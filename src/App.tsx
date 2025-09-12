@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { Parser } from 'node-sql-parser';
 import {
   ReactFlow,
   addEdge,
@@ -79,6 +80,35 @@ export default function CanvasPlayground() {
   const selectedTable = nodes.find((n) => n.id === selectedTableId);
   const attributes = Array.isArray(selectedTable?.data?.attributes) ? selectedTable.data.attributes : [];
 
+  // SQL Export logic
+  const exportToSQL = () => {
+    // Helper to map attribute type to SQL type (simple default: all VARCHAR)
+    const sqlType = (attr: any) => 'VARCHAR(255)';
+    let sql = '';
+    nodes.forEach((node) => {
+      const label = typeof node.data.label === 'string' ? node.data.label : `Table_${node.id}`;
+      const tableName = label.replace(/\s+/g, '_');
+      const attrs = Array.isArray(node.data.attributes) ? node.data.attributes : [];
+      if (!attrs.length) return;
+      sql += `CREATE TABLE ${tableName} (\n`;
+      sql += attrs.map((attr: any) => {
+        let line = `  ${attr.name} ${sqlType(attr)}`;
+        if (attr.type === 'PK') line += ' PRIMARY KEY';
+        return line;
+      }).join(',\n');
+      // Foreign keys
+      const fks = attrs.filter((a: any) => a.type === 'FK');
+      if (fks.length) {
+        sql += ',\n';
+        sql += fks.map((fk: any) =>
+          `  FOREIGN KEY (${fk.name}) REFERENCES ${fk.refTable}(${fk.refAttr})`
+        ).join(',\n');
+      }
+      sql += '\n);\n\n';
+    });
+    alert(sql || 'No tables to export!');
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
       {/* Sidebar for attribute editing */}
@@ -107,6 +137,7 @@ export default function CanvasPlayground() {
             {attrType === 'FK' && (
               <>
                 <input
+                
                   placeholder="Reference Table"
                   value={refTable}
                   onChange={e => setRefTable(e.target.value)}
@@ -127,8 +158,11 @@ export default function CanvasPlayground() {
         )}
       </div>
       <div style={{ flex: 1, position: 'relative' }}>
-        <button onClick={addTable} style={{ position: 'absolute', zIndex: 10, width:'250px', height:"75px", backgroundColor:"green" }}>
+        <button onClick={addTable} style={{ position: 'absolute', zIndex: 10, width:'250px', height:"75px", backgroundColor:"yellow" }}>
           Add Table
+        </button>
+        <button onClick={exportToSQL} style={{ position: 'absolute', left: 270, zIndex: 10, width:'250px', height:"75px", backgroundColor:"#0074D9", color: 'white' }}>
+          Export to SQL
         </button>
         <ReactFlow
           nodes={nodes}
