@@ -80,9 +80,11 @@ export default function CanvasPlayground() {
   const selectedTable = nodes.find((n) => n.id === selectedTableId);
   const attributes = Array.isArray(selectedTable?.data?.attributes) ? selectedTable.data.attributes : [];
 
-  // SQL Export logic
+  // SQL Export logic with modal
+  const [sqlDialogOpen, setSqlDialogOpen] = React.useState(false);
+  const [sqlText, setSqlText] = React.useState('');
+
   const exportToSQL = () => {
-    // Helper to map attribute type to SQL type (simple default: all VARCHAR)
     const sqlType = (attr: any) => 'VARCHAR(255)';
     let sql = '';
     nodes.forEach((node) => {
@@ -96,7 +98,6 @@ export default function CanvasPlayground() {
         if (attr.type === 'PK') line += ' PRIMARY KEY';
         return line;
       }).join(',\n');
-      // Foreign keys
       const fks = attrs.filter((a: any) => a.type === 'FK');
       if (fks.length) {
         sql += ',\n';
@@ -106,7 +107,12 @@ export default function CanvasPlayground() {
       }
       sql += '\n);\n\n';
     });
-    alert(sql || 'No tables to export!');
+    setSqlText(sql || 'No tables to export!');
+    setSqlDialogOpen(true);
+  };
+
+  const copySQL = () => {
+    navigator.clipboard.writeText(sqlText);
   };
 
   return (
@@ -164,6 +170,21 @@ export default function CanvasPlayground() {
         <button onClick={exportToSQL} style={{ position: 'absolute', left: 270, zIndex: 10, width:'250px', height:"75px", backgroundColor:"#0074D9", color: 'white' }}>
           Export to SQL
         </button>
+        {/* SQL Dialog */}
+        {sqlDialogOpen && (
+          <div style={{ position: 'absolute', top: 100, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: 'white', border: '2px solid #0074D9', borderRadius: 8, boxShadow: '0 2px 16px rgba(0,0,0,0.15)', padding: 24, minWidth: 400 }}>
+            <h2 style={{ marginTop: 0 }}>Exported SQL</h2>
+            <textarea
+              value={sqlText}
+              readOnly
+              style={{ width: '100%', height: 200, fontFamily: 'monospace', fontSize: 14, marginBottom: 16 }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <button onClick={copySQL} style={{ background: '#0074D9', color: 'white', padding: '8px 16px', borderRadius: 4, border: 'none' }}>Copy</button>
+              <button onClick={() => setSqlDialogOpen(false)} style={{ background: '#aaa', color: 'white', padding: '8px 16px', borderRadius: 4, border: 'none' }}>Close</button>
+            </div>
+          </div>
+        )}
         <ReactFlow
           nodes={nodes}
           edges={edges}
