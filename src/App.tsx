@@ -11,8 +11,70 @@ import {
   Connection,
   Edge,
   Node,
+  NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+
+// Custom Table Node Component
+const TableNode = ({ data }: { data: any }) => {
+  const attributes = Array.isArray(data.attributes) ? data.attributes : [];
+  
+  return (
+    <div style={{
+      background: 'white',
+      border: '2px solid #0074D9',
+      borderRadius: 8,
+      minWidth: 200,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    }}>
+      {/* Table Header */}
+      <div style={{
+        background: '#0074D9',
+        color: 'white',
+        padding: '8px 12px',
+        borderRadius: '6px 6px 0 0',
+        fontWeight: 'bold',
+        textAlign: 'center'
+      }}>
+        {typeof data.label === 'string' ? data.label : `Table ${data.id}`}
+      </div>
+      
+      {/* Attributes List */}
+      <div style={{ padding: '8px 0' }}>
+        {attributes.length > 0 ? (
+          attributes.map((attr: any, idx: number) => (
+            <div key={idx} style={{
+              padding: '4px 12px',
+              borderBottom: idx < attributes.length - 1 ? '1px solid #eee' : 'none',
+              fontSize: 12,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontWeight: attr.type === 'PK' ? 'bold' : 'normal' }}>
+                {attr.name}
+                {attr.type === 'PK' && <span style={{ color: '#FFD700', marginLeft: 4 }}>🔑</span>}
+                {attr.type === 'FK' && <span style={{ color: '#FF6B6B', marginLeft: 4 }}>🔗</span>}
+              </span>
+              <span style={{ color: '#666', fontSize: 10 }}>
+                {attr.dataType || 'VARCHAR(255)'}
+              </span>
+            </div>
+          ))
+        ) : (
+          <div style={{ padding: '8px 12px', fontSize: 12, color: '#999', fontStyle: 'italic' }}>
+            No attributes
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Define node types
+const nodeTypes: NodeTypes = {
+  tableNode: TableNode,
+};
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -36,7 +98,7 @@ export default function CanvasPlayground() {
           attributes: [] // Each attribute: { name: string, type: 'PK' | 'FK' | 'normal', refTable?: string, refAttr?: string }
         },
         position: { x: 100 + nds.length * 50, y: 100 + nds.length * 50 },
-        type: 'default',
+        type: 'tableNode', // Use custom node type
       },
     ]);
   };
@@ -306,6 +368,7 @@ export default function CanvasPlayground() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
