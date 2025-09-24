@@ -12,11 +12,13 @@ import {
   Edge,
   Node,
   NodeTypes,
+  Handle,
+  Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 // Custom Table Node Component
-const TableNode = ({ data }: { data: any }) => {
+const TableNode = ({ data, id }: { data: any; id: string }) => {
   const attributes = Array.isArray(data.attributes) ? data.attributes : [];
   
   return (
@@ -25,7 +27,8 @@ const TableNode = ({ data }: { data: any }) => {
       border: '2px solid #0074D9',
       borderRadius: 8,
       minWidth: 200,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      position: 'relative'
     }}>
       {/* Table Header */}
       <div style={{
@@ -36,7 +39,7 @@ const TableNode = ({ data }: { data: any }) => {
         fontWeight: 'bold',
         textAlign: 'center'
       }}>
-        {typeof data.label === 'string' ? data.label : `Table ${data.id}`}
+        {typeof data.label === 'string' ? data.label : `Table ${id}`}
       </div>
       
       {/* Attributes List */}
@@ -49,8 +52,40 @@ const TableNode = ({ data }: { data: any }) => {
               fontSize: 12,
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              position: 'relative',
+              minHeight: 24
             }}>
+              {/* Left handle for incoming connections */}
+              <Handle
+                type="target"
+                position={Position.Left}
+                id={`${id}-${attr.name}-target`}
+                style={{
+                  background: attr.type === 'FK' ? '#FF6B6B' : '#0074D9',
+                  width: 8,
+                  height: 8,
+                  left: -4,
+                  top: '50%',
+                  transform: 'translateY(-50%)'
+                }}
+              />
+              
+              {/* Right handle for outgoing connections */}
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={`${id}-${attr.name}-source`}
+                style={{
+                  background: attr.type === 'PK' ? '#FFD700' : '#0074D9',
+                  width: 8,
+                  height: 8,
+                  right: -4,
+                  top: '50%',
+                  transform: 'translateY(-50%)'
+                }}
+              />
+              
               <span style={{ fontWeight: attr.type === 'PK' ? 'bold' : 'normal' }}>
                 {attr.name}
                 {attr.type === 'PK' && <span style={{ color: '#FFD700', marginLeft: 4 }}>🔑</span>}
@@ -84,9 +119,114 @@ export default function CanvasPlayground() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Edge | Connection) => {
+      // Parse connection information
+      const sourceHandleId = params.sourceHandle;
+      const targetHandleId = params.targetHandle;
+      
+      if (sourceHandleId && targetHandleId) {
+        // Extract table and attribute names from handle IDs
+        const sourceMatch = sourceHandleId.match(/^(.+)-(.+)-source$/);
+        const targetMatch = targetHandleId.match(/^(.+)-(.+)-target$/);
+        
+        if (sourceMatch && targetMatch) {
+          const [, sourceTableId, sourceAttrName] = sourceMatch;
+          const [, targetTableId, targetAttrName] = targetMatch;
+          
+          // Update node attributes to reflect the relationship
+          setNodes((nds) =>
+            nds.map((node) => {
+              if (node.id === sourceTableId) {
+                // Source attribute should be Primary Key
+                const updatedAttributes = Array.isArray(node.data.attributes) 
+                  ? node.data.attributes.map((attr: any) => 
+                      attr.name === sourceAttrName 
+                        ? { ...attr, type: 'PK' }
+                        : attr
+                    )
+                  : [];
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    attributes: updatedAttributes,
+                  },
+                };
+              } else if (node.id === targetTableId) {
+                // Target attribute should be Foreign Key
+                const sourceTable = nds.find(n => n.id === sourceTableId);
+                const sourceTableLabel = typeof sourceTable?.data?.label === 'string' 
+                  ? sourceTable.data.label 
+                  : `Table_${sourceTableId}`;
+                
+                const updatedAttributes = Array.isArray(node.data.attributes) 
+                  ? node.data.attributes.map((attr: any) => 
+                      attr.name === targetAttrName 
+                        ? { 
+                            ...attr, 
+                            type: 'FK', 
+                            refTable: sourceTableLabel.replace(/\s+/g, '_'),
+                            refAttr: sourceAttrName 
+                          }
+                        : attr
+                    )
+                  : [];
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    attributes: updatedAttributes,
+                  },
+                };
+              }
+              return node;
+            })
+          );
+        }
+      }
+      
+      // Add custom styling for different connection types
+      const newEdge = {
+        ...params,
+        style: {
+          stroke: '#0074D9',
+          strokeWidth: 2,
+        },
+        markerEnd: {
+          type: 'arrowclosed' as const,
+          color: '#0074D9',
+        },
+        label: sourceHandleId && targetHandleId ? 'FK Relationship' : undefined,
+        labelStyle: { fill: '#0074D9', fontWeight: 'bold', fontSize: 10 },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+    },
+    [setEdges, setNodes]
   );
+
+  // Custom connection validation with enhanced rules
+  const isValidConnection = useCallback((connection: Edge | Connection) => {
+    // Prevent connecting a node to itself
+    if (connection.source === connection.target) {
+      return false;
+    }
+    
+    // Ensure we have proper handle IDs
+    if (!connection.sourceHandle || !connection.targetHandle) {
+      return false;
+    }
+    
+    // Parse handle information
+    const sourceMatch = connection.sourceHandle.match(/^(.+)-(.+)-source$/);
+    const targetMatch = connection.targetHandle.match(/^(.+)-(.+)-target$/);
+    
+    if (!sourceMatch || !targetMatch) {
+      return false;
+    }
+    
+    // Allow all valid connections - we'll handle the logic in onConnect
+    return true;
+  }, []);
 
   const addTable = () => {
     setNodes((nds) => [
@@ -157,26 +297,39 @@ export default function CanvasPlayground() {
   const exportToSQL = () => {
     const sqlType = (attr: any) => attr.dataType || 'VARCHAR(255)';
     let sql = '';
+    
+    // First pass: Create all tables with their columns and primary keys
     nodes.forEach((node) => {
       const label = typeof node.data.label === 'string' ? node.data.label : `Table_${node.id}`;
       const tableName = label.replace(/\s+/g, '_');
       const attrs = Array.isArray(node.data.attributes) ? node.data.attributes : [];
       if (!attrs.length) return;
+      
       sql += `CREATE TABLE ${tableName} (\n`;
       sql += attrs.map((attr: any) => {
         let line = `  ${attr.name} ${sqlType(attr)}`;
         if (attr.type === 'PK') line += ' PRIMARY KEY';
+        if (attr.type === 'FK') line += ' NOT NULL'; // FK columns should typically not be null
         return line;
       }).join(',\n');
-      const fks = attrs.filter((a: any) => a.type === 'FK');
-      if (fks.length) {
-        sql += ',\n';
-        sql += fks.map((fk: any) =>
-          `  FOREIGN KEY (${fk.name}) REFERENCES ${fk.refTable}(${fk.refAttr})`
-        ).join(',\n');
-      }
       sql += '\n);\n\n';
     });
+    
+    // Second pass: Add foreign key constraints
+    nodes.forEach((node) => {
+      const label = typeof node.data.label === 'string' ? node.data.label : `Table_${node.id}`;
+      const tableName = label.replace(/\s+/g, '_');
+      const attrs = Array.isArray(node.data.attributes) ? node.data.attributes : [];
+      const fks = attrs.filter((a: any) => a.type === 'FK' && a.refTable && a.refAttr);
+      
+      if (fks.length) {
+        fks.forEach((fk: any) => {
+          sql += `ALTER TABLE ${tableName} ADD CONSTRAINT FK_${tableName}_${fk.name}\n`;
+          sql += `  FOREIGN KEY (${fk.name}) REFERENCES ${fk.refTable}(${fk.refAttr});\n\n`;
+        });
+      }
+    });
+    
     setSqlText(sql || 'No tables to export!');
     setSqlDialogOpen(true);
   };
@@ -373,7 +526,15 @@ export default function CanvasPlayground() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          isValidConnection={isValidConnection}
           fitView
+          connectionLineStyle={{ stroke: '#0074D9', strokeWidth: 3 }}
+          defaultEdgeOptions={{
+            style: { stroke: '#0074D9', strokeWidth: 3 },
+            markerEnd: { type: 'arrowclosed', color: '#0074D9' },
+            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.8 },
+            labelStyle: { fill: '#0074D9', fontWeight: 'bold' }
+          }}
         >
           <MiniMap />
           <Controls />
