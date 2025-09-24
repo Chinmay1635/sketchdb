@@ -45,6 +45,7 @@ export default function CanvasPlayground() {
   const [selectedTableId, setSelectedTableId] = React.useState<string | null>(null);
   const [attrName, setAttrName] = React.useState("");
   const [attrType, setAttrType] = React.useState<'PK' | 'FK' | 'normal'>('normal');
+  const [attrDataType, setAttrDataType] = React.useState("VARCHAR(255)");
   const [refTable, setRefTable] = React.useState("");
   const [refAttr, setRefAttr] = React.useState("");
 
@@ -60,7 +61,13 @@ export default function CanvasPlayground() {
       nds.map((node) => {
         if (node.id !== selectedTableId) return node;
         const oldAttrs = Array.isArray(node.data.attributes) ? node.data.attributes : [];
-        const newAttr = { name: attrName, type: attrType, refTable: attrType === 'FK' ? refTable : undefined, refAttr: attrType === 'FK' ? refAttr : undefined };
+        const newAttr = { 
+          name: attrName, 
+          type: attrType, 
+          dataType: attrDataType,
+          refTable: attrType === 'FK' ? refTable : undefined, 
+          refAttr: attrType === 'FK' ? refAttr : undefined 
+        };
         return {
           ...node,
           data: {
@@ -72,6 +79,7 @@ export default function CanvasPlayground() {
     );
     setAttrName("");
     setAttrType('normal');
+    setAttrDataType("VARCHAR(255)");
     setRefTable("");
     setRefAttr("");
   };
@@ -85,7 +93,7 @@ export default function CanvasPlayground() {
   const [sqlText, setSqlText] = React.useState('');
 
   const exportToSQL = () => {
-    const sqlType = (attr: any) => 'VARCHAR(255)';
+    const sqlType = (attr: any) => attr.dataType || 'VARCHAR(255)';
     let sql = '';
     nodes.forEach((node) => {
       const label = typeof node.data.label === 'string' ? node.data.label : `Table_${node.id}`;
@@ -203,7 +211,7 @@ export default function CanvasPlayground() {
             <ul>
               {attributes.map((attr: any, idx: number) => (
                 <li key={idx}>
-                  {attr.name} ({attr.type}{attr.type === 'FK' ? ` → ${attr.refTable}.${attr.refAttr}` : ''})
+                  <strong>{attr.name}</strong> - {attr.dataType || 'VARCHAR(255)'} ({attr.type}{attr.type === 'FK' ? ` → ${attr.refTable}.${attr.refAttr}` : ''})
                 </li>
               ))}
             </ul>
@@ -213,6 +221,25 @@ export default function CanvasPlayground() {
               onChange={e => setAttrName(e.target.value)}
               style={{ width: '100%', marginBottom: 8 }}
             />
+            <select value={attrDataType} onChange={e => setAttrDataType(e.target.value)} style={{ width: '100%', marginBottom: 8 }}>
+              <option value="VARCHAR(255)">VARCHAR(255)</option>
+              <option value="VARCHAR(100)">VARCHAR(100)</option>
+              <option value="VARCHAR(50)">VARCHAR(50)</option>
+              <option value="TEXT">TEXT</option>
+              <option value="INTEGER">INTEGER</option>
+              <option value="BIGINT">BIGINT</option>
+              <option value="DECIMAL(10,2)">DECIMAL(10,2)</option>
+              <option value="FLOAT">FLOAT</option>
+              <option value="DOUBLE">DOUBLE</option>
+              <option value="BOOLEAN">BOOLEAN</option>
+              <option value="DATE">DATE</option>
+              <option value="DATETIME">DATETIME</option>
+              <option value="TIMESTAMP">TIMESTAMP</option>
+              <option value="TIME">TIME</option>
+              <option value="CHAR(10)">CHAR(10)</option>
+              <option value="JSON">JSON</option>
+              <option value="BLOB">BLOB</option>
+            </select>
             <select value={attrType} onChange={e => setAttrType(e.target.value as any)} style={{ width: '100%', marginBottom: 8 }}>
               <option value="normal">Normal</option>
               <option value="PK">Primary Key</option>
