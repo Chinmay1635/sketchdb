@@ -115,6 +115,51 @@ export default function CanvasPlayground() {
     navigator.clipboard.writeText(sqlText);
   };
 
+  // Delete table functionality
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  
+  const deleteTable = () => {
+    if (!selectedTableId) return;
+    setNodes((nds) => nds.filter((node) => node.id !== selectedTableId));
+    setSelectedTableId(null);
+    setDeleteConfirmOpen(false);
+  };
+
+  // Edit table name functionality
+  const [isEditingTableName, setIsEditingTableName] = React.useState(false);
+  const [editTableName, setEditTableName] = React.useState("");
+
+  const startEditTableName = () => {
+    if (selectedTable) {
+      const currentLabel = typeof selectedTable.data.label === 'string' ? selectedTable.data.label : `Table ${selectedTable.id}`;
+      setEditTableName(currentLabel);
+      setIsEditingTableName(true);
+    }
+  };
+
+  const saveTableName = () => {
+    if (!selectedTableId || !editTableName.trim()) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            label: editTableName.trim(),
+          },
+        };
+      })
+    );
+    setIsEditingTableName(false);
+    setEditTableName("");
+  };
+
+  const cancelEditTableName = () => {
+    setIsEditingTableName(false);
+    setEditTableName("");
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
       {/* Sidebar for attribute editing */}
@@ -122,6 +167,39 @@ export default function CanvasPlayground() {
         <h3>Attributes</h3>
         {selectedTable ? (
           <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              {isEditingTableName ? (
+                <div style={{ display: 'flex', flex: 1, marginRight: 8 }}>
+                  <input
+                    value={editTableName}
+                    onChange={(e) => setEditTableName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveTableName();
+                      if (e.key === 'Escape') cancelEditTableName();
+                    }}
+                    style={{ flex: 1, marginRight: 4, padding: '2px 4px' }}
+                    autoFocus
+                  />
+                  <button onClick={saveTableName} style={{ background: '#4CAF50', color: 'white', border: 'none', borderRadius: 4, padding: '2px 8px', marginRight: 2 }}>✓</button>
+                  <button onClick={cancelEditTableName} style={{ background: '#f44336', color: 'white', border: 'none', borderRadius: 4, padding: '2px 8px' }}>✕</button>
+                </div>
+              ) : (
+                <h4 
+                  style={{ margin: 0, cursor: 'pointer', flex: 1 }} 
+                  onClick={startEditTableName}
+                  title="Click to edit table name"
+                >
+                  {typeof selectedTable.data.label === 'string' ? selectedTable.data.label : `Table ${selectedTable.id}`}
+                </h4>
+              )}
+              <button 
+                onClick={() => setDeleteConfirmOpen(true)}
+                style={{ background: '#ff4444', color: 'white', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}
+                title="Delete Table"
+              >
+                Delete
+              </button>
+            </div>
             <ul>
               {attributes.map((attr: any, idx: number) => (
                 <li key={idx}>
@@ -182,6 +260,19 @@ export default function CanvasPlayground() {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <button onClick={copySQL} style={{ background: '#0074D9', color: 'white', padding: '8px 16px', borderRadius: 4, border: 'none' }}>Copy</button>
               <button onClick={() => setSqlDialogOpen(false)} style={{ background: '#aaa', color: 'white', padding: '8px 16px', borderRadius: 4, border: 'none' }}>Close</button>
+            </div>
+          </div>
+        )}
+        
+        {/* Delete Confirmation Dialog */}
+        {deleteConfirmOpen && (
+          <div style={{ position: 'absolute', top: 150, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: 'white', border: '2px solid #ff4444', borderRadius: 8, boxShadow: '0 2px 16px rgba(0,0,0,0.15)', padding: 24, minWidth: 300 }}>
+            <h3 style={{ marginTop: 0, color: '#ff4444' }}>Delete Table</h3>
+            <p>Are you sure you want to delete "{typeof selectedTable?.data.label === 'string' ? selectedTable.data.label : `Table ${selectedTableId}`}"?</p>
+            <p style={{ fontSize: 14, color: '#666' }}>This action cannot be undone.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <button onClick={deleteTable} style={{ background: '#ff4444', color: 'white', padding: '8px 16px', borderRadius: 4, border: 'none' }}>Delete</button>
+              <button onClick={() => setDeleteConfirmOpen(false)} style={{ background: '#aaa', color: 'white', padding: '8px 16px', borderRadius: 4, border: 'none' }}>Cancel</button>
             </div>
           </div>
         )}
