@@ -20,6 +20,7 @@ import {
   SQLDialog,
   DeleteConfirmDialog,
   Toolbar,
+  LoadingDialog,
 } from './components';
 
 // Hooks
@@ -49,6 +50,7 @@ export default function CanvasPlayground() {
   
   // Dialog states
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
+  const [loadingDialogOpen, setLoadingDialogOpen] = useState(false);
   const [sqlText, setSqlText] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
@@ -105,12 +107,28 @@ export default function CanvasPlayground() {
     setSelectedTableId(node.id);
   }, [setSelectedTableId]);
 
-  // SQL Export
+  // SQL Export with loading animation
   const exportToSQL = useCallback(() => {
+    // Show loading dialog
+    setLoadingDialogOpen(true);
+    
+    // Generate SQL immediately but show it after 2 seconds
     const sql = generateSQL(nodes);
-    setSqlText(sql);
-    setSqlDialogOpen(true);
+    
+    // Store timeout ID for cancellation
+    const timeoutId = setTimeout(() => {
+      setLoadingDialogOpen(false);
+      setSqlText(sql);
+      setSqlDialogOpen(true);
+    }, 2000);
+
+    // Store timeout ID in state for potential cancellation
+    return timeoutId;
   }, [nodes]);
+
+  const handleCancelLoading = useCallback(() => {
+    setLoadingDialogOpen(false);
+  }, []);
 
   const handleCopySQL = useCallback(() => {
     copyToClipboard(sqlText);
@@ -156,6 +174,13 @@ export default function CanvasPlayground() {
       <div style={{ flex: 1, position: 'relative' }}>
         {/* Toolbar */}
         <Toolbar onAddTable={addTable} onExportSQL={exportToSQL} />
+        
+        {/* Loading Dialog */}
+        <LoadingDialog
+          isOpen={loadingDialogOpen}
+          message="Parsing to SQL..."
+          onCancel={handleCancelLoading}
+        />
         
         {/* SQL Dialog */}
         <SQLDialog
