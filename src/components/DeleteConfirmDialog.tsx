@@ -37,13 +37,13 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
       <div className="flex justify-between mt-4">
         <button
           onClick={onConfirm}
-          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+          className="cursor-pointer bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
         >
           Delete
         </button>
         <button
           onClick={onCancel}
-          className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500"
+          className="cursor-pointer bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500"
         >
           Cancel
         </button>

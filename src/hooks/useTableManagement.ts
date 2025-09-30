@@ -20,6 +20,7 @@ export const useTableManagement = (initialNodes: Node[]) => {
   const selectedTable = nodes.find((n) => n.id === selectedTableId);
   const attributes = Array.isArray(selectedTable?.data?.attributes) ? selectedTable.data.attributes : [];
 
+  // Add Table
   const addTable = useCallback(() => {
     setNodes((nds) => [
       ...nds,
@@ -35,12 +36,14 @@ export const useTableManagement = (initialNodes: Node[]) => {
     ]);
   }, [setNodes]);
 
+  // Delete Table
   const deleteTable = useCallback(() => {
     if (!selectedTableId) return;
     setNodes((nds) => nds.filter((node) => node.id !== selectedTableId));
     setSelectedTableId(null);
   }, [selectedTableId, setNodes]);
 
+  // Add Attribute
   const addAttribute = useCallback(() => {
     if (!selectedTableId || !attrName) return;
     
@@ -53,7 +56,9 @@ export const useTableManagement = (initialNodes: Node[]) => {
           type: attrType, 
           dataType: attrDataType,
           refTable: attrType === 'FK' ? refTable : undefined, 
-          refAttr: attrType === 'FK' ? refAttr : undefined 
+          refAttr: attrType === 'FK' ? refAttr : undefined,
+          isEditing: false,   // NEW
+          editName: ""        // NEW
         };
         return {
           ...node,
@@ -73,6 +78,7 @@ export const useTableManagement = (initialNodes: Node[]) => {
     setRefAttr("");
   }, [selectedTableId, attrName, attrType, attrDataType, refTable, refAttr, setNodes]);
 
+  // Start Editing Table Name
   const startEditTableName = useCallback(() => {
     if (selectedTable) {
       const currentLabel = typeof selectedTable.data.label === 'string' 
@@ -83,6 +89,7 @@ export const useTableManagement = (initialNodes: Node[]) => {
     }
   }, [selectedTable]);
 
+  // Save Table Name
   const saveTableName = useCallback(() => {
     if (!selectedTableId || !editTableName.trim()) return;
     
@@ -107,13 +114,77 @@ export const useTableManagement = (initialNodes: Node[]) => {
     setEditTableName("");
   }, []);
 
+  // Attribute Editing Functions
+  const onStartAttrEdit = useCallback((idx: number) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const updatedAttrs = node.data.attributes.map((attr, i) =>
+          i === idx ? { ...attr, isEditing: true, editName: attr.name } : attr
+        );
+        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditNameChange = useCallback((idx: number, value: string) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const updatedAttrs = node.data.attributes.map((attr, i) =>
+          i === idx ? { ...attr, editName: value } : attr
+        );
+        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onSaveAttrName = useCallback((idx: number) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const updatedAttrs = node.data.attributes.map((attr, i) =>
+          i === idx ? { ...attr, name: attr.editName || attr.name, isEditing: false, editName: "" } : attr
+        );
+        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onCancelAttrEdit = useCallback((idx: number) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const updatedAttrs = node.data.attributes.map((attr, i) =>
+          i === idx ? { ...attr, isEditing: false, editName: "" } : attr
+        );
+        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onDeleteAttribute = useCallback((idx: number) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const updatedAttrs = node.data.attributes.filter((_, i) => i !== idx);
+        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  // Connection handling
   const updateNodeAttributes = useCallback((connectionInfo: any) => {
     const { sourceTableId, sourceAttrName, targetTableId, targetAttrName } = connectionInfo;
     
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === sourceTableId) {
-          // Source attribute should be Primary Key
           const updatedAttributes = Array.isArray(node.data.attributes) 
             ? node.data.attributes.map((attr: TableAttribute) => 
                 attr.name === sourceAttrName 
@@ -129,7 +200,6 @@ export const useTableManagement = (initialNodes: Node[]) => {
             },
           };
         } else if (node.id === targetTableId) {
-          // Target attribute should be Foreign Key
           const sourceTable = nds.find(n => n.id === sourceTableId);
           const sourceTableLabel = typeof sourceTable?.data?.label === 'string' 
             ? sourceTable.data.label 
@@ -184,6 +254,13 @@ export const useTableManagement = (initialNodes: Node[]) => {
     saveTableName,
     cancelEditTableName,
     updateNodeAttributes,
+
+    // Attribute Editing
+    onStartAttrEdit,
+    onAttrEditNameChange,
+    onSaveAttrName,
+    onCancelAttrEdit,
+    onDeleteAttribute,
     
     // Form setters
     setEditTableName,

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState } from "react";
 import {
   ReactFlow,
   addEdge,
@@ -10,8 +10,8 @@ import {
   Edge,
   Node,
   NodeTypes,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 // Components
 import {
@@ -21,21 +21,21 @@ import {
   DeleteConfirmDialog,
   Toolbar,
   LoadingDialog,
-} from './components';
+} from "./components";
 
 // Hooks
-import { useTableManagement } from './hooks/useTableManagement';
+import { useTableManagement } from "./hooks/useTableManagement";
 
 // Utils
-import { 
-  parseConnectionHandles, 
-  createStyledEdge, 
-  isValidConnection 
-} from './utils/connectionUtils';
-import { generateSQL, copyToClipboard } from './utils/sqlGenerator';
+import {
+  parseConnectionHandles,
+  createStyledEdge,
+  isValidConnection,
+} from "./utils/connectionUtils";
+import { generateSQL, copyToClipboard } from "./utils/sqlGenerator";
 
 // Types
-import { AttributeType, DataType } from './types';
+import { AttributeType, DataType } from "./types";
 
 // Node types configuration
 const nodeTypes: NodeTypes = {
@@ -47,17 +47,17 @@ const initialEdges: Edge[] = [];
 
 export default function CanvasPlayground() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  
+
   // Dialog states
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
   const [loadingDialogOpen, setLoadingDialogOpen] = useState(false);
-  const [sqlText, setSqlText] = useState('');
+  const [sqlText, setSqlText] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // Table management hook
   const {
     nodes,
-    selectedTableId,
+    selectedTableId, // <-- add this
     selectedTable,
     attributes,
     isEditingTableName,
@@ -67,6 +67,7 @@ export default function CanvasPlayground() {
     attrDataType,
     refTable,
     refAttr,
+
     setSelectedTableId,
     onNodesChange,
     addTable,
@@ -75,7 +76,16 @@ export default function CanvasPlayground() {
     startEditTableName,
     saveTableName,
     cancelEditTableName,
+
+    // Attribute editing
+    onStartAttrEdit,
+    onAttrEditNameChange,
+    onSaveAttrName,
+    onCancelAttrEdit,
+    onDeleteAttribute,
+
     updateNodeAttributes,
+
     setEditTableName,
     setAttrName,
     setAttrType,
@@ -88,14 +98,14 @@ export default function CanvasPlayground() {
   const onConnect = useCallback(
     (params: Edge | Connection) => {
       const connectionInfo = parseConnectionHandles(
-        params.sourceHandle || null, 
+        params.sourceHandle || null,
         params.targetHandle || null
       );
-      
+
       if (connectionInfo) {
         updateNodeAttributes(connectionInfo);
       }
-      
+
       const newEdge = createStyledEdge(params);
       setEdges((eds) => addEdge(newEdge as Connection, eds));
     },
@@ -103,15 +113,18 @@ export default function CanvasPlayground() {
   );
 
   // Node selection
-  const onNodeClick = useCallback((_: any, node: Node) => {
-    setSelectedTableId(node.id);
-  }, [setSelectedTableId]);
+  const onNodeClick = useCallback(
+    (_: any, node: Node) => {
+      setSelectedTableId(node.id);
+    },
+    [setSelectedTableId]
+  );
 
   // SQL Export with loading animation
   const exportToSQL = useCallback(() => {
     setLoadingDialogOpen(true);
     const sql = generateSQL(nodes);
-    
+
     const timeoutId = setTimeout(() => {
       setLoadingDialogOpen(false);
       setSqlText(sql);
@@ -156,27 +169,34 @@ export default function CanvasPlayground() {
         onSaveTableName={saveTableName}
         onCancelEditTableName={cancelEditTableName}
         onEditTableNameChange={setEditTableName}
-        onDeleteTable={handleDeleteConfirm}
+        onDeleteTable={deleteTable}
         onAttrNameChange={setAttrName}
         onAttrDataTypeChange={setAttrDataType}
         onAttrTypeChange={setAttrType}
         onRefTableChange={setRefTable}
         onRefAttrChange={setRefAttr}
         onAddAttribute={addAttribute}
+        onStartAttrEdit={onStartAttrEdit}
+        onAttrEditNameChange={onAttrEditNameChange}
+        onSaveAttrName={onSaveAttrName}
+        onCancelAttrEdit={onCancelAttrEdit}
+        onDeleteAttribute={onDeleteAttribute}
+        // Pass this if the sidebar uses connections
+        updateNodeAttributes={updateNodeAttributes}
       />
 
       {/* Main Canvas Area */}
       <div className="flex-1 relative">
         {/* Toolbar */}
         <Toolbar onAddTable={addTable} onExportSQL={exportToSQL} />
-        
+
         {/* Loading Dialog */}
         <LoadingDialog
           isOpen={loadingDialogOpen}
           message="Parsing to SQL..."
           onCancel={handleCancelLoading}
         />
-        
+
         {/* SQL Dialog */}
         <SQLDialog
           isOpen={sqlDialogOpen}
@@ -184,7 +204,7 @@ export default function CanvasPlayground() {
           onClose={() => setSqlDialogOpen(false)}
           onCopy={handleCopySQL}
         />
-        
+
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmDialog
           isOpen={deleteConfirmOpen}
@@ -193,7 +213,7 @@ export default function CanvasPlayground() {
           onConfirm={handleDeleteTable}
           onCancel={() => setDeleteConfirmOpen(false)}
         />
-        
+
         {/* React Flow */}
         <ReactFlow
           nodes={nodes}
@@ -205,12 +225,12 @@ export default function CanvasPlayground() {
           onNodeClick={onNodeClick}
           isValidConnection={isValidConnection}
           fitView
-          connectionLineStyle={{ stroke: '#0074D9', strokeWidth: 3 }}
+          connectionLineStyle={{ stroke: "#0074D9", strokeWidth: 3 }}
           defaultEdgeOptions={{
-            style: { stroke: '#0074D9', strokeWidth: 3 },
-            markerEnd: { type: 'arrowclosed', color: '#0074D9' },
-            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.8 },
-            labelStyle: { fill: '#0074D9', fontWeight: 'bold' }
+            style: { stroke: "#0074D9", strokeWidth: 3 },
+            markerEnd: { type: "arrowclosed", color: "#0074D9" },
+            labelBgStyle: { fill: "#ffffff", fillOpacity: 0.8 },
+            labelStyle: { fill: "#0074D9", fontWeight: "bold" },
           }}
         >
           <MiniMap />
