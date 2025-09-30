@@ -124,7 +124,15 @@ export const useTableManagement = (initialNodes: Node[]) => {
         if (node.id !== selectedTableId) return node;
         const nodeData = node.data as TableData;
         const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
-          i === idx ? { ...attr, isEditing: true, editName: attr.name } : attr
+          i === idx ? { 
+            ...attr, 
+            isEditing: true, 
+            editName: attr.name,
+            editDataType: attr.dataType as DataType,
+            editType: attr.type,
+            editRefTable: attr.refTable || "",
+            editRefAttr: attr.refAttr || ""
+          } : attr
         );
         return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
       })
@@ -145,6 +153,62 @@ export const useTableManagement = (initialNodes: Node[]) => {
     );
   }, [selectedTableId, setNodes]);
 
+  const onAttrEditDataTypeChange = useCallback((idx: number, value: DataType) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editDataType: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditTypeChange = useCallback((idx: number, value: AttributeType) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editType: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditRefTableChange = useCallback((idx: number, value: string) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editRefTable: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditRefAttrChange = useCallback((idx: number, value: string) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editRefAttr: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
   const onSaveAttrName = useCallback((idx: number) => {
     if (!selectedTableId) return;
     setNodes((nds) =>
@@ -152,7 +216,20 @@ export const useTableManagement = (initialNodes: Node[]) => {
         if (node.id !== selectedTableId) return node;
         const nodeData = node.data as TableData;
         const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
-          i === idx ? { ...attr, name: attr.editName || attr.name, isEditing: false, editName: "" } : attr
+          i === idx ? { 
+            ...attr, 
+            name: attr.editName || attr.name, 
+            dataType: attr.editDataType || attr.dataType,
+            type: attr.editType || attr.type,
+            refTable: attr.editType === 'FK' ? (attr.editRefTable || attr.refTable) : undefined,
+            refAttr: attr.editType === 'FK' ? (attr.editRefAttr || attr.refAttr) : undefined,
+            isEditing: false, 
+            editName: "",
+            editDataType: undefined,
+            editType: undefined,
+            editRefTable: "",
+            editRefAttr: ""
+          } : attr
         );
         return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
       })
@@ -166,7 +243,15 @@ export const useTableManagement = (initialNodes: Node[]) => {
         if (node.id !== selectedTableId) return node;
         const nodeData = node.data as TableData;
         const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
-          i === idx ? { ...attr, isEditing: false, editName: "" } : attr
+          i === idx ? { 
+            ...attr, 
+            isEditing: false, 
+            editName: "",
+            editDataType: undefined,
+            editType: undefined,
+            editRefTable: "",
+            editRefAttr: ""
+          } : attr
         );
         return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
       })
@@ -265,6 +350,10 @@ export const useTableManagement = (initialNodes: Node[]) => {
     // Attribute Editing
     onStartAttrEdit,
     onAttrEditNameChange,
+    onAttrEditDataTypeChange,
+    onAttrEditTypeChange,
+    onAttrEditRefTableChange,
+    onAttrEditRefAttrChange,
     onSaveAttrName,
     onCancelAttrEdit,
     onDeleteAttribute,

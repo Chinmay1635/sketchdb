@@ -16,9 +16,10 @@ export const LoadingDialog: React.FC<LoadingDialogProps> = ({
   return (
     <div
       className="
-        absolute top-[100px] left-1/2 -translate-x-1/2
+        absolute top-1/2 left-1/2 -translate-x-1/2
+        -translate-y-1/2
         z-[100] bg-white border-2 border-[#0074D9]
-        rounded-lg shadow-lg p-8 min-w-[300px]
+        rounded-lg shadow-lg p-8 min-w-[500px]
         text-center
       "
     >

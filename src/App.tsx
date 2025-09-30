@@ -80,6 +80,10 @@ export default function CanvasPlayground() {
     // Attribute editing
     onStartAttrEdit,
     onAttrEditNameChange,
+    onAttrEditDataTypeChange,
+    onAttrEditTypeChange,
+    onAttrEditRefTableChange,
+    onAttrEditRefAttrChange,
     onSaveAttrName,
     onCancelAttrEdit,
     onDeleteAttribute,
@@ -178,6 +182,10 @@ export default function CanvasPlayground() {
         onAddAttribute={addAttribute}
         onStartAttrEdit={onStartAttrEdit}
         onAttrEditNameChange={onAttrEditNameChange}
+        onAttrEditDataTypeChange={onAttrEditDataTypeChange}
+        onAttrEditTypeChange={onAttrEditTypeChange}
+        onAttrEditRefTableChange={onAttrEditRefTableChange}
+        onAttrEditRefAttrChange={onAttrEditRefAttrChange}
         onSaveAttrName={onSaveAttrName}
         onCancelAttrEdit={onCancelAttrEdit}
         onDeleteAttribute={onDeleteAttribute}

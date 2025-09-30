@@ -33,6 +33,10 @@ interface SidebarProps {
   // Attribute editing
   onStartAttrEdit?: (idx: number) => void;
   onAttrEditNameChange?: (idx: number, val: string) => void;
+  onAttrEditDataTypeChange?: (idx: number, val: DataType) => void;
+  onAttrEditTypeChange?: (idx: number, val: AttributeType) => void;
+  onAttrEditRefTableChange?: (idx: number, val: string) => void;
+  onAttrEditRefAttrChange?: (idx: number, val: string) => void;
   onSaveAttrName?: (idx: number) => void;
   onCancelAttrEdit?: (idx: number) => void;
   onDeleteAttribute?: (idx: number) => void;
@@ -61,6 +65,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onAddAttribute,
   onStartAttrEdit,
   onAttrEditNameChange,
+  onAttrEditDataTypeChange,
+  onAttrEditTypeChange,
+  onAttrEditRefTableChange,
+  onAttrEditRefAttrChange,
   onSaveAttrName,
   onCancelAttrEdit,
   onDeleteAttribute,
@@ -147,36 +155,121 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="flex items-center justify-between">
                       {/* Attribute Name */}
                       {attr.isEditing ? (
-                        <div className="flex flex-1 gap-2 items-center">
-                          <input
-                            value={attr.editName || ""}
-                            onChange={(e) =>
-                              onAttrEditNameChange?.(idx, e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") onSaveAttrName?.(idx);
-                              if (e.key === "Escape") onCancelAttrEdit?.(idx);
-                            }}
-                            className="flex-1 px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            title="Edit attribute name"
-                            aria-label="Edit attribute name"
-                            placeholder="Enter attribute name"
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => onSaveAttrName?.(idx)}
-                            className="bg-green-500 text-white px-2 py-1 rounded-md cursor-pointer"
-                            title="Save attribute name"
-                          >
-                            ✓
-                          </button>
-                          <button
-                            onClick={() => onCancelAttrEdit?.(idx)}
-                            className="bg-red-500 text-white px-2 py-1 rounded-md cursor-pointer"
-                            title="Cancel edit"
-                          >
-                            ✕
-                          </button>
+                        <div className="flex flex-col gap-3 flex-1">
+                          {/* Attribute Name Input */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Attribute Name
+                            </label>
+                            <input
+                              value={attr.editName || ""}
+                              onChange={(e) =>
+                                onAttrEditNameChange?.(idx, e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") onSaveAttrName?.(idx);
+                                if (e.key === "Escape") onCancelAttrEdit?.(idx);
+                              }}
+                              className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              title="Edit attribute name"
+                              aria-label="Edit attribute name"
+                              placeholder="Enter attribute name"
+                              autoFocus
+                            />
+                          </div>
+                          
+                          {/* Data Type Select */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Data Type
+                            </label>
+                            <select
+                              value={attr.editDataType || attr.dataType}
+                              onChange={(e) =>
+                                onAttrEditDataTypeChange?.(idx, e.target.value as DataType)
+                              }
+                              className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              title="Select data type"
+                            >
+                              {DATA_TYPES.map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          {/* Attribute Type Select */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Key Type
+                            </label>
+                            <select
+                              value={attr.editType || attr.type}
+                              onChange={(e) =>
+                                onAttrEditTypeChange?.(idx, e.target.value as AttributeType)
+                              }
+                              className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              title="Select key type"
+                            >
+                              <option value="normal">Normal</option>
+                              <option value="PK">Primary Key</option>
+                              <option value="FK">Foreign Key</option>
+                            </select>
+                          </div>
+                          
+                          {/* Foreign Key References */}
+                          {(attr.editType === "FK" || (attr.editType === undefined && attr.type === "FK")) && (
+                            <div className="space-y-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+                              <h6 className="text-xs font-medium text-blue-800">
+                                Foreign Key Reference
+                              </h6>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Reference Table
+                                </label>
+                                <input
+                                  value={attr.editRefTable || attr.refTable || ""}
+                                  onChange={(e) =>
+                                    onAttrEditRefTableChange?.(idx, e.target.value)
+                                  }
+                                  className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Enter reference table name"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Reference Attribute
+                                </label>
+                                <input
+                                  value={attr.editRefAttr || attr.refAttr || ""}
+                                  onChange={(e) =>
+                                    onAttrEditRefAttrChange?.(idx, e.target.value)
+                                  }
+                                  className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Enter reference attribute name"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Action Buttons */}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => onSaveAttrName?.(idx)}
+                              className="bg-green-500 text-white px-3 py-2 rounded-md cursor-pointer flex-1 hover:bg-green-600 transition-colors"
+                              title="Save changes"
+                            >
+                              ✓ Save
+                            </button>
+                            <button
+                              onClick={() => onCancelAttrEdit?.(idx)}
+                              className="bg-red-500 text-white px-3 py-2 rounded-md cursor-pointer flex-1 hover:bg-red-600 transition-colors"
+                              title="Cancel edit"
+                            >
+                              ✕ Cancel
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between flex-1">
@@ -192,7 +285,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                     {/* Actions */}
                     {!attr.isEditing && (
-                      <div className="w-full mt-5 flex items-center justify-between gap-3">
+                      <div className="w-full mt-3 flex items-center justify-between gap-3">
                         <button
                           onClick={() => onStartAttrEdit?.(idx)}
                           className="text-blue-500 hover:text-blue-700 text-sm px-3 py-2 border border-blue-500 rounded-md cursor-pointer"

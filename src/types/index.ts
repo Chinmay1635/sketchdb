@@ -6,6 +6,10 @@ export interface TableAttribute {
   refAttr?: string;
   isEditing?: boolean;
   editName?: string;
+  editDataType?: DataType;
+  editType?: AttributeType;
+  editRefTable?: string;
+  editRefAttr?: string;
 }
 
 export interface TableData {
