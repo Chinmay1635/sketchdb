@@ -28,6 +28,8 @@ export const SQLDialog: React.FC<SQLDialogProps> = ({
       <textarea
         value={sqlText}
         readOnly
+        aria-label="Generated SQL code"
+        title="Generated SQL code for the database schema"
         className="
           w-full h-[200px] font-mono text-sm
           border border-gray-300 rounded-md

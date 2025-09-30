@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { Node, useNodesState } from '@xyflow/react';
-import { TableAttribute, AttributeType, DataType } from '../types';
+import { TableAttribute, AttributeType, DataType, TableData } from '../types';
+
+type TableNode = Node<TableData>;
 
 export const useTableManagement = (initialNodes: Node[]) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -120,10 +122,11 @@ export const useTableManagement = (initialNodes: Node[]) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id !== selectedTableId) return node;
-        const updatedAttrs = node.data.attributes.map((attr, i) =>
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
           i === idx ? { ...attr, isEditing: true, editName: attr.name } : attr
         );
-        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
       })
     );
   }, [selectedTableId, setNodes]);
@@ -133,10 +136,11 @@ export const useTableManagement = (initialNodes: Node[]) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id !== selectedTableId) return node;
-        const updatedAttrs = node.data.attributes.map((attr, i) =>
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
           i === idx ? { ...attr, editName: value } : attr
         );
-        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
       })
     );
   }, [selectedTableId, setNodes]);
@@ -146,10 +150,11 @@ export const useTableManagement = (initialNodes: Node[]) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id !== selectedTableId) return node;
-        const updatedAttrs = node.data.attributes.map((attr, i) =>
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
           i === idx ? { ...attr, name: attr.editName || attr.name, isEditing: false, editName: "" } : attr
         );
-        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
       })
     );
   }, [selectedTableId, setNodes]);
@@ -159,10 +164,11 @@ export const useTableManagement = (initialNodes: Node[]) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id !== selectedTableId) return node;
-        const updatedAttrs = node.data.attributes.map((attr, i) =>
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
           i === idx ? { ...attr, isEditing: false, editName: "" } : attr
         );
-        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
       })
     );
   }, [selectedTableId, setNodes]);
@@ -172,8 +178,9 @@ export const useTableManagement = (initialNodes: Node[]) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id !== selectedTableId) return node;
-        const updatedAttrs = node.data.attributes.filter((_, i) => i !== idx);
-        return { ...node, data: { ...node.data, attributes: updatedAttrs } };
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.filter((_: TableAttribute, i: number) => i !== idx);
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
       })
     );
   }, [selectedTableId, setNodes]);

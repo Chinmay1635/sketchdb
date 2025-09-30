@@ -4,6 +4,7 @@ import { TableAttribute, AttributeType, DataType, DATA_TYPES } from "../types";
 
 interface TableNodeData {
   label: string;
+  [key: string]: unknown;
 }
 type TableNode = Node<TableNodeData>;
 
@@ -115,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={onStartEditTableName}
                 title="Click to edit table name"
               >
-                {selectedTable?.data?.label || `Table ${selectedTable?.id}`}
+                {(selectedTable?.data as any)?.label || `Table ${selectedTable?.id}`}
               </h4>
             )}
 
@@ -157,6 +158,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               if (e.key === "Escape") onCancelAttrEdit?.(idx);
                             }}
                             className="flex-1 px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            title="Edit attribute name"
+                            aria-label="Edit attribute name"
+                            placeholder="Enter attribute name"
                             autoFocus
                           />
                           <button
@@ -264,6 +268,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onAttrDataTypeChange?.(e.target.value as DataType)
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title="Select data type for the attribute"
+                aria-label="Data type selection"
               >
                 {DATA_TYPES.map((type) => (
                   <option key={type} value={type}>
@@ -283,6 +289,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onAttrTypeChange?.(e.target.value as AttributeType)
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title="Select attribute type (normal, primary key, or foreign key)"
+                aria-label="Attribute type selection"
               >
                 <option value="normal">Normal</option>
                 <option value="PK">Primary Key</option>

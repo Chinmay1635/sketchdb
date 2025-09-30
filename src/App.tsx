@@ -181,8 +181,6 @@ export default function CanvasPlayground() {
         onSaveAttrName={onSaveAttrName}
         onCancelAttrEdit={onCancelAttrEdit}
         onDeleteAttribute={onDeleteAttribute}
-        // Pass this if the sidebar uses connections
-        updateNodeAttributes={updateNodeAttributes}
       />
 
       {/* Main Canvas Area */}

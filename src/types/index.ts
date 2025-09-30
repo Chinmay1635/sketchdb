@@ -4,11 +4,14 @@ export interface TableAttribute {
   dataType: string;
   refTable?: string;
   refAttr?: string;
+  isEditing?: boolean;
+  editName?: string;
 }
 
 export interface TableData {
   label: string;
   attributes: TableAttribute[];
+  [key: string]: unknown;
 }
 
 export interface TableNodeData extends TableData {
