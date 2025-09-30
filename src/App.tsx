@@ -109,20 +109,15 @@ export default function CanvasPlayground() {
 
   // SQL Export with loading animation
   const exportToSQL = useCallback(() => {
-    // Show loading dialog
     setLoadingDialogOpen(true);
-    
-    // Generate SQL immediately but show it after 2 seconds
     const sql = generateSQL(nodes);
     
-    // Store timeout ID for cancellation
     const timeoutId = setTimeout(() => {
       setLoadingDialogOpen(false);
       setSqlText(sql);
       setSqlDialogOpen(true);
     }, 2000);
 
-    // Store timeout ID in state for potential cancellation
     return timeoutId;
   }, [nodes]);
 
@@ -145,7 +140,7 @@ export default function CanvasPlayground() {
   }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
+    <div className="w-screen h-screen flex">
       {/* Sidebar */}
       <Sidebar
         selectedTable={selectedTable}
@@ -171,7 +166,7 @@ export default function CanvasPlayground() {
       />
 
       {/* Main Canvas Area */}
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div className="flex-1 relative">
         {/* Toolbar */}
         <Toolbar onAddTable={addTable} onExportSQL={exportToSQL} />
         

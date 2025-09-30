@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface ToolbarProps {
   onAddTable: () => void;
@@ -7,33 +7,19 @@ interface ToolbarProps {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ onAddTable, onExportSQL }) => {
   return (
-    <>
-      <button 
-        onClick={onAddTable} 
-        style={{ 
-          position: 'absolute', 
-          zIndex: 10, 
-          width: '250px', 
-          height: '75px', 
-          backgroundColor: 'yellow' 
-        }}
+    <div className="absolute top-4 left-4 flex space-x-4 z-10">
+      <button
+        onClick={onAddTable}
+        className="cursor-pointer w-[250px] h-[75px] bg-yellow-400 hover:bg-yellow-500 rounded-md font-bold"
       >
         Add Table
       </button>
-      <button 
-        onClick={onExportSQL} 
-        style={{ 
-          position: 'absolute', 
-          left: 270, 
-          zIndex: 10, 
-          width: '250px', 
-          height: '75px', 
-          backgroundColor: '#0074D9', 
-          color: 'white' 
-        }}
+      <button
+        onClick={onExportSQL}
+        className="cursor-pointer w-[250px] h-[75px] bg-[#0074D9] hover:bg-blue-600 text-white rounded-md font-bold"
       >
         Export to SQL
       </button>
-    </>
+    </div>
   );
 };

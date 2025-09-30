@@ -7,62 +7,50 @@ interface SQLDialogProps {
   onCopy: () => void;
 }
 
-export const SQLDialog: React.FC<SQLDialogProps> = ({ 
-  isOpen, 
-  sqlText, 
-  onClose, 
-  onCopy 
+export const SQLDialog: React.FC<SQLDialogProps> = ({
+  isOpen,
+  sqlText,
+  onClose,
+  onCopy,
 }) => {
   if (!isOpen) return null;
 
   return (
-    <div style={{ 
-      position: 'absolute', 
-      top: 100, 
-      left: '50%', 
-      transform: 'translateX(-50%)', 
-      zIndex: 100, 
-      background: 'white', 
-      border: '2px solid #0074D9', 
-      borderRadius: 8, 
-      boxShadow: '0 2px 16px rgba(0,0,0,0.15)', 
-      padding: 24, 
-      minWidth: 400 
-    }}>
-      <h2 style={{ marginTop: 0 }}>Exported SQL</h2>
+    <div
+      className="
+        absolute top-[100px] left-1/2 -translate-x-1/2
+        z-[100] bg-white border-2 border-[#0074D9]
+        rounded-lg shadow-lg p-6 min-w-[400px]
+      "
+    >
+      <h2 className="mt-0 text-lg font-semibold">Exported SQL</h2>
+
       <textarea
         value={sqlText}
         readOnly
-        style={{ 
-          width: '100%', 
-          height: 200, 
-          fontFamily: 'monospace', 
-          fontSize: 14, 
-          marginBottom: 16 
-        }}
+        className="
+          w-full h-[200px] font-mono text-sm
+          border border-gray-300 rounded-md
+          p-2 mb-4 resize-none
+        "
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <button 
-          onClick={onCopy} 
-          style={{ 
-            background: '#0074D9', 
-            color: 'white', 
-            padding: '8px 16px', 
-            borderRadius: 4, 
-            border: 'none' 
-          }}
+
+      <div className="flex justify-between">
+        <button
+          onClick={onCopy}
+          className="cursor-pointer
+            bg-[#0074D9] text-white px-4 py-2
+            rounded-md hover:bg-blue-600
+          "
         >
           Copy
         </button>
-        <button 
-          onClick={onClose} 
-          style={{ 
-            background: '#aaa', 
-            color: 'white', 
-            padding: '8px 16px', 
-            borderRadius: 4, 
-            border: 'none' 
-          }}
+        <button
+          onClick={onClose}
+          className="cursor-pointer
+            bg-gray-400 text-white px-4 py-2
+            rounded-md hover:bg-gray-500
+          "
         >
           Close
         </button>

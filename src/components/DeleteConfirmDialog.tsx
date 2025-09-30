@@ -18,49 +18,32 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const tableName = typeof selectedTable?.data.label === 'string' 
-    ? selectedTable.data.label 
-    : `Table ${selectedTableId}`;
+  const tableName =
+    typeof selectedTable?.data.label === 'string'
+      ? selectedTable.data.label
+      : `Table ${selectedTableId}`;
 
   return (
-    <div style={{ 
-      position: 'absolute', 
-      top: 150, 
-      left: '50%', 
-      transform: 'translateX(-50%)', 
-      zIndex: 100, 
-      background: 'white', 
-      border: '2px solid #ff4444', 
-      borderRadius: 8, 
-      boxShadow: '0 2px 16px rgba(0,0,0,0.15)', 
-      padding: 24, 
-      minWidth: 300 
-    }}>
-      <h3 style={{ marginTop: 0, color: '#ff4444' }}>Delete Table</h3>
+    <div
+      className="
+        absolute top-[150px] left-1/2 -translate-x-1/2 
+        z-[100] bg-white border-2 border-red-500 
+        rounded-lg shadow-lg p-6 min-w-[300px]
+      "
+    >
+      <h3 className="mt-0 text-red-500 font-semibold text-lg">Delete Table</h3>
       <p>Are you sure you want to delete "{tableName}"?</p>
-      <p style={{ fontSize: 14, color: '#666' }}>This action cannot be undone.</p>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <button 
-          onClick={onConfirm} 
-          style={{ 
-            background: '#ff4444', 
-            color: 'white', 
-            padding: '8px 16px', 
-            borderRadius: 4, 
-            border: 'none' 
-          }}
+      <p className="text-sm text-gray-600">This action cannot be undone.</p>
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={onConfirm}
+          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
         >
           Delete
         </button>
-        <button 
-          onClick={onCancel} 
-          style={{ 
-            background: '#aaa', 
-            color: 'white', 
-            padding: '8px 16px', 
-            borderRadius: 4, 
-            border: 'none' 
-          }}
+        <button
+          onClick={onCancel}
+          className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500"
         >
           Cancel
         </button>

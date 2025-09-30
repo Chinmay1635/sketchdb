@@ -6,90 +6,56 @@ interface LoadingDialogProps {
   onCancel?: () => void;
 }
 
-export const LoadingDialog: React.FC<LoadingDialogProps> = ({ 
-  isOpen, 
+export const LoadingDialog: React.FC<LoadingDialogProps> = ({
+  isOpen,
   message = "Parsing to SQL...",
-  onCancel
+  onCancel,
 }) => {
   if (!isOpen) return null;
 
   return (
-    <div style={{ 
-      position: 'absolute', 
-      top: 100, 
-      left: '50%', 
-      transform: 'translateX(-50%)', 
-      zIndex: 100, 
-      background: 'white', 
-      border: '2px solid #0074D9', 
-      borderRadius: 8, 
-      boxShadow: '0 2px 16px rgba(0,0,0,0.15)', 
-      padding: 32, 
-      minWidth: 300,
-      textAlign: 'center'
-    }}>
+    <div
+      className="
+        absolute top-[100px] left-1/2 -translate-x-1/2
+        z-[100] bg-white border-2 border-[#0074D9]
+        rounded-lg shadow-lg p-8 min-w-[300px]
+        text-center
+      "
+    >
       {/* Loading Spinner */}
-      <div style={{
-        width: 40,
-        height: 40,
-        border: '4px solid #f3f3f3',
-        borderTop: '4px solid #0074D9',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite',
-        margin: '0 auto 20px auto'
-      }}></div>
-      
+      <div
+        className="
+          w-10 h-10 border-4 border-gray-200 
+          border-t-[#0074D9] rounded-full 
+          animate-spin mx-auto mb-5
+        "
+      ></div>
+
       {/* Loading Message */}
-      <h3 style={{ 
-        color: '#0074D9', 
-        marginTop: 0, 
-        marginBottom: 10,
-        fontSize: 18,
-        fontWeight: 'bold'
-      }}>
+      <h3 className="text-[#0074D9] mt-0 mb-2 text-lg font-bold">
         {message}
       </h3>
-      
-      <p style={{ 
-        color: '#666', 
-        margin: 0,
-        fontSize: 14,
-        marginBottom: onCancel ? 20 : 0
-      }}>
+
+      <p
+        className={`
+          text-gray-600 text-sm mb-${onCancel ? "5" : "0"}
+        `}
+      >
         Please wait while we generate your SQL schema...
       </p>
-      
+
       {/* Cancel Button */}
       {onCancel && (
-        <button 
+        <button
           onClick={onCancel}
-          style={{
-            background: '#aaa',
-            color: 'white',
-            border: 'none',
-            borderRadius: 4,
-            padding: '8px 16px',
-            cursor: 'pointer',
-            fontSize: 14
-          }}
+          className="cursor-pointer
+            bg-gray-400 text-white px-4 py-2 
+            rounded-md text-sm hover:bg-gray-500
+          "
         >
           Cancel
         </button>
       )}
-      
-      {/* CSS Animation */}
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes pulse {
-          0% { opacity: 1; }
-          50% { opacity: 0.5; }
-          100% { opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 };

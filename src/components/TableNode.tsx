@@ -1,6 +1,6 @@
-import React from 'react';
-import { Handle, Position } from '@xyflow/react';
-import { TableAttribute } from '../types';
+import React from "react";
+import { Handle, Position } from "@xyflow/react";
+import { TableAttribute } from "../types";
 
 interface TableNodeProps {
   data: {
@@ -12,84 +12,61 @@ interface TableNodeProps {
 
 export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
   const attributes = Array.isArray(data.attributes) ? data.attributes : [];
-  
+
   return (
-    <div style={{
-      background: 'white',
-      border: '2px solid #0074D9',
-      borderRadius: 8,
-      minWidth: 200,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      position: 'relative'
-    }}>
+    <div className="bg-white border-2 border-[#0074D9] rounded-lg min-w-[200px] shadow-md relative">
       {/* Table Header */}
-      <div style={{
-        background: '#0074D9',
-        color: 'white',
-        padding: '8px 12px',
-        borderRadius: '6px 6px 0 0',
-        fontWeight: 'bold',
-        textAlign: 'center'
-      }}>
-        {typeof data.label === 'string' ? data.label : `Table ${id}`}
+      <div className="bg-[#0074D9] text-white px-3 py-2 rounded-t-lg font-bold text-center">
+        {typeof data.label === "string" ? data.label : `Table ${id}`}
       </div>
-      
+
       {/* Attributes List */}
-      <div style={{ padding: '8px 0' }}>
+      <div className="py-2">
         {attributes.length > 0 ? (
           attributes.map((attr, idx) => (
-            <div key={idx} style={{
-              padding: '4px 12px',
-              borderBottom: idx < attributes.length - 1 ? '1px solid #eee' : 'none',
-              fontSize: 12,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              position: 'relative',
-              minHeight: 24
-            }}>
-              {/* Left handle for incoming connections */}
+            <div
+              key={idx}
+              className={`px-3 py-1 text-xs flex justify-between items-center relative min-h-[24px] ${
+                idx < attributes.length - 1 ? "border-b border-gray-200" : ""
+              }`}
+            >
+              {/* Left handle (incoming connections) */}
               <Handle
                 type="target"
                 position={Position.Left}
                 id={`${id}-${attr.name}-target`}
-                style={{
-                  background: attr.type === 'FK' ? '#FF6B6B' : '#0074D9',
-                  width: 8,
-                  height: 8,
-                  left: -4,
-                  top: '50%',
-                  transform: 'translateY(-50%)'
-                }}
+                className={`!w-2 !h-2 !bg-${
+                  attr.type === "FK" ? "[#FF6B6B]" : "[#0074D9]"
+                } absolute left-[-4px] top-1/2 -translate-y-1/2 rounded-full`}
               />
-              
-              {/* Right handle for outgoing connections */}
+
+              {/* Right handle (outgoing connections) */}
               <Handle
                 type="source"
                 position={Position.Right}
                 id={`${id}-${attr.name}-source`}
-                style={{
-                  background: attr.type === 'PK' ? '#FFD700' : '#0074D9',
-                  width: 8,
-                  height: 8,
-                  right: -4,
-                  top: '50%',
-                  transform: 'translateY(-50%)'
-                }}
+                className={`!w-2 !h-2 !bg-${
+                  attr.type === "PK" ? "[#FFD700]" : "[#0074D9]"
+                } absolute right-[-4px] top-1/2 -translate-y-1/2 rounded-full`}
               />
-              
-              <span style={{ fontWeight: attr.type === 'PK' ? 'bold' : 'normal' }}>
+
+              <span className={attr.type === "PK" ? "font-bold" : ""}>
                 {attr.name}
-                {attr.type === 'PK' && <span style={{ color: '#FFD700', marginLeft: 4 }}>🔑</span>}
-                {attr.type === 'FK' && <span style={{ color: '#FF6B6B', marginLeft: 4 }}>🔗</span>}
+                {attr.type === "PK" && (
+                  <span className="text-[#FFD700] ml-1">🔑</span>
+                )}
+                {attr.type === "FK" && (
+                  <span className="text-[#FF6B6B] ml-1">🔗</span>
+                )}
               </span>
-              <span style={{ color: '#666', fontSize: 10 }}>
-                {attr.dataType || 'VARCHAR(255)'}
+
+              <span className="text-gray-500 text-[10px]">
+                {attr.dataType || "VARCHAR(255)"}
               </span>
             </div>
           ))
         ) : (
-          <div style={{ padding: '8px 12px', fontSize: 12, color: '#999', fontStyle: 'italic' }}>
+          <div className="px-3 py-2 text-xs text-gray-400 italic">
             No attributes
           </div>
         )}
