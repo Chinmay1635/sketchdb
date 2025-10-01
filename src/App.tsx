@@ -96,7 +96,14 @@ export default function CanvasPlayground() {
     setAttrDataType,
     setRefTable,
     setRefAttr,
-  } = useTableManagement(initialNodes);
+    
+    // FK Helper functions
+    getAvailableTables,
+    getAttributesForTable,
+    validateFKReference,
+    createFKEdge,
+    removeFKEdge,
+  } = useTableManagement(initialNodes, setEdges);
 
   // Connection handling
   const onConnect = useCallback(
@@ -189,6 +196,9 @@ export default function CanvasPlayground() {
         onSaveAttrName={onSaveAttrName}
         onCancelAttrEdit={onCancelAttrEdit}
         onDeleteAttribute={onDeleteAttribute}
+        getAvailableTables={getAvailableTables}
+        getAttributesForTable={getAttributesForTable}
+        validateFKReference={validateFKReference}
       />
 
       {/* Main Canvas Area */}
