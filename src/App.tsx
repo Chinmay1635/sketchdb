@@ -18,6 +18,7 @@ import {
   TableNode,
   Sidebar,
   SQLDialog,
+  ImportDialog,
   DeleteConfirmDialog,
   Toolbar,
   LoadingDialog,
@@ -33,6 +34,8 @@ import {
   isValidConnection,
 } from "./utils/connectionUtils";
 import { generateSQL, copyToClipboard } from "./utils/sqlGenerator";
+import { parseSQLSchema } from "./utils/sqlParser";
+import { createEdgesFromNodes } from "./utils/edgeGenerator";
 
 // Types
 import { AttributeType, DataType } from "./types";
@@ -50,6 +53,7 @@ export default function CanvasPlayground() {
 
   // Dialog states
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [loadingDialogOpen, setLoadingDialogOpen] = useState(false);
   const [sqlText, setSqlText] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -103,7 +107,37 @@ export default function CanvasPlayground() {
     validateFKReference,
     createFKEdge,
     removeFKEdge,
+    importNodes,
   } = useTableManagement(initialNodes, setEdges);
+
+  // Import schema functionality
+  const importSchema = useCallback((sqlText: string) => {
+    try {
+      // Parse SQL to nodes
+      const parsedNodes = parseSQLSchema(sqlText);
+      
+      // Generate edges from foreign key relationships
+      const generatedEdges = createEdgesFromNodes(parsedNodes);
+      
+      // Replace all nodes and edges with imported ones
+      importNodes(parsedNodes);
+      setEdges(generatedEdges);
+      
+      console.log('Schema imported successfully:', { parsedNodes, generatedEdges });
+    } catch (error) {
+      console.error('Failed to import schema:', error);
+      throw new Error('Failed to parse SQL schema. Please check your SQL syntax.');
+    }
+  }, [importNodes, setEdges]);
+
+  // Import dialog handlers
+  const handleImportSchema = useCallback(() => {
+    setImportDialogOpen(true);
+  }, []);
+
+  const handleImportClose = useCallback(() => {
+    setImportDialogOpen(false);
+  }, []);
 
   // Connection handling
   const onConnect = useCallback(
@@ -204,13 +238,24 @@ export default function CanvasPlayground() {
       {/* Main Canvas Area */}
       <div className="flex-1 relative">
         {/* Toolbar */}
-        <Toolbar onAddTable={addTable} onExportSQL={exportToSQL} />
+        <Toolbar 
+          onAddTable={addTable} 
+          onExportSQL={exportToSQL}
+          onImportSchema={handleImportSchema}
+        />
 
         {/* Loading Dialog */}
         <LoadingDialog
           isOpen={loadingDialogOpen}
           message="Parsing to SQL..."
           onCancel={handleCancelLoading}
+        />
+
+        {/* Import Dialog */}
+        <ImportDialog
+          isOpen={importDialogOpen}
+          onClose={handleImportClose}
+          onImport={importSchema}
         />
 
         {/* SQL Dialog */}

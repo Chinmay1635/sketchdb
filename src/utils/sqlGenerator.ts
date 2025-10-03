@@ -18,10 +18,29 @@ export const generateSQL = (nodes: Node[]): string => {
     const columnDefinitions = attrs.map((attr: TableAttribute) => {
       let line = `  ${attr.name} ${sqlType(attr)}`;
       
+      // Add IDENTITY for auto-increment
+      if (attr.isAutoIncrement) {
+        line += ' IDENTITY(1,1)';
+      }
+      
+      // Add NOT NULL constraint
+      if (attr.isNotNull || attr.type === 'PK') {
+        line += ' NOT NULL';
+      }
+      
+      // Add UNIQUE constraint
+      if (attr.isUnique && attr.type !== 'PK') {
+        line += ' UNIQUE';
+      }
+      
+      // Add DEFAULT value
+      if (attr.defaultValue) {
+        line += ` DEFAULT ${attr.defaultValue}`;
+      }
+      
+      // Add PRIMARY KEY constraint
       if (attr.type === 'PK') {
         line += ' PRIMARY KEY';
-      } else if (attr.type === 'FK') {
-        line += ' NOT NULL';
       }
       
       return line;

@@ -10,6 +10,11 @@ export interface TableAttribute {
   editType?: AttributeType;
   editRefTable?: string;
   editRefAttr?: string;
+  // Additional SQL constraints
+  isNotNull?: boolean;
+  isUnique?: boolean;
+  defaultValue?: string;
+  isAutoIncrement?: boolean;
 }
 
 export interface TableData {

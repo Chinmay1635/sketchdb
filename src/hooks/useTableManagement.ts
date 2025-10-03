@@ -143,6 +143,11 @@ export const useTableManagement = (
     return `${tableId}-${attrName}`;
   }, []);
 
+  const importNodes = useCallback((newNodes: Node[]) => {
+    setNodes(newNodes);
+    setSelectedTableId(null);
+  }, [setNodes, setSelectedTableId]);
+
   // Add Table
   const addTable = useCallback(() => {
     setNodes((nds) => [
@@ -601,5 +606,6 @@ export const useTableManagement = (
     createFKEdge,
     removeFKEdge,
     removeEdgesByAttribute,
+    importNodes,
   };
 };
