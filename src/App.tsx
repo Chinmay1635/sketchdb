@@ -36,6 +36,7 @@ import {
 import { generateSQL, copyToClipboard } from "./utils/sqlGenerator";
 import { parseSQLSchema } from "./utils/sqlParser";
 import { createEdgesFromNodes } from "./utils/edgeGenerator";
+import { exportCanvasAsPNG, exportCanvasAsPDF } from "./utils/canvasExport";
 
 // Types
 import { AttributeType, DataType } from "./types";
@@ -137,6 +138,31 @@ export default function CanvasPlayground() {
 
   const handleImportClose = useCallback(() => {
     setImportDialogOpen(false);
+  }, []);
+
+  // Canvas export handlers
+  const handleExportPNG = useCallback(async () => {
+    try {
+      setLoadingDialogOpen(true);
+      await exportCanvasAsPNG();
+    } catch (error) {
+      console.error('Export PNG failed:', error);
+      // You could show an error dialog here
+    } finally {
+      setLoadingDialogOpen(false);
+    }
+  }, []);
+
+  const handleExportPDF = useCallback(async () => {
+    try {
+      setLoadingDialogOpen(true);
+      await exportCanvasAsPDF();
+    } catch (error) {
+      console.error('Export PDF failed:', error);
+      // You could show an error dialog here
+    } finally {
+      setLoadingDialogOpen(false);
+    }
   }, []);
 
   // Connection handling
@@ -242,6 +268,8 @@ export default function CanvasPlayground() {
           onAddTable={addTable} 
           onExportSQL={exportToSQL}
           onImportSchema={handleImportSchema}
+          onExportPNG={handleExportPNG}
+          onExportPDF={handleExportPDF}
         />
 
         {/* Loading Dialog */}

@@ -15,6 +15,9 @@
     "@emotion/styled": "^11.11.0",
     "@xyflow/react": "^12.8.4",
     "framer-motion": "^11.0.23",
+    "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
     "node-sql-parser": "^5.3.12",
     "react": "^18.2.0",
     "react-bootstrap-icons": "^1.11.3",
@@ -23,6 +26,7 @@
     "reactflow": "^11.10.4"
   },
   "devDependencies": {
+    "@types/html2canvas": "^0.5.35",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",

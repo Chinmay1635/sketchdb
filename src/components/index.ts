@@ -5,3 +5,4 @@ export { ImportDialog } from './ImportDialog';
 export { DeleteConfirmDialog } from './DeleteConfirmDialog';
 export { Toolbar } from './Toolbar';
 export { LoadingDialog } from './LoadingDialog';
+export { ExportDialog } from './ExportDialog';
