@@ -29,6 +29,7 @@ export const parseConnectionHandles = (
 export const createStyledEdge = (params: Edge | Connection): Partial<Edge> => {
   return {
     ...params,
+    type: 'customEdge',
     style: {
       stroke: '#0074D9',
       strokeWidth: 2,

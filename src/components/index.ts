@@ -6,3 +6,4 @@ export { DeleteConfirmDialog } from './DeleteConfirmDialog';
 export { Toolbar } from './Toolbar';
 export { LoadingDialog } from './LoadingDialog';
 export { ExportDialog } from './ExportDialog';
+export { default as CustomEdge } from './CustomEdge';

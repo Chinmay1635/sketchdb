@@ -10,6 +10,7 @@ import {
   Edge,
   Node,
   NodeTypes,
+  EdgeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -22,6 +23,7 @@ import {
   DeleteConfirmDialog,
   Toolbar,
   LoadingDialog,
+  CustomEdge,
 } from "./components";
 
 // Hooks
@@ -44,6 +46,11 @@ import { AttributeType, DataType } from "./types";
 // Node types configuration
 const nodeTypes: NodeTypes = {
   tableNode: TableNode,
+};
+
+// Edge types configuration
+const edgeTypes: EdgeTypes = {
+  customEdge: CustomEdge,
 };
 
 const initialNodes: Node[] = [];
@@ -308,6 +315,7 @@ export default function CanvasPlayground() {
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -316,7 +324,8 @@ export default function CanvasPlayground() {
           fitView
           connectionLineStyle={{ stroke: "#0074D9", strokeWidth: 3 }}
           defaultEdgeOptions={{
-            style: { stroke: "#0074D9", strokeWidth: 3 },
+            type: "customEdge",
+            style: { stroke: "#0074D9", strokeWidth: 2 },
             markerEnd: { type: "arrowclosed", color: "#0074D9" },
             labelBgStyle: { fill: "#ffffff", fillOpacity: 0.8 },
             labelStyle: { fill: "#0074D9", fontWeight: "bold" },
