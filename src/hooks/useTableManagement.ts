@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Node, useNodesState, Edge } from '@xyflow/react';
 import { TableAttribute, AttributeType, DataType, TableData } from '../types';
 import { getRandomTableColor } from '../utils/colorUtils';
+import { useErrorHandler } from '../utils/errorHandler';
 
 type TableNode = Node<TableData>;
 
@@ -22,6 +23,9 @@ export const useTableManagement = (
   const [attrDataType, setAttrDataType] = useState<DataType>("VARCHAR(255)");
   const [refTable, setRefTable] = useState("");
   const [refAttr, setRefAttr] = useState("");
+  
+  // Error handling
+  const { showError } = useErrorHandler();
   
   const selectedTable = nodes.find((n) => n.id === selectedTableId);
   const attributes = Array.isArray(selectedTable?.data?.attributes) ? selectedTable.data.attributes : [];
@@ -137,6 +141,56 @@ export const useTableManagement = (
       })
     );
   }, [setEdges]);
+
+  // Helper function to clean up foreign key references when a referenced attribute is deleted
+  const cleanupForeignKeyReferences = useCallback((tableId: string, attrName: string) => {
+    if (!setNodes || !setEdges) return;
+    
+    // Find the table name for the tableId
+    const sourceNode = nodes.find(n => n.id === tableId);
+    if (!sourceNode) return;
+    
+    const sourceTableName = typeof sourceNode.data?.label === 'string' 
+      ? sourceNode.data.label.replace(/\s+/g, '_')
+      : `Table_${tableId}`;
+    
+    console.log(`Cleaning up FK references to ${sourceTableName}.${attrName}`);
+    
+    // Update all nodes to remove foreign key references to the deleted attribute
+    setNodes((nds) =>
+      nds.map((node) => {
+        const nodeData = node.data as TableData;
+        const hasChanges = nodeData.attributes.some((attr: TableAttribute) => 
+          attr.type === 'FK' && 
+          attr.refTable === sourceTableName && 
+          attr.refAttr === attrName
+        );
+        
+        if (!hasChanges) return node;
+        
+        console.log(`Removing FK references in table ${node.id}`);
+        
+        // Remove FK references and convert back to normal attributes
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute) => {
+          if (attr.type === 'FK' && attr.refTable === sourceTableName && attr.refAttr === attrName) {
+            console.log(`Converting FK ${attr.name} back to normal attribute`);
+            return {
+              ...attr,
+              type: 'normal' as const,
+              refTable: undefined,
+              refAttr: undefined,
+            };
+          }
+          return attr;
+        });
+        
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+    
+    // Remove related edges
+    removeEdgesByAttribute(tableId, attrName);
+  }, [setNodes, setEdges, nodes, removeEdgesByAttribute]);
 
   const findFKEdgeByAttribute = useCallback((tableId: string, attrName: string) => {
     // This would need to be called with current edges from the parent component
@@ -516,22 +570,45 @@ export const useTableManagement = (
   const onDeleteAttribute = useCallback((idx: number) => {
     if (!selectedTableId) return;
     
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id !== selectedTableId) return node;
-        const nodeData = node.data as TableData;
-        const attrToDelete = nodeData.attributes[idx];
-        
-        // Remove any edges involving this attribute
-        if (setEdges) {
-          removeEdgesByAttribute(selectedTableId, attrToDelete.name);
-        }
-        
-        const updatedAttrs = nodeData.attributes.filter((_: TableAttribute, i: number) => i !== idx);
-        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
-      })
-    );
-  }, [selectedTableId, setNodes, setEdges, removeEdgesByAttribute]);
+    try {
+      console.log(`Deleting attribute at index: ${idx} from table: ${selectedTableId}`);
+      
+      // First, get the attribute that will be deleted to clean up references
+      const nodeToUpdate = nodes.find(n => n.id === selectedTableId);
+      if (!nodeToUpdate) return;
+      
+      const nodeData = nodeToUpdate.data as TableData;
+      const attrToDelete = nodeData.attributes[idx];
+      
+      if (!attrToDelete) return;
+      
+      console.log(`Deleting attribute: ${attrToDelete.name}`);
+      
+      // Clean up any foreign key references to this attribute in other tables
+      cleanupForeignKeyReferences(selectedTableId, attrToDelete.name);
+      
+      // Then remove the attribute from its own table
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id !== selectedTableId) return node;
+          
+          const nodeData = node.data as TableData;
+          const updatedAttrs = nodeData.attributes.filter((_: TableAttribute, i: number) => i !== idx);
+          
+          console.log(`Removed attribute ${attrToDelete.name}, remaining attributes:`, updatedAttrs.map(a => a.name));
+          
+          return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+        })
+      );
+      
+      // Remove any remaining edges involving this attribute
+      removeEdgesByAttribute(selectedTableId, attrToDelete.name);
+      
+    } catch (error) {
+      console.error('Error deleting attribute:', error);
+      showError(error, 'validation');
+    }
+  }, [selectedTableId, setNodes, setEdges, removeEdgesByAttribute, cleanupForeignKeyReferences, nodes, showError]);
 
   // Connection handling
   const updateNodeAttributes = useCallback((connectionInfo: any) => {
