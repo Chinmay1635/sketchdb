@@ -4,27 +4,32 @@ interface ImportDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (sqlText: string) => void;
+  onError: (error: any) => void;
 }
 
 export const ImportDialog: React.FC<ImportDialogProps> = ({
   isOpen,
   onClose,
   onImport,
+  onError,
 }) => {
   const [sqlText, setSqlText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleImport = async () => {
-    if (!sqlText.trim()) return;
+    if (!sqlText.trim()) {
+      onError(new Error('Please enter some SQL code to import'));
+      return;
+    }
     
     setIsLoading(true);
     try {
-      onImport(sqlText);
+      await onImport(sqlText);
       setSqlText('');
       onClose();
     } catch (error) {
       console.error('Import failed:', error);
-      alert('Failed to import schema. Please check your SQL syntax.');
+      onError(error);
     } finally {
       setIsLoading(false);
     }

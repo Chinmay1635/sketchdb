@@ -183,13 +183,25 @@ export const useTableManagement = (
 
   // Add Attribute
   const addAttribute = useCallback(() => {
-    if (!selectedTableId || !attrName) return;
+    if (!selectedTableId || !attrName) {
+      throw new Error('Please select a table and provide an attribute name');
+    }
+    
+    // Validate attribute name
+    if (attrName.trim().length === 0) {
+      throw new Error('Attribute name cannot be empty');
+    }
+    
+    // Check for duplicate attribute names
+    const existingAttr = attributes.find(attr => attr.name.toLowerCase() === attrName.toLowerCase());
+    if (existingAttr) {
+      throw new Error(`An attribute named '${attrName}' already exists in this table`);
+    }
     
     // Validate FK reference if adding FK attribute
     if (attrType === 'FK') {
       if (!refTable || !refAttr) {
-        console.warn('Foreign key reference is incomplete');
-        return; // Don't add if FK reference is incomplete
+        throw new Error('Foreign key reference is incomplete. Please select both reference table and attribute.');
       }
       
       // Find the referenced table by label
@@ -198,8 +210,7 @@ export const useTableManagement = (
       );
       
       if (!refTableNode) {
-        console.warn(`Referenced table "${refTable}" not found`);
-        return; // Don't add if referenced table doesn't exist
+        throw new Error(`Referenced table "${refTable}" not found`);
       }
       
       // Check if referenced attribute exists
@@ -207,8 +218,7 @@ export const useTableManagement = (
         refTableNode.data.attributes.some((a: TableAttribute) => a.name === refAttr);
       
       if (!refAttrExists) {
-        console.warn(`Referenced attribute "${refAttr}" not found in table "${refTable}"`);
-        return; // Don't add if referenced attribute doesn't exist
+        throw new Error(`Referenced attribute "${refAttr}" not found in table "${refTable}"`);
       }
       
       // Create FK edge if validation passes
@@ -246,7 +256,7 @@ export const useTableManagement = (
     setAttrDataType("VARCHAR(255)");
     setRefTable("");
     setRefAttr("");
-  }, [selectedTableId, attrName, attrType, attrDataType, refTable, refAttr, setNodes, nodes, setEdges, createFKEdge]);
+  }, [selectedTableId, attrName, attrType, attrDataType, refTable, refAttr, setNodes, nodes, setEdges, createFKEdge, attributes]);
 
   // Start Editing Table Name
   const startEditTableName = useCallback(() => {

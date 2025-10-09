@@ -59,3 +59,60 @@ export const isValidConnection = (connection: Edge | Connection): boolean => {
   
   return connectionInfo !== null;
 };
+
+// Create edges from foreign key relationships
+export const createEdgesFromForeignKeys = (nodes: Node[]): Edge[] => {
+  const edges: Edge[] = [];
+  
+  nodes.forEach(node => {
+    const tableData = node.data as any; // Type assertion for table data
+    if (!tableData || !tableData.attributes || !Array.isArray(tableData.attributes)) return;
+    
+    tableData.attributes.forEach((attr: any) => {
+      // Check if this attribute is a foreign key
+      if (attr.type === 'FK' && attr.refTable && attr.refAttr) {
+        // Find the target node (referenced table)
+        const referencedNode = nodes.find(n => {
+          const targetData = n.data as any;
+          return targetData?.table === attr.refTable || targetData?.label === attr.refTable || n.id === attr.refTable;
+        });
+        
+        if (referencedNode) {
+          // Edge direction: FROM referenced PK TO foreign key
+          // This shows: "Primary key is referenced by foreign key"
+          const sourceHandle = `${referencedNode.id}-${attr.refAttr}-source`;  // PK side
+          const targetHandle = `${node.id}-${attr.name}-target`;               // FK side
+          
+          const edge: Edge = {
+            id: `${referencedNode.id}-${attr.refAttr}-to-${node.id}-${attr.name}`,
+            source: referencedNode.id,    // Source: referenced table (PK)
+            target: node.id,              // Target: table with FK
+            sourceHandle,                 // Source: referenced column (PK)
+            targetHandle,                 // Target: FK column
+            type: 'customEdge',
+            style: {
+              stroke: '#0074D9',
+              strokeWidth: 2,
+            },
+            markerEnd: {
+              type: 'arrowclosed' as const,
+              color: '#0074D9',
+            },
+            label: 'FK',
+            labelStyle: { fill: '#0074D9', fontWeight: 'bold', fontSize: 10 },
+          };
+          
+          console.log('Creating edge:', {
+            from: `${referencedNode.id}.${attr.refAttr} (PK)`,
+            to: `${node.id}.${attr.name} (FK)`,
+            edge
+          });
+          
+          edges.push(edge);
+        }
+      }
+    });
+  });
+  
+  return edges;
+};

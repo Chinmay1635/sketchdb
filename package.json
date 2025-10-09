@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@types/html2canvas": "^0.5.35",
+    "@types/node-sql-parser": "^1.0.0",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
