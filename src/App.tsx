@@ -93,6 +93,7 @@ export default function CanvasPlayground() {
     startEditTableName,
     saveTableName,
     cancelEditTableName,
+    changeTableColor,
 
     // Attribute editing
     onStartAttrEdit,
@@ -194,14 +195,14 @@ export default function CanvasPlayground() {
           updateNodeAttributes(connectionInfo);
         }
 
-        const newEdge = createStyledEdge(params);
+        const newEdge = createStyledEdge(params, nodes);
         setEdges((eds) => addEdge(newEdge as Connection, eds));
       } catch (error) {
         console.error('Failed to create connection:', error);
         showError(new Error('Failed to create connection between tables. Please try again.'), 'validation');
       }
     },
-    [setEdges, updateNodeAttributes, showError]
+    [setEdges, updateNodeAttributes, showError, nodes]
   );
 
   // Node selection
@@ -320,6 +321,7 @@ export default function CanvasPlayground() {
         onCancelEditTableName={cancelEditTableName}
         onEditTableNameChange={setEditTableName}
         onDeleteTable={deleteTable}
+        onChangeTableColor={changeTableColor}
         onAttrNameChange={setAttrName}
         onAttrDataTypeChange={setAttrDataType}
         onAttrTypeChange={setAttrType}

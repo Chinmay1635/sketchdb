@@ -1,6 +1,7 @@
 import React from "react";
 import { Node } from "@xyflow/react";
 import { TableAttribute, AttributeType, DataType, DATA_TYPES } from "../types";
+import { ColorPicker } from "./ColorPicker";
 
 interface TableNodeData {
   label: string;
@@ -23,6 +24,7 @@ interface SidebarProps {
   onCancelEditTableName?: () => void;
   onEditTableNameChange?: (val: string) => void;
   onDeleteTable?: () => void;
+  onChangeTableColor?: (color: string) => void;
   onAttrNameChange?: (val: string) => void;
   onAttrDataTypeChange?: (val: DataType) => void;
   onAttrTypeChange?: (val: AttributeType) => void;
@@ -62,6 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCancelEditTableName,
   onEditTableNameChange,
   onDeleteTable,
+  onChangeTableColor,
   onAttrNameChange,
   onAttrDataTypeChange,
   onAttrTypeChange,
@@ -147,6 +150,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Delete
             </button>
           </div>
+
+          {/* Color Picker Section */}
+          <ColorPicker
+            currentColor={(selectedTable?.data as any)?.color || '#0074D9'}
+            onColorChange={(color) => onChangeTableColor?.(color)}
+          />
 
           {/* Current Attributes */}
           <div className="mb-6 bg-gray-50 p-4 rounded-lg border">

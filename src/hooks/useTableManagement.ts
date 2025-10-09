@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Node, useNodesState, Edge } from '@xyflow/react';
 import { TableAttribute, AttributeType, DataType, TableData } from '../types';
+import { getRandomTableColor } from '../utils/colorUtils';
 
 type TableNode = Node<TableData>;
 
@@ -157,6 +158,7 @@ export const useTableManagement = (
         data: {
           label: `Table ${nds.length + 1}`,
           attributes: [],
+          color: getRandomTableColor(), // Assign random color to new table
         },
         position: { x: 100 + nds.length * 50, y: 100 + nds.length * 50 },
         type: 'tableNode',
@@ -293,6 +295,24 @@ export const useTableManagement = (
     setIsEditingTableName(false);
     setEditTableName("");
   }, []);
+
+  // Change Table Color
+  const changeTableColor = useCallback((color: string) => {
+    if (!selectedTableId) return;
+    
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            color: color,
+          },
+        };
+      })
+    );
+  }, [selectedTableId, setNodes]);
 
   // Attribute Editing Functions
   const onStartAttrEdit = useCallback((idx: number) => {
@@ -588,6 +608,7 @@ export const useTableManagement = (
     startEditTableName,
     saveTableName,
     cancelEditTableName,
+    changeTableColor,
     updateNodeAttributes,
 
     // Attribute Editing

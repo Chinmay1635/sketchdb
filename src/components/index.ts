@@ -7,4 +7,5 @@ export { Toolbar } from './Toolbar';
 export { LoadingDialog } from './LoadingDialog';
 export { ExportDialog } from './ExportDialog';
 export { ErrorDialog } from './ErrorDialog';
+export { ColorPicker } from './ColorPicker';
 export { default as CustomEdge } from './CustomEdge';

@@ -26,20 +26,30 @@ export const parseConnectionHandles = (
   };
 };
 
-export const createStyledEdge = (params: Edge | Connection): Partial<Edge> => {
+export const createStyledEdge = (params: Edge | Connection, nodes?: Node[]): Partial<Edge> => {
+  let edgeColor = '#0074D9'; // Default color
+  
+  // Try to get color from the target node if nodes are provided
+  if (nodes && params.target) {
+    const targetNode = nodes.find(n => n.id === params.target);
+    if (targetNode && (targetNode.data as any)?.color) {
+      edgeColor = (targetNode.data as any).color;
+    }
+  }
+  
   return {
     ...params,
     type: 'customEdge',
     style: {
-      stroke: '#0074D9',
+      stroke: edgeColor,
       strokeWidth: 2,
     },
     markerEnd: {
       type: 'arrowclosed' as const,
-      color: '#0074D9',
+      color: edgeColor,
     },
     label: params.sourceHandle && params.targetHandle ? 'FK Relationship' : undefined,
-    labelStyle: { fill: '#0074D9', fontWeight: 'bold', fontSize: 10 },
+    labelStyle: { fill: edgeColor, fontWeight: 'bold', fontSize: 10 },
   };
 };
 
@@ -68,6 +78,8 @@ export const createEdgesFromForeignKeys = (nodes: Node[]): Edge[] => {
     const tableData = node.data as any; // Type assertion for table data
     if (!tableData || !tableData.attributes || !Array.isArray(tableData.attributes)) return;
     
+    const sourceColor = tableData.color || '#0074D9'; // Use table color for edges
+    
     tableData.attributes.forEach((attr: any) => {
       // Check if this attribute is a foreign key
       if (attr.type === 'FK' && attr.refTable && attr.refAttr) {
@@ -78,6 +90,8 @@ export const createEdgesFromForeignKeys = (nodes: Node[]): Edge[] => {
         });
         
         if (referencedNode) {
+          const targetColor = (referencedNode.data as any)?.color || '#0074D9';
+          
           // Edge direction: FROM referenced PK TO foreign key
           // This shows: "Primary key is referenced by foreign key"
           const sourceHandle = `${referencedNode.id}-${attr.refAttr}-source`;  // PK side
@@ -91,15 +105,15 @@ export const createEdgesFromForeignKeys = (nodes: Node[]): Edge[] => {
             targetHandle,                 // Target: FK column
             type: 'customEdge',
             style: {
-              stroke: '#0074D9',
+              stroke: targetColor, // Use target table color for the edge
               strokeWidth: 2,
             },
             markerEnd: {
               type: 'arrowclosed' as const,
-              color: '#0074D9',
+              color: targetColor,
             },
             label: 'FK',
-            labelStyle: { fill: '#0074D9', fontWeight: 'bold', fontSize: 10 },
+            labelStyle: { fill: targetColor, fontWeight: 'bold', fontSize: 10 },
           };
           
           console.log('Creating edge:', {

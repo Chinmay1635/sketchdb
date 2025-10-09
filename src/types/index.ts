@@ -20,6 +20,7 @@ export interface TableAttribute {
 export interface TableData {
   label: string;
   attributes: TableAttribute[];
+  color?: string; // Visual color for the table (doesn't affect SQL)
   [key: string]: unknown;
 }
 
