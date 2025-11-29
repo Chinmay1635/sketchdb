@@ -155,6 +155,19 @@ export default function CanvasPlayground() {
     setLastOperation(() => () => setImportDialogOpen(true));
   }, [showError]);
 
+  // Handle importing SQL from uploaded file
+  const handleImportSQLFile = useCallback((sqlText: string) => {
+    try {
+      importSchema(sqlText);
+      // close any dialogs if open
+      setImportDialogOpen(false);
+    } catch (error) {
+      console.error('Import SQL file failed:', error);
+      showError(error, 'import');
+      setLastOperation(() => () => handleImportSchema());
+    }
+  }, [importSchema, showError, handleImportSchema]);
+
   // Canvas export handlers
   const handleExportPNG = useCallback(async () => {
     try {
@@ -242,6 +255,30 @@ export default function CanvasPlayground() {
       console.error('SQL export failed:', error);
       showError(error, 'export');
       setLastOperation(() => exportToSQL);
+    }
+  }, [nodes, showError]);
+
+  // Download SQL as a .sql file
+  const downloadSQL = useCallback(() => {
+    try {
+      if (!nodes || nodes.length === 0) {
+        throw new Error('No tables available to export. Please create some tables first.');
+      }
+      const sql = generateSQL(nodes);
+      const blob = new Blob([sql], { type: 'text/sql' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const filename = `schema.sql`;
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download SQL failed:', error);
+      showError(error, 'export');
+      setLastOperation(() => downloadSQL);
     }
   }, [nodes, showError]);
 
@@ -351,6 +388,8 @@ export default function CanvasPlayground() {
           onImportSchema={handleImportSchema}
           onExportPNG={handleExportPNG}
           onExportPDF={handleExportPDF}
+          onExportSQLFile={downloadSQL}
+          onImportSQLFile={handleImportSQLFile}
         />
 
         {/* Loading Dialog */}
