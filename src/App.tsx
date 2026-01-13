@@ -415,6 +415,17 @@ function CanvasPlayground() {
 
   return (
     <div className="w-screen h-screen flex">
+      {/* Navbar - Fixed at top */}
+      <Toolbar 
+        onAddTable={handleAddTable} 
+        onExportSQL={exportToSQL}
+        onImportSchema={handleImportSchema}
+        onExportPNG={handleExportPNG}
+        onExportPDF={handleExportPDF}
+        onExportSQLFile={downloadSQL}
+        onImportSQLFile={handleImportSQLFile}
+      />
+
       {/* Sidebar */}
       <Sidebar
         selectedTable={selectedTable}
@@ -458,17 +469,6 @@ function CanvasPlayground() {
         <div className="absolute top-2 right-4 z-10">
           <AutoSaveIndicator />
         </div>
-
-        {/* Toolbar (Navbar) */}
-        <Toolbar 
-          onAddTable={handleAddTable} 
-          onExportSQL={exportToSQL}
-          onImportSchema={handleImportSchema}
-          onExportPNG={handleExportPNG}
-          onExportPDF={handleExportPDF}
-          onExportSQLFile={downloadSQL}
-          onImportSQLFile={handleImportSQLFile}
-        />
 
         {/* Loading Dialog */}
         <LoadingDialog
