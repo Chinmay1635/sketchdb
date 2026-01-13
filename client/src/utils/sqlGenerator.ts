@@ -48,9 +48,8 @@ export const generateSQL = (nodes: Node[]): string => {
     // Validate attributes
     const attrs = Array.isArray(node.data.attributes) ? node.data.attributes : [];
     
-    if (attrs.length === 0) {
-      validationErrors.push(`Table ${tableName}: No attributes defined`);
-    }
+    // Skip validation for tables with no attributes - they'll be skipped during generation
+    // This allows users to have empty tables while designing their schema
     
     // Validate individual attributes
     const attributeNames = new Set<string>();
@@ -151,8 +150,9 @@ const generateSingleTableManual = (node: Node): string => {
       throw new Error('Invalid table name');
     }
     
+    // Return empty string for tables with no attributes (they'll be skipped)
     if (!attrs.length) {
-      throw new Error(`Table ${tableName} has no attributes to generate SQL`);
+      return `-- Table ${tableName} has no attributes defined (skipped)`;
     }
     
     let sql = `CREATE TABLE ${tableName} (\n`;

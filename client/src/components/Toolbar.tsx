@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import UserMenu from "./UserMenu";
 
 interface ToolbarProps {
   onAddTable: () => void;
@@ -8,6 +9,13 @@ interface ToolbarProps {
   onExportPDF: () => void;
   onExportSQLFile: () => void;
   onImportSQLFile: (sqlText: string) => void;
+  onSave?: () => void;
+  isSaving?: boolean;
+  lastSavedAt?: Date | null;
+  currentDiagramName?: string | null;
+  isAuthenticated?: boolean;
+  onLoginClick?: () => void;
+  onSavedDiagramsClick?: () => void;
 }
 
 // Dropdown Menu Component
@@ -87,9 +95,29 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onExportPNG,
   onExportPDF,
   onExportSQLFile,
-  onImportSQLFile
+  onImportSQLFile,
+  onSave,
+  isSaving,
+  lastSavedAt,
+  currentDiagramName,
+  isAuthenticated,
+  onLoginClick,
+  onSavedDiagramsClick
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const formatLastSaved = (date: Date | null | undefined) => {
+    if (!date) return null;
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
@@ -225,9 +253,59 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </DropdownMenu>
           </div>
 
-          {/* Right section - Empty for now, can add user profile, settings etc */}
-          <div className="flex items-center gap-2">
-            {/* Placeholder for future items like settings, user profile */}
+          {/* Right section - Save button, status, and User Menu */}
+          <div className="flex items-center gap-3">
+            {isAuthenticated && onSave && (
+              <>
+                {/* Last saved timestamp */}
+                {lastSavedAt && (
+                  <span className="text-xs text-gray-400">
+                    Saved {formatLastSaved(lastSavedAt)}
+                  </span>
+                )}
+                
+                {/* Current diagram name */}
+                {currentDiagramName && (
+                  <span className="text-sm text-gray-300 max-w-[150px] truncate" title={currentDiagramName}>
+                    {currentDiagramName}
+                  </span>
+                )}
+                
+                {/* Save button */}
+                <button
+                  onClick={onSave}
+                  disabled={isSaving}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isSaving 
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      Save
+                    </>
+                  )}
+                </button>
+              </>
+            )}
+            
+            {/* User Menu */}
+            <UserMenu
+              onLoginClick={onLoginClick || (() => {})}
+              onSavedDiagramsClick={onSavedDiagramsClick || (() => {})}
+            />
           </div>
         </div>
       </nav>

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useRef } from "react";
 import {
   ReactFlow,
   addEdge,
@@ -6,6 +6,8 @@ import {
   Controls,
   Background,
   useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
   Connection,
   Edge,
   Node,
@@ -26,20 +28,23 @@ import {
   ErrorDialog,
   CustomEdge,
 } from "./components";
+import AuthDialog from "./components/AuthDialog";
+import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
+import UserMenu from "./components/UserMenu";
+
+// Context
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Hooks
 import { useTableManagement } from "./hooks/useTableManagement";
 
 // Utils
-import {
-  parseConnectionHandles,
-  createStyledEdge,
-  isValidConnection,
-} from "./utils/connectionUtils";
+import { parseConnectionHandles, createStyledEdge, isValidConnection } from "./utils/connectionUtils";
 import { generateSQL, copyToClipboard } from "./utils/sqlGenerator";
 import { parseSQLSchema } from "./utils/sqlParser";
 import { exportCanvasAsPNG, exportCanvasAsPDF } from "./utils/canvasExport";
 import { useErrorHandler } from "./utils/errorHandler";
+import { diagramsAPI } from "./services/api";
 
 // Types
 import { AttributeType, DataType } from "./types";
@@ -60,6 +65,16 @@ const initialEdges: Edge[] = [];
 // Main Canvas Component
 function CanvasPlayground() {
   const [edges, setEdges, onEdgesChangeDefault] = useEdgesState(initialEdges);
+  const reactFlowInstance = useReactFlow();
+
+  // Auth state
+  const { isAuthenticated } = useAuth();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [savedDiagramsDialogOpen, setSavedDiagramsDialogOpen] = useState(false);
+  const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(null);
+  const [currentDiagramName, setCurrentDiagramName] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Error handling
   const { error, showError, clearError, retryOperation, hasError } = useErrorHandler();
@@ -146,6 +161,92 @@ function CanvasPlayground() {
       throw error; // Re-throw to be handled by ImportDialog
     }
   }, [importNodes, setEdges]);
+
+  // Load diagram from saved data
+  const handleLoadDiagram = useCallback((diagram: any) => {
+    try {
+      // Load nodes
+      if (diagram.nodes && diagram.nodes.length > 0) {
+        importNodes(diagram.nodes);
+      } else {
+        importNodes([]);
+      }
+      
+      // Load edges
+      if (diagram.edges) {
+        setEdges(diagram.edges);
+      } else {
+        setEdges([]);
+      }
+      
+      // Set viewport if available
+      if (diagram.viewport && reactFlowInstance) {
+        setTimeout(() => {
+          reactFlowInstance.setViewport(diagram.viewport);
+        }, 100);
+      }
+      
+      // Store current diagram ID and name for future saves
+      setCurrentDiagramId(diagram._id);
+      setCurrentDiagramName(diagram.name);
+      setLastSavedAt(diagram.updatedAt ? new Date(diagram.updatedAt) : new Date());
+      
+      console.log('Diagram loaded successfully:', diagram.name);
+    } catch (error) {
+      console.error('Failed to load diagram:', error);
+      showError(new Error('Failed to load diagram. Please try again.'), 'import');
+    }
+  }, [importNodes, setEdges, reactFlowInstance, showError]);
+
+  // Quick save current diagram
+  const handleQuickSave = useCallback(async () => {
+    if (!isAuthenticated) {
+      setAuthDialogOpen(true);
+      return;
+    }
+
+    // If no current diagram, open save dialog to create new
+    if (!currentDiagramId) {
+      setSavedDiagramsDialogOpen(true);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const diagramData = {
+        name: currentDiagramName || 'Untitled Diagram',
+        description: '',
+        nodes: nodes,
+        edges: edges,
+        sqlContent: generateSQL(nodes),
+        viewport: reactFlowInstance ? reactFlowInstance.getViewport() : { x: 0, y: 0, zoom: 1 },
+      };
+
+      await diagramsAPI.update(currentDiagramId, diagramData);
+      setLastSavedAt(new Date());
+      console.log('Diagram saved successfully');
+    } catch (error) {
+      console.error('Failed to save diagram:', error);
+      showError(new Error('Failed to save diagram. Please try again.'), 'save');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [isAuthenticated, currentDiagramId, currentDiagramName, nodes, edges, reactFlowInstance, showError]);
+
+  // Handle save completion from dialog (for new diagrams)
+  const handleSaveComplete = useCallback((diagramId: string, name: string) => {
+    setCurrentDiagramId(diagramId);
+    setCurrentDiagramName(name);
+    setLastSavedAt(new Date());
+  }, []);
+
+  // Get current viewport
+  const getViewport = useCallback(() => {
+    if (reactFlowInstance) {
+      return reactFlowInstance.getViewport();
+    }
+    return { x: 0, y: 0, zoom: 1 };
+  }, [reactFlowInstance]);
 
   // Import dialog handlers
   const handleImportSchema = useCallback(() => {
@@ -366,6 +467,32 @@ function CanvasPlayground() {
         onExportPDF={handleExportPDF}
         onExportSQLFile={downloadSQL}
         onImportSQLFile={handleImportSQLFile}
+        onSave={handleQuickSave}
+        isSaving={isSaving}
+        lastSavedAt={lastSavedAt}
+        currentDiagramName={currentDiagramName}
+        isAuthenticated={isAuthenticated}
+        onLoginClick={() => setAuthDialogOpen(true)}
+        onSavedDiagramsClick={() => setSavedDiagramsDialogOpen(true)}
+      />
+
+      {/* Auth Dialog */}
+      <AuthDialog
+        isOpen={authDialogOpen}
+        onClose={() => setAuthDialogOpen(false)}
+      />
+
+      {/* Saved Diagrams Dialog */}
+      <SavedDiagramsDialog
+        isOpen={savedDiagramsDialogOpen}
+        onClose={() => setSavedDiagramsDialogOpen(false)}
+        onLoad={handleLoadDiagram}
+        onSaveComplete={handleSaveComplete}
+        currentNodes={nodes}
+        currentEdges={edges}
+        sqlContent={generateSQL(nodes)}
+        viewport={getViewport()}
+        currentDiagramId={currentDiagramId}
       />
 
       {/* Sidebar */}
@@ -481,5 +608,11 @@ function CanvasPlayground() {
 
 // App component
 export default function App() {
-  return <CanvasPlayground />;
+  return (
+    <AuthProvider>
+      <ReactFlowProvider>
+        <CanvasPlayground />
+      </ReactFlowProvider>
+    </AuthProvider>
+  );
 }
