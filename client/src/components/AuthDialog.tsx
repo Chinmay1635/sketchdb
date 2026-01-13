@@ -2,8 +2,16 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Turnstile from './Turnstile';
 
-// Turnstile site key - use test key for development, replace with real key for production
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'; // Test key that always passes
+// Turnstile site key - use test key for localhost, real key for production
+const getTurnstileSiteKey = () => {
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocalhost) {
+    // Cloudflare test key that always passes for localhost
+    return '1x00000000000000000000AA';
+  }
+  // Use environment variable or hardcoded production key
+  return import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAACMRo8q_iPvTlEDn';
+};
 
 type AuthMode = 'login' | 'signup' | 'verify-otp' | 'forgot-password' | 'reset-password';
 
@@ -254,7 +262,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               
               {/* Turnstile CAPTCHA */}
               <Turnstile
-                siteKey={TURNSTILE_SITE_KEY}
+                key="login-turnstile"
+                siteKey={getTurnstileSiteKey()}
                 onVerify={(token) => setTurnstileToken(token)}
                 onExpire={() => setTurnstileToken(null)}
                 onError={() => setTurnstileToken(null)}
@@ -351,7 +360,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               
               {/* Turnstile CAPTCHA */}
               <Turnstile
-                siteKey={TURNSTILE_SITE_KEY}
+                key="signup-turnstile"
+                siteKey={getTurnstileSiteKey()}
                 onVerify={(token) => setTurnstileToken(token)}
                 onExpire={() => setTurnstileToken(null)}
                 onError={() => setTurnstileToken(null)}

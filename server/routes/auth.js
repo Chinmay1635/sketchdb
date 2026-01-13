@@ -17,9 +17,18 @@ const generateToken = (id) => {
 const verifyTurnstileToken = async (token) => {
   if (!token) return false;
   
+  // Check if this is a development/test environment
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  
+  // If in development and no real secret configured, skip verification
+  if (isDevelopment && (!process.env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET_KEY.startsWith('1x0000'))) {
+    console.log('Development mode: Skipping Turnstile verification');
+    return true;
+  }
+  
   const secretKey = process.env.TURNSTILE_SECRET_KEY;
   
-  // If no secret key is configured, skip verification in development
+  // If no secret key is configured, skip verification
   if (!secretKey) {
     console.warn('TURNSTILE_SECRET_KEY not configured, skipping verification');
     return true;
@@ -38,6 +47,7 @@ const verifyTurnstileToken = async (token) => {
     });
     
     const data = await response.json();
+    console.log('Turnstile verification result:', data.success);
     return data.success === true;
   } catch (error) {
     console.error('Turnstile verification error:', error);
