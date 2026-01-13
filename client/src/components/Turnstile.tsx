@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface TurnstileProps {
   siteKey: string;
@@ -30,73 +30,72 @@ const Turnstile: React.FC<TurnstileProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const hasRenderedRef = useRef(false);
+  const hasVerifiedRef = useRef(false);
   const [status, setStatus] = useState<'loading' | 'ready' | 'verified' | 'error'>('loading');
 
-  const handleVerify = useCallback((token: string) => {
-    console.log('✅ Turnstile verified! Token length:', token.length);
-    setStatus('verified');
-    onVerify(token);
-  }, [onVerify]);
+  // Store callbacks in refs to avoid re-render loops
+  const onVerifyRef = useRef(onVerify);
+  const onErrorRef = useRef(onError);
+  const onExpireRef = useRef(onExpire);
 
-  const handleError = useCallback((error?: any) => {
-    console.error('❌ Turnstile error:', error);
-    setStatus('error');
-    onError?.();
-  }, [onError]);
-
-  const handleExpire = useCallback(() => {
-    console.log('⏰ Turnstile token expired');
-    setStatus('ready');
-    onExpire?.();
-  }, [onExpire]);
+  // Update refs when props change
+  useEffect(() => {
+    onVerifyRef.current = onVerify;
+    onErrorRef.current = onError;
+    onExpireRef.current = onExpire;
+  }, [onVerify, onError, onExpire]);
 
   useEffect(() => {
+    // Prevent multiple renders
+    if (hasRenderedRef.current || hasVerifiedRef.current) {
+      return;
+    }
+
     let isMounted = true;
-    let retryCount = 0;
-    const maxRetries = 3;
+    let verificationTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const renderWidget = () => {
       if (!containerRef.current || !window.turnstile || !isMounted) {
-        console.log('Cannot render: container or turnstile not ready');
         return;
       }
 
-      // Remove existing widget if any
-      if (widgetIdRef.current) {
-        try {
-          window.turnstile.remove(widgetIdRef.current);
-        } catch (e) {
-          // Ignore
-        }
-        widgetIdRef.current = null;
+      // Prevent duplicate renders
+      if (hasRenderedRef.current) {
+        return;
       }
+      hasRenderedRef.current = true;
 
-      // Clear container
-      containerRef.current.innerHTML = '';
+      // Set a timeout - if not verified in 30 seconds, show error
+      verificationTimeout = setTimeout(() => {
+        if (isMounted && !hasVerifiedRef.current) {
+          console.log('⏱️ Turnstile verification timeout after 30s');
+          setStatus('error');
+        }
+      }, 30000);
 
       try {
         console.log('🔄 Rendering Turnstile widget with siteKey:', siteKey.substring(0, 10) + '...');
-        
+
         widgetIdRef.current = window.turnstile.render(containerRef.current, {
           sitekey: siteKey,
-          callback: handleVerify,
-          'error-callback': (error: any) => {
-            console.error('Turnstile error-callback:', error);
-            if (retryCount < maxRetries) {
-              retryCount++;
-              console.log(`Retrying (${retryCount}/${maxRetries})...`);
-              setTimeout(renderWidget, 2000);
-            } else {
-              handleError(error);
-            }
+          callback: (token: string) => {
+            if (hasVerifiedRef.current) return; // Prevent duplicate calls
+            hasVerifiedRef.current = true;
+            console.log('✅ Turnstile verified! Token length:', token.length);
+            setStatus('verified');
+            onVerifyRef.current(token);
           },
-          'expired-callback': handleExpire,
-          'timeout-callback': () => {
-            console.log('Turnstile timeout');
-            if (retryCount < maxRetries) {
-              retryCount++;
-              setTimeout(renderWidget, 2000);
-            }
+          'error-callback': () => {
+            console.error('❌ Turnstile error');
+            setStatus('error');
+            onErrorRef.current?.();
+          },
+          'expired-callback': () => {
+            console.log('⏰ Turnstile token expired');
+            hasVerifiedRef.current = false;
+            setStatus('ready');
+            onExpireRef.current?.();
           },
           theme,
           size,
@@ -105,39 +104,36 @@ const Turnstile: React.FC<TurnstileProps> = ({
           'retry-interval': 5000,
           'refresh-expired': 'auto',
         });
-        
+
         setStatus('ready');
         console.log('✅ Turnstile widget rendered, widgetId:', widgetIdRef.current);
       } catch (e) {
         console.error('❌ Failed to render Turnstile widget:', e);
-        handleError(e);
+        setStatus('error');
       }
     };
 
     const loadScript = () => {
-      const existingScript = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
-
       if (window.turnstile) {
-        console.log('Turnstile already loaded, rendering...');
         renderWidget();
         return;
       }
 
+      const existingScript = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+
       if (existingScript) {
-        console.log('Script exists, waiting for load...');
         const checkTurnstile = setInterval(() => {
           if (window.turnstile) {
             clearInterval(checkTurnstile);
             renderWidget();
           }
         }, 100);
-        
-        // Timeout after 10 seconds
+
         setTimeout(() => {
           clearInterval(checkTurnstile);
-          if (!window.turnstile) {
-            console.error('Turnstile failed to load after timeout');
-            handleError();
+          if (!window.turnstile && isMounted) {
+            console.error('Turnstile failed to load');
+            setStatus('error');
           }
         }, 10000);
         return;
@@ -150,7 +146,6 @@ const Turnstile: React.FC<TurnstileProps> = ({
 
       script.onload = () => {
         console.log('Turnstile script loaded');
-        // Give it a moment to initialize
         setTimeout(() => {
           if (isMounted && window.turnstile) {
             renderWidget();
@@ -158,9 +153,9 @@ const Turnstile: React.FC<TurnstileProps> = ({
         }, 100);
       };
 
-      script.onerror = (e) => {
-        console.error('Failed to load Turnstile script:', e);
-        handleError();
+      script.onerror = () => {
+        console.error('Failed to load Turnstile script');
+        setStatus('error');
       };
 
       document.head.appendChild(script);
@@ -170,15 +165,28 @@ const Turnstile: React.FC<TurnstileProps> = ({
 
     return () => {
       isMounted = false;
-      if (widgetIdRef.current && window.turnstile) {
-        try {
-          window.turnstile.remove(widgetIdRef.current);
-        } catch (e) {
-          // Ignore
-        }
-      }
+      if (verificationTimeout) clearTimeout(verificationTimeout);
+      // Don't remove widget on cleanup to prevent re-render issues
     };
-  }, [siteKey, handleVerify, handleError, handleExpire, theme, size]);
+  }, [siteKey, theme, size]); // Only re-run if these change
+
+  const handleRetry = () => {
+    hasRenderedRef.current = false;
+    hasVerifiedRef.current = false;
+    setStatus('loading');
+    
+    // Remove old widget and re-render
+    if (widgetIdRef.current && window.turnstile) {
+      try {
+        window.turnstile.reset(widgetIdRef.current);
+        setStatus('ready');
+      } catch (e) {
+        window.location.reload();
+      }
+    } else {
+      window.location.reload();
+    }
+  };
 
   return (
     <div className="turnstile-wrapper flex flex-col items-center my-4">
@@ -187,8 +195,14 @@ const Turnstile: React.FC<TurnstileProps> = ({
         <div className="text-sm text-gray-500 mt-2">Loading verification...</div>
       )}
       {status === 'error' && (
-        <div className="text-sm text-red-500 mt-2">
-          Verification failed. Please refresh the page.
+        <div className="flex flex-col items-center mt-2">
+          <div className="text-sm text-red-500">Verification failed or timed out.</div>
+          <button
+            onClick={handleRetry}
+            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            Try again
+          </button>
         </div>
       )}
       {status === 'verified' && (
