@@ -36,7 +36,7 @@ export const ErrorDialog: React.FC<ErrorDialogProps> = ({
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: '#1f2937',
           borderRadius: 12,
           padding: 24,
           maxWidth: '90%',
@@ -44,7 +44,7 @@ export const ErrorDialog: React.FC<ErrorDialogProps> = ({
           width: 500,
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
           border: '2px solid #ef4444',
         }}
       >
@@ -54,7 +54,7 @@ export const ErrorDialog: React.FC<ErrorDialogProps> = ({
           alignItems: 'center',
           marginBottom: 16,
           paddingBottom: 12,
-          borderBottom: '1px solid #fee2e2'
+          borderBottom: '1px solid #7f1d1d'
         }}>
           <div
             style={{
@@ -75,7 +75,7 @@ export const ErrorDialog: React.FC<ErrorDialogProps> = ({
           </div>
           <h2 style={{ 
             margin: 0, 
-            color: '#ef4444',
+            color: '#f87171',
             fontSize: 18,
             fontWeight: 600
           }}>
@@ -87,7 +87,7 @@ export const ErrorDialog: React.FC<ErrorDialogProps> = ({
         <div style={{ marginBottom: 16 }}>
           <p style={{ 
             margin: 0,
-            color: '#374151',
+            color: '#e5e7eb',
             fontSize: 14,
             lineHeight: '1.5'
           }}>
@@ -100,7 +100,7 @@ export const ErrorDialog: React.FC<ErrorDialogProps> = ({
           <div style={{ marginBottom: 20 }}>
             <details style={{ cursor: 'pointer' }}>
               <summary style={{
-                color: '#6b7280',
+                color: '#9ca3af',
                 fontSize: 12,
                 fontWeight: 500,
                 marginBottom: 8,
@@ -110,13 +110,13 @@ export const ErrorDialog: React.FC<ErrorDialogProps> = ({
               </summary>
               <div
                 style={{
-                  backgroundColor: '#f9fafb',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: '#374151',
+                  border: '1px solid #4b5563',
                   borderRadius: 6,
                   padding: 12,
                   fontFamily: 'monospace',
                   fontSize: 11,
-                  color: '#374151',
+                  color: '#e5e7eb',
                   maxHeight: 150,
                   overflow: 'auto',
                   whiteSpace: 'pre-wrap',
@@ -143,18 +143,18 @@ export const ErrorDialog: React.FC<ErrorDialogProps> = ({
                 padding: '8px 16px',
                 border: '1px solid #3b82f6',
                 borderRadius: 6,
-                background: 'white',
-                color: '#3b82f6',
+                background: '#1f2937',
+                color: '#60a5fa',
                 cursor: 'pointer',
                 fontSize: 14,
                 fontWeight: 500,
                 transition: 'all 0.2s',
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#eff6ff';
+                e.currentTarget.style.backgroundColor = '#1e3a5f';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'white';
+                e.currentTarget.style.backgroundColor = '#1f2937';
               }}
             >
               Try Again

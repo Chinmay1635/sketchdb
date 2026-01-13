@@ -37,7 +37,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ label, icon, children, clas
     <div ref={dropdownRef} className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 rounded-md transition-colors"
       >
         {icon}
         {label}
@@ -52,7 +52,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ label, icon, children, clas
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+        <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-1 z-50">
           {children}
         </div>
       )}
@@ -71,14 +71,14 @@ interface DropdownItemProps {
 const DropdownItem: React.FC<DropdownItemProps> = ({ onClick, icon, children, className = '' }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors ${className}`}
+    className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition-colors ${className}`}
   >
     {icon}
     {children}
   </button>
 );
 
-const DropdownDivider = () => <div className="border-t border-gray-200 my-1" />;
+const DropdownDivider = () => <div className="border-t border-gray-700 my-1" />;
 
 export const Toolbar: React.FC<ToolbarProps> = ({ 
   onAddTable, 
@@ -110,7 +110,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <>
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 shadow-sm z-50">
+      <nav className="fixed top-0 left-0 right-0 h-14 bg-gray-900 border-b border-gray-700 shadow-sm z-50">
         <div className="h-full px-4 flex items-center justify-between">
           {/* Left section - Logo and Diagram info */}
           <div className="flex items-center gap-4">
@@ -121,11 +121,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                 </svg>
               </div>
-              <span className="text-lg font-bold text-gray-800">SketchDB</span>
+              <span className="text-lg font-bold text-gray-100">SketchDB</span>
             </div>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-gray-300" />
+            <div className="w-px h-6 bg-gray-700" />
           </div>
 
           {/* Center section - Main actions */}

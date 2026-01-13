@@ -85,8 +85,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   validateFKReference,
 }) => {
   return (
-    <div className="w-72 lg:w-80 xl:w-96 bg-white border-l border-gray-200 shadow-lg p-6 overflow-y-auto max-h-screen">
-      <h3 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-200 pb-3">
+    <div className="w-72 lg:w-80 xl:w-96 bg-gray-900 border-r-2 border-gray-700 shadow-lg p-6 overflow-y-auto max-h-screen ">
+      <h3 className="text-xl font-bold text-gray-100 mb-4 border-b border-gray-700 pb-3">
         Table Attributes
       </h3>
 
@@ -98,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isEditingTableName
                 ? "block"
                 : "flex flex-col lg:flex-row justify-between items-center"
-            } mb-6 bg-gray-50 p-4 rounded-lg border`}
+            } mb-6 bg-gray-800 p-4 rounded-lg border border-gray-700`}
           >
             {isEditingTableName ? (
               <div className="flex flex-col flex-1 mr-2 gap-2">
@@ -109,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     if (e.key === "Enter") onSaveTableName?.();
                     if (e.key === "Escape") onCancelEditTableName?.();
                   }}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter table name"
                   title="Edit table name"
                   autoFocus
@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             ) : (
               <h4
-                className="m-0 cursor-pointer flex-1 text-lg font-semibold text-gray-800 hover:text-blue-600 transition-colors duration-200"
+                className="m-0 cursor-pointer flex-1 text-lg font-semibold text-gray-100 hover:text-blue-400 transition-colors duration-200"
                 onClick={onStartEditTableName}
                 title="Click to edit table name"
               >
@@ -158,8 +158,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           />
 
           {/* Current Attributes */}
-          <div className="mb-6 bg-gray-50 p-4 rounded-lg border">
-            <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+          <div className="mb-6 bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <h5 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wide">
               Current Attributes
             </h5>
 
@@ -169,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {attributes.map((attr, idx) => (
                     <li
                       key={idx}
-                      className="bg-white p-3 rounded-md border border-gray-200 shadow-sm"
+                      className="bg-gray-700 p-3 rounded-md border border-gray-600 shadow-sm"
                     >
                       <div className="flex items-center justify-between">
                         {/* Attribute Name */}
@@ -177,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           <div className="flex flex-col gap-3 flex-1">
                             {/* Attribute Name Input */}
                             <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">
                                 Attribute Name
                               </label>
                               <input
@@ -190,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   if (e.key === "Escape")
                                     onCancelAttrEdit?.(idx);
                                 }}
-                                className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-2 py-1 border border-gray-600 rounded-md bg-gray-600 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 title="Edit attribute name"
                                 aria-label="Edit attribute name"
                                 placeholder="Enter attribute name"
@@ -200,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                             {/* Data Type Select */}
                             <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">
                                 Data Type
                               </label>
                               <select
@@ -211,7 +211,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     e.target.value as DataType
                                   )
                                 }
-                                className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-2 py-1 border border-gray-600 rounded-md bg-gray-600 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 title="Select data type"
                               >
                                 {DATA_TYPES.map((type) => (
@@ -224,7 +224,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                             {/* Attribute Type Select */}
                             <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">
                                 Key Type
                               </label>
                               <select
@@ -235,7 +235,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     e.target.value as AttributeType
                                   )
                                 }
-                                className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-2 py-1 border border-gray-600 rounded-md bg-gray-600 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 title="Select key type"
                               >
                                 <option value="normal">Normal</option>
@@ -248,12 +248,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             {(attr.editType === "FK" ||
                               (attr.editType === undefined &&
                                 attr.type === "FK")) && (
-                              <div className="space-y-2 p-3 bg-blue-50 rounded-md border border-blue-200">
-                                <h6 className="text-xs font-medium text-blue-800">
+                              <div className="space-y-2 p-3 bg-blue-900/30 rounded-md border border-blue-700">
+                                <h6 className="text-xs font-medium text-blue-300">
                                   Foreign Key Reference
                                 </h6>
                                 <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  <label className="block text-xs font-medium text-gray-400 mb-1">
                                     Reference Table
                                   </label>
                                   <select
@@ -270,7 +270,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                         onAttrEditRefAttrChange?.(idx, "");
                                       }
                                     }}
-                                    className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-2 py-1 border border-gray-600 rounded-md bg-gray-600 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     title="Select reference table for foreign key"
                                   >
                                     <option value="">Select table...</option>
@@ -282,7 +282,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   </select>
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  <label className="block text-xs font-medium text-gray-400 mb-1">
                                     Reference Attribute
                                   </label>
                                   <select
@@ -295,7 +295,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                         e.target.value
                                       )
                                     }
-                                    className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-2 py-1 border border-gray-600 rounded-md bg-gray-600 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     disabled={!(attr.editRefTable || attr.refTable)}
                                     title="Select reference attribute for foreign key"
                                   >
@@ -334,10 +334,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           </div>
                         ) : (
                           <div className="flex items-center justify-between flex-1">
-                            <span className="font-medium text-gray-800">
+                            <span className="font-medium text-gray-100">
                               {attr.name || "Unnamed"}
                             </span>
-                            <span className="text-sm text-gray-500 ml-2">
+                            <span className="text-sm text-gray-400 ml-2">
                               {attr.dataType || "VARCHAR"}
                             </span>
                           </div>
@@ -362,10 +362,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           <span
                             className={`px-3 py-2 rounded-md text-xs font-medium ${
                               attr.type === "PK"
-                                ? "bg-yellow-100 text-yellow-800"
+                                ? "bg-yellow-900/50 text-yellow-300"
                                 : attr.type === "FK"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-gray-100 text-gray-800"
+                                ? "bg-blue-900/50 text-blue-300"
+                                : "bg-gray-600 text-gray-300"
                             }`}
                           >
                             {attr.type || "Normal"}
@@ -375,9 +375,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                       {/* FK reference */}
                       {attr.type === "FK" && attr.refTable && attr.refAttr && (
-                        <div className="mt-2 text-xs text-gray-600">
+                        <div className="mt-2 text-xs text-gray-400">
                           References:{" "}
-                          <span className="font-medium">
+                          <span className="font-medium text-gray-300">
                             {attr.refTable}.{attr.refAttr}
                           </span>
                         </div>
@@ -387,7 +387,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </ul>
               </div>
             ) : (
-              <p className="text-gray-500 text-sm italic">
+              <p className="text-gray-400 text-sm italic">
                 No attributes defined yet
               </p>
             )}
@@ -395,24 +395,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Add New Attribute */}
           <div className="space-y-4">
-            <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+            <h5 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wide">
               Add New Attribute
             </h5>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Attribute Name
               </label>
               <input
                 placeholder="Enter attribute name"
                 value={attrName || ""}
                 onChange={(e) => onAttrNameChange?.(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Data Type
               </label>
               <select
@@ -420,7 +420,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChange={(e) =>
                   onAttrDataTypeChange?.(e.target.value as DataType)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 title="Select data type for the attribute"
                 aria-label="Data type selection"
               >
@@ -433,7 +433,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Attribute Type
               </label>
               <select
@@ -441,7 +441,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChange={(e) =>
                   onAttrTypeChange?.(e.target.value as AttributeType)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 title="Select attribute type (normal, primary key, or foreign key)"
                 aria-label="Attribute type selection"
               >
@@ -452,12 +452,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {attrType === "FK" && (
-              <div className="space-y-4 p-4 bg-blue-50 rounded-md border border-blue-200">
-                <h6 className="text-sm font-medium text-blue-800">
+              <div className="space-y-4 p-4 bg-blue-900/30 rounded-md border border-blue-700">
+                <h6 className="text-sm font-medium text-blue-300">
                   Foreign Key Reference
                 </h6>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Reference Table
                   </label>
                   <select
@@ -469,7 +469,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onRefAttrChange?.("");
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     title="Select reference table for foreign key"
                   >
                     <option value="">Select table...</option>
@@ -481,13 +481,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Reference Attribute
                   </label>
                   <select
                     value={refAttr || ""}
                     onChange={(e) => onRefAttrChange?.(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     disabled={!refTable}
                     title="Select reference attribute for foreign key"
                   >
@@ -515,7 +515,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </>
       ) : (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-400 py-8">
           <div className="text-4xl mb-4">📊</div>
           <p className="text-lg font-medium mb-2">No Table Selected</p>
           <p className="text-sm">

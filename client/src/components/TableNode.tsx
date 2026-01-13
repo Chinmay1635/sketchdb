@@ -23,7 +23,7 @@ export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
     <div 
       className="border-2 rounded-lg min-w-[200px] shadow-md relative"
       style={{
-        backgroundColor: 'white',
+        backgroundColor: '#1f2937',
         borderColor: tableColor,
         boxShadow: `0 4px 6px -1px ${getLighterColor(tableColor, 0.3)}`
       }}
@@ -45,8 +45,8 @@ export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
           attributes.map((attr, idx) => (
             <div
               key={idx}
-              className={`px-3 py-1 text-xs flex justify-between items-center relative min-h-[24px] ${
-                idx < attributes.length - 1 ? "border-b border-gray-200" : ""
+              className={`px-3 py-1 text-xs flex justify-between items-center relative min-h-[24px] text-gray-200 ${
+                idx < attributes.length - 1 ? "border-b border-gray-700" : ""
               }`}
               style={{
                 backgroundColor: idx % 2 === 0 ? lightBackground : 'transparent'
@@ -98,13 +98,13 @@ export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
                 )}
               </span>
 
-              <span className="text-gray-500 text-[10px]">
+              <span className="text-gray-400 text-[10px]">
                 {attr.dataType || "VARCHAR(255)"}
               </span>
             </div>
           ))
         ) : (
-          <div className="px-3 py-2 text-xs text-gray-400 italic">
+          <div className="px-3 py-2 text-xs text-gray-500 italic">
             No attributes
           </div>
         )}

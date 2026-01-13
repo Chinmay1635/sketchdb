@@ -356,7 +356,7 @@ function CanvasPlayground() {
   }, []);
 
   return (
-    <div className="w-screen h-screen flex">
+    <div className="w-screen h-screen flex bg-gray-900">
       {/* Navbar - Fixed at top */}
       <Toolbar 
         onAddTable={handleAddTable} 
@@ -406,7 +406,7 @@ function CanvasPlayground() {
       />
 
       {/* Main Canvas Area */}
-      <div className="flex-1 relative pt-14">
+      <div className="flex-1 relative pt-14 bg-black">
         {/* Loading Dialog */}
         <LoadingDialog
           isOpen={loadingDialogOpen}
@@ -461,18 +461,18 @@ function CanvasPlayground() {
           onNodeClick={onNodeClick}
           isValidConnection={isValidConnection}
           fitView
-          connectionLineStyle={{ stroke: "#0074D9", strokeWidth: 3 }}
+          connectionLineStyle={{ stroke: "#60a5fa", strokeWidth: 3 }}
           defaultEdgeOptions={{
             type: "customEdge",
-            style: { stroke: "#0074D9", strokeWidth: 2 },
-            markerEnd: { type: "arrowclosed", color: "#0074D9" },
-            labelBgStyle: { fill: "#ffffff", fillOpacity: 0.8 },
-            labelStyle: { fill: "#0074D9", fontWeight: "bold" },
+            style: { stroke: "#60a5fa", strokeWidth: 2 },
+            markerEnd: { type: "arrowclosed", color: "#60a5fa" },
+            labelBgStyle: { fill: "#1f2937", fillOpacity: 0.9 },
+            labelStyle: { fill: "#60a5fa", fontWeight: "bold" },
           }}
         >
-          <MiniMap />
+          <MiniMap style={{ backgroundColor: '#374151' }} />
           <Controls />
-          <Background />
+          <Background color="#4b5563" />
         </ReactFlow>
       </div>
     </div>

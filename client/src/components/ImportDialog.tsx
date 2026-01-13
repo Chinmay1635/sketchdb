@@ -59,7 +59,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: '#1f2937',
           borderRadius: 8,
           padding: 24,
           maxWidth: '80%',
@@ -67,7 +67,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
           width: 600,
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
         }}
       >
         <div style={{ 
@@ -76,7 +76,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
           alignItems: 'center',
           marginBottom: 16 
         }}>
-          <h2 style={{ margin: 0, color: '#0074D9' }}>Import SQL Schema</h2>
+          <h2 style={{ margin: 0, color: '#60a5fa' }}>Import SQL Schema</h2>
           <button
             onClick={handleClose}
             style={{
@@ -84,7 +84,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
               border: 'none',
               fontSize: 20,
               cursor: 'pointer',
-              color: '#666',
+              color: '#9ca3af',
               padding: 4,
             }}
           >
@@ -97,7 +97,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
             display: 'block', 
             marginBottom: 8, 
             fontWeight: 'bold',
-            color: '#333'
+            color: '#e5e7eb'
           }}>
             Paste your SQL schema here:
           </label>
@@ -120,18 +120,20 @@ CREATE TABLE posts (
               width: '100%',
               height: 300,
               padding: 12,
-              border: '1px solid #ddd',
+              border: '1px solid #4b5563',
               borderRadius: 4,
               fontFamily: 'monospace',
               fontSize: 14,
               resize: 'vertical',
               outline: 'none',
+              backgroundColor: '#374151',
+              color: '#e5e7eb',
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = '#0074D9';
+              e.target.style.borderColor = '#60a5fa';
             }}
             onBlur={(e) => {
-              e.target.style.borderColor = '#ddd';
+              e.target.style.borderColor = '#4b5563';
             }}
           />
         </div>
@@ -146,9 +148,10 @@ CREATE TABLE posts (
             disabled={isLoading}
             style={{
               padding: '8px 16px',
-              border: '1px solid #ddd',
+              border: '1px solid #4b5563',
               borderRadius: 4,
-              background: 'white',
+              background: '#374151',
+              color: '#e5e7eb',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.6 : 1,
             }}
@@ -162,7 +165,7 @@ CREATE TABLE posts (
               padding: '8px 16px',
               border: 'none',
               borderRadius: 4,
-              background: !sqlText.trim() || isLoading ? '#ccc' : '#0074D9',
+              background: !sqlText.trim() || isLoading ? '#4b5563' : '#3b82f6',
               color: 'white',
               cursor: !sqlText.trim() || isLoading ? 'not-allowed' : 'pointer',
               fontWeight: 'bold',
