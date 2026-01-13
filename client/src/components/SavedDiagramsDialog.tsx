@@ -207,7 +207,7 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                     <button
                       onClick={() => {
                         setMode('save');
-                        setEditingId(currentDiagramId);
+                        setEditingId(currentDiagramId || null);
                         setDiagramName(currentDiagram.name);
                         setDiagramDescription(currentDiagram.description || '');
                       }}

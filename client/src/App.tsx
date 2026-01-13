@@ -227,7 +227,7 @@ function CanvasPlayground() {
       console.log('Diagram saved successfully');
     } catch (error) {
       console.error('Failed to save diagram:', error);
-      showError(new Error('Failed to save diagram. Please try again.'), 'save');
+      showError(new Error('Failed to save diagram. Please try again.'), 'export');
     } finally {
       setIsSaving(false);
     }
