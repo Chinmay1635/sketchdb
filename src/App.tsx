@@ -26,9 +26,14 @@ import {
   ErrorDialog,
   CustomEdge,
 } from "./components";
+import { AutoSaveIndicator } from "./components/AutoSaveIndicator";
+
+// Storage Providers
+import { StorageProvider, useStorage } from "./context/storage-context";
+import { LocalConfigProvider } from "./context/local-config-context";
 
 // Hooks
-import { useTableManagement } from "./hooks/useTableManagement";
+import { useTableManagementWithStorage } from "./hooks/useTableManagementWithStorage";
 
 // Utils
 import {
@@ -57,8 +62,12 @@ const edgeTypes: EdgeTypes = {
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
-export default function CanvasPlayground() {
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+// Main Canvas Component with Storage
+function CanvasPlayground() {
+  const [edges, setEdges, onEdgesChangeDefault] = useEdgesState(initialEdges);
+  
+  // Storage context
+  const storage = useStorage();
 
   // Error handling
   const { error, showError, clearError, retryOperation, hasError } = useErrorHandler();
@@ -71,10 +80,15 @@ export default function CanvasPlayground() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [lastOperation, setLastOperation] = useState<(() => void) | null>(null);
 
-  // Table management hook
+  // Table management with storage integration
+  const tableManagement = useTableManagementWithStorage({
+    initialNodes,
+    setEdges
+  });
+
   const {
     nodes,
-    selectedTableId, // <-- add this
+    selectedTableId,
     selectedTable,
     attributes,
     isEditingTableName,
@@ -94,6 +108,12 @@ export default function CanvasPlayground() {
     saveTableName,
     cancelEditTableName,
     changeTableColor,
+
+    // Storage-specific functions
+    saveToStorage,
+    currentDiagram,
+    isStorageLoading,
+    autoSaveEnabled,
 
     // Attribute editing
     onStartAttrEdit,
@@ -122,7 +142,7 @@ export default function CanvasPlayground() {
     createFKEdge,
     removeFKEdge,
     importNodes,
-  } = useTableManagement(initialNodes, setEdges);
+  } = tableManagement;
 
   // Import schema functionality
   const importSchema = useCallback((sqlText: string) => {
@@ -184,7 +204,7 @@ export default function CanvasPlayground() {
 
   // Connection handling
   const onConnect = useCallback(
-    (params: Edge | Connection) => {
+    async (params: Edge | Connection) => {
       try {
         const connectionInfo = parseConnectionHandles(
           params.sourceHandle || null,
@@ -197,12 +217,65 @@ export default function CanvasPlayground() {
 
         const newEdge = createStyledEdge(params, nodes);
         setEdges((eds) => addEdge(newEdge as Connection, eds));
+
+        // Save relationship to storage
+        if (storage.currentDiagram?.id && params.source && params.target) {
+          try {
+            await storage.saveRelationship({
+              sourceTableId: params.source,
+              targetTableId: params.target,
+              sourceAttributeName: params.sourceHandle || 'id',
+              targetAttributeName: params.targetHandle || 'id',
+              type: 'one-to-many' // Default, can be enhanced later
+            });
+            console.log('Relationship saved to storage');
+          } catch (storageError) {
+            console.error('Failed to save relationship to storage:', storageError);
+            // Don't show error to user for storage issues, just log it
+          }
+        }
       } catch (error) {
         console.error('Failed to create connection:', error);
         showError(new Error('Failed to create connection between tables. Please try again.'), 'validation');
       }
     },
-    [setEdges, updateNodeAttributes, showError, nodes]
+    [setEdges, updateNodeAttributes, showError, nodes, storage]
+  );
+
+  // Custom edges change handler that also manages storage
+  const onEdgesChange = useCallback(
+    async (changes: any[]) => {
+      // Handle the default React Flow changes first
+      onEdgesChangeDefault(changes);
+
+      // Handle storage for edge deletions
+      for (const change of changes) {
+        if (change.type === 'remove' && storage.currentDiagram?.id) {
+          try {
+            // Find the relationship in storage and delete it
+            const relationships = await storage.listRelationships(storage.currentDiagram.id);
+            const edgeToDelete = edges.find(edge => edge.id === change.id);
+            
+            if (edgeToDelete) {
+              const relationshipToDelete = relationships.find(rel => 
+                rel.sourceTableId === edgeToDelete.source &&
+                rel.targetTableId === edgeToDelete.target &&
+                rel.sourceAttributeName === edgeToDelete.sourceHandle &&
+                rel.targetAttributeName === edgeToDelete.targetHandle
+              );
+              
+              if (relationshipToDelete && relationshipToDelete.id) {
+                await storage.deleteRelationship(relationshipToDelete.id);
+                console.log('Relationship deleted from storage');
+              }
+            }
+          } catch (storageError) {
+            console.error('Failed to delete relationship from storage:', storageError);
+          }
+        }
+      }
+    },
+    [onEdgesChangeDefault, storage, edges]
   );
 
   // Node selection
@@ -343,14 +416,20 @@ export default function CanvasPlayground() {
       />
 
       {/* Main Canvas Area */}
-      <div className="flex-1 relative">
-        {/* Toolbar */}
+      <div className="flex-1 relative pt-14">
+        {/* Auto Save Indicator */}
+        <div className="absolute top-2 right-4 z-10">
+          <AutoSaveIndicator />
+        </div>
+
+        {/* Toolbar (Navbar) */}
         <Toolbar 
           onAddTable={handleAddTable} 
           onExportSQL={exportToSQL}
           onImportSchema={handleImportSchema}
           onExportPNG={handleExportPNG}
           onExportPDF={handleExportPDF}
+          onManualSave={saveToStorage}
         />
 
         {/* Loading Dialog */}
@@ -422,5 +501,16 @@ export default function CanvasPlayground() {
         </ReactFlow>
       </div>
     </div>
+  );
+}
+
+// App component with providers
+export default function App() {
+  return (
+    <LocalConfigProvider>
+      <StorageProvider>
+        <CanvasPlayground />
+      </StorageProvider>
+    </LocalConfigProvider>
   );
 }
