@@ -1,7 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useStorage } from "../context/storage-context";
-import { CreateDiagramDialog } from "./CreateDiagramDialog";
-import { OpenDiagramDialog } from "./OpenDiagramDialog";
 
 interface ToolbarProps {
   onAddTable: () => void;
@@ -93,11 +90,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onImportSQLFile
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { currentDiagram } = useStorage();
-  
-  // Diagram management dialogs
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showOpenDialog, setShowOpenDialog] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
@@ -134,60 +126,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
             {/* Divider */}
             <div className="w-px h-6 bg-gray-300" />
-
-            {/* Current diagram name */}
-            {currentDiagram && (
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                <span className="text-sm font-medium text-gray-600">{currentDiagram.name}</span>
-              </div>
-            )}
           </div>
 
           {/* Center section - Main actions */}
           <div className="flex items-center gap-1">
-            {/* Manage Diagrams Dropdown */}
-            <DropdownMenu
-              label="Manage"
-              icon={
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-              }
-            >
-              <DropdownItem
-                onClick={() => setShowCreateDialog(true)}
-                icon={
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                }
-              >
-                New Diagram
-              </DropdownItem>
-              <DropdownItem
-                onClick={() => setShowOpenDialog(true)}
-                icon={
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
-                  </svg>
-                }
-              >
-                Open Diagram
-              </DropdownItem>
-              <DropdownDivider />
-              <DropdownItem
-                onClick={() => setShowOpenDialog(true)}
-                icon={
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                }
-              >
-                Switch Diagram
-              </DropdownItem>
-            </DropdownMenu>
-
             {/* Add Table Button */}
             <button
               onClick={onAddTable}
@@ -299,17 +241,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         onChange={handleFileChange}
         title="Upload SQL file"
         aria-label="Upload SQL file"
-      />
-
-      {/* Dialogs */}
-      <CreateDiagramDialog
-        isOpen={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-      />
-      
-      <OpenDiagramDialog
-        isOpen={showOpenDialog}
-        onClose={() => setShowOpenDialog(false)}
       />
     </>
   );

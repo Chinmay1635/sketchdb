@@ -9,5 +9,3 @@ export { ExportDialog } from './ExportDialog';
 export { ErrorDialog } from './ErrorDialog';
 export { ColorPicker } from './ColorPicker';
 export { default as CustomEdge } from './CustomEdge';
-export { CreateDiagramDialog } from './CreateDiagramDialog';
-export { OpenDiagramDialog } from './OpenDiagramDialog';
