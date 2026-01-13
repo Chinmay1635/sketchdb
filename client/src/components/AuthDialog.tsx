@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import Turnstile from './Turnstile';
+
+// Turnstile site key - use test key for development, replace with real key for production
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'; // Test key that always passes
 
 type AuthMode = 'login' | 'signup' | 'verify-otp' | 'forgot-password' | 'reset-password';
 
@@ -25,6 +29,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
   const [prn, setPrn] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const resetForm = () => {
     setEmail('');
@@ -34,6 +39,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
     setPrn('');
     setOtp('');
     setNewPassword('');
+    setTurnstileToken(null);
     setError(null);
     setSuccess(null);
   };
@@ -46,11 +52,17 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!turnstileToken) {
+      setError('Please complete the CAPTCHA verification');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await login(email, password);
+      const result = await login(email, password, turnstileToken);
       if (result.requiresVerification) {
         setMode('verify-otp');
         setSuccess('A verification code has been sent to your email.');
@@ -60,6 +72,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
       }
     } catch (err: any) {
       setError(err.message);
+      setTurnstileToken(null); // Reset token on error
     } finally {
       setIsLoading(false);
     }
@@ -67,6 +80,12 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!turnstileToken) {
+      setError('Please complete the CAPTCHA verification');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
 
@@ -83,11 +102,12 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
     }
 
     try {
-      await signup({ username, email, prn, password });
+      await signup({ username, email, prn, password, turnstileToken });
       setMode('verify-otp');
       setSuccess('Account created! Please check your email for the verification code.');
     } catch (err: any) {
       setError(err.message);
+      setTurnstileToken(null); // Reset token on error
     } finally {
       setIsLoading(false);
     }
@@ -231,9 +251,19 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                   required
                 />
               </div>
+              
+              {/* Turnstile CAPTCHA */}
+              <Turnstile
+                siteKey={TURNSTILE_SITE_KEY}
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+                theme="light"
+              />
+              
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !turnstileToken}
                 className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
               >
                 {isLoading ? 'Logging in...' : 'Login'}
@@ -318,9 +348,19 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                   required
                 />
               </div>
+              
+              {/* Turnstile CAPTCHA */}
+              <Turnstile
+                siteKey={TURNSTILE_SITE_KEY}
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+                theme="light"
+              />
+              
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !turnstileToken}
                 className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
               >
                 {isLoading ? 'Creating Account...' : 'Sign Up'}

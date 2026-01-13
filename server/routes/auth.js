@@ -13,6 +13,38 @@ const generateToken = (id) => {
   });
 };
 
+// Verify Turnstile token
+const verifyTurnstileToken = async (token) => {
+  if (!token) return false;
+  
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+  
+  // If no secret key is configured, skip verification in development
+  if (!secretKey) {
+    console.warn('TURNSTILE_SECRET_KEY not configured, skipping verification');
+    return true;
+  }
+  
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        secret: secretKey,
+        response: token,
+      }),
+    });
+    
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error('Turnstile verification error:', error);
+    return false;
+  }
+};
+
 // Validation rules
 const signupValidation = [
   body('username')
@@ -59,7 +91,16 @@ router.post('/signup', signupValidation, async (req, res) => {
       });
     }
 
-    const { username, email, prn, password } = req.body;
+    const { username, email, prn, password, turnstileToken } = req.body;
+
+    // Verify Turnstile token
+    const isTurnstileValid = await verifyTurnstileToken(turnstileToken);
+    if (!isTurnstileValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'CAPTCHA verification failed. Please try again.'
+      });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -244,7 +285,16 @@ router.post('/login', loginValidation, async (req, res) => {
       });
     }
 
-    const { email, password } = req.body;
+    const { email, password, turnstileToken } = req.body;
+
+    // Verify Turnstile token
+    const isTurnstileValid = await verifyTurnstileToken(turnstileToken);
+    if (!isTurnstileValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'CAPTCHA verification failed. Please try again.'
+      });
+    }
 
     // Find user
     const user = await User.findOne({ email: email.toLowerCase() });

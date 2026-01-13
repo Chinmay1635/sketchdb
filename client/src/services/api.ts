@@ -49,6 +49,7 @@ export const authAPI = {
     email: string;
     prn: string;
     password: string;
+    turnstileToken?: string;
   }) => {
     return apiRequest('/auth/signup', {
       method: 'POST',
@@ -74,10 +75,10 @@ export const authAPI = {
     });
   },
 
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string, turnstileToken?: string) => {
     const data = await apiRequest('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, turnstileToken }),
     });
     if (data.token) {
       setToken(data.token);

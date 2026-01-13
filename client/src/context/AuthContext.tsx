@@ -12,8 +12,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<any>;
-  signup: (userData: { username: string; email: string; prn: string; password: string }) => Promise<any>;
+  login: (email: string, password: string, turnstileToken?: string) => Promise<any>;
+  signup: (userData: { username: string; email: string; prn: string; password: string; turnstileToken?: string }) => Promise<any>;
   verifyOTP: (email: string, otp: string) => Promise<any>;
   resendOTP: (email: string) => Promise<any>;
   forgotPassword: (email: string) => Promise<any>;
@@ -49,15 +49,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const data = await authAPI.login(email, password);
+  const login = async (email: string, password: string, turnstileToken?: string) => {
+    const data = await authAPI.login(email, password, turnstileToken);
     if (data.user) {
       setUser(data.user);
     }
     return data;
   };
 
-  const signup = async (userData: { username: string; email: string; prn: string; password: string }) => {
+  const signup = async (userData: { username: string; email: string; prn: string; password: string; turnstileToken?: string }) => {
     return authAPI.signup(userData);
   };
 
