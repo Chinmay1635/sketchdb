@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { nanoid } = require('nanoid');
 
 // Use flexible schema for nodes and edges to preserve all ReactFlow data
 // This ensures all attributes, positions, colors, and relationships are saved exactly as sent
@@ -74,6 +75,27 @@ const diagramSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  slug: {
+    type: String,
+    unique: true,
+    default: () => nanoid(10), // Generate 10-character unique ID
+    index: true
+  },
+  isPublic: {
+    type: Boolean,
+    default: false // For future collaboration feature
+  },
+  collaborators: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    permission: {
+      type: String,
+      enum: ['view', 'edit'],
+      default: 'view'
+    }
+  }],
   name: {
     type: String,
     required: [true, 'Diagram name is required'],
@@ -119,5 +141,19 @@ diagramSchema.pre('findOneAndUpdate', function(next) {
 
 // Index for faster queries
 diagramSchema.index({ user: 1, createdAt: -1 });
+// Note: slug index is already defined inline with 'index: true'
+diagramSchema.index({ 'collaborators.user': 1 }); // For collaboration queries
+
+// Virtual to populate owner info
+diagramSchema.virtual('owner', {
+  ref: 'User',
+  localField: 'user',
+  foreignField: '_id',
+  justOne: true
+});
+
+// Ensure virtuals are included in JSON output
+diagramSchema.set('toJSON', { virtuals: true });
+diagramSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('Diagram', diagramSchema);
