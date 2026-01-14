@@ -77,6 +77,30 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
 
   const socketRef = useRef<Socket | null>(null);
   const stateProviderRequesterId = useRef<string | null>(null);
+  
+  // Use refs for callbacks to avoid stale closures
+  const callbacksRef = useRef({
+    onNodeAdd,
+    onNodeUpdate,
+    onNodeDelete,
+    onNodeMove,
+    onEdgeAdd,
+    onEdgeDelete,
+    onStateReceived
+  });
+  
+  // Update refs when callbacks change
+  useEffect(() => {
+    callbacksRef.current = {
+      onNodeAdd,
+      onNodeUpdate,
+      onNodeDelete,
+      onNodeMove,
+      onEdgeAdd,
+      onEdgeDelete,
+      onStateReceived
+    };
+  }, [onNodeAdd, onNodeUpdate, onNodeDelete, onNodeMove, onEdgeAdd, onEdgeDelete, onStateReceived]);
 
   const [state, setState] = useState<CollaborationState>({
     isConnected: false,
@@ -217,35 +241,35 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
       updateCollaboratorCursor(data.id, data.x, data.y);
     });
 
-    // Node operations from others
+    // Node operations from others - use refs to avoid stale closures
     socket.on('node-add', (data: { node: GenericNode; userId: string; username: string }) => {
       console.log(`📦 Node added by ${data.username}`);
-      onNodeAdd?.(data.node);
+      callbacksRef.current.onNodeAdd?.(data.node);
     });
 
     socket.on('node-update', (data: { nodeId: string; changes: Partial<GenericNode>; userId: string; username: string }) => {
       console.log(`📝 Node updated by ${data.username}`);
-      onNodeUpdate?.(data.nodeId, data.changes);
+      callbacksRef.current.onNodeUpdate?.(data.nodeId, data.changes);
     });
 
     socket.on('node-delete', (data: { nodeId: string; userId: string; username: string }) => {
       console.log(`🗑️ Node deleted by ${data.username}`);
-      onNodeDelete?.(data.nodeId);
+      callbacksRef.current.onNodeDelete?.(data.nodeId);
     });
 
     socket.on('node-move', (data: { nodeId: string; position: { x: number; y: number }; userId: string; username: string }) => {
-      onNodeMove?.(data.nodeId, data.position);
+      callbacksRef.current.onNodeMove?.(data.nodeId, data.position);
     });
 
-    // Edge operations from others
+    // Edge operations from others - use refs to avoid stale closures
     socket.on('edge-add', (data: { edge: GenericEdge; userId: string; username: string }) => {
       console.log(`🔗 Edge added by ${data.username}`);
-      onEdgeAdd?.(data.edge);
+      callbacksRef.current.onEdgeAdd?.(data.edge);
     });
 
     socket.on('edge-delete', (data: { edgeId: string; userId: string; username: string }) => {
       console.log(`🗑️ Edge deleted by ${data.username}`);
-      onEdgeDelete?.(data.edgeId);
+      callbacksRef.current.onEdgeDelete?.(data.edgeId);
     });
 
     // State request from late joiners
@@ -257,7 +281,7 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     // Receive state from another user
     socket.on('state-provided', (data: { nodes: GenericNode[]; edges: GenericEdge[] }) => {
       console.log('📋 State received from collaborator');
-      onStateReceived?.(data);
+      callbacksRef.current.onStateReceived?.(data);
     });
 
     // Error handling
@@ -267,7 +291,7 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     });
 
     socketRef.current = socket;
-  }, [addCollaborator, removeCollaborator, updateCollaboratorCursor, onNodeAdd, onNodeUpdate, onNodeDelete, onNodeMove, onEdgeAdd, onEdgeDelete, onStateReceived]);
+  }, [addCollaborator, removeCollaborator, updateCollaboratorCursor]);
 
   // Disconnect from socket server
   const disconnect = useCallback(() => {

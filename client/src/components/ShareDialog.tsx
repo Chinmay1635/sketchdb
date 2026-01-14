@@ -1,5 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { diagramsAPI } from '../services/api';
+
+interface Collaborator {
+  user: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  permission: 'view' | 'edit';
+}
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -25,18 +34,48 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Collaborator management
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [newCollaboratorEmail, setNewCollaboratorEmail] = useState('');
+  const [newCollaboratorPermission, setNewCollaboratorPermission] = useState<'view' | 'edit'>('edit');
+  const [isAddingCollaborator, setIsAddingCollaborator] = useState(false);
+  const [isLoadingCollaborators, setIsLoadingCollaborators] = useState(false);
 
   // Generate the public URL with /playground prefix
   const publicUrl = ownerUsername && diagramSlug 
     ? `${window.location.origin}/playground/${ownerUsername}/${diagramSlug}`
     : null;
 
+  // Load collaborators when dialog opens
+  const loadCollaborators = useCallback(async () => {
+    if (!diagramId) return;
+    
+    setIsLoadingCollaborators(true);
+    try {
+      const response = await diagramsAPI.getById(diagramId);
+      if (response.success && response.diagram?.collaborators) {
+        setCollaborators(response.diagram.collaborators);
+      }
+    } catch (err) {
+      console.error('Failed to load collaborators:', err);
+    } finally {
+      setIsLoadingCollaborators(false);
+    }
+  }, [diagramId]);
+
   useEffect(() => {
+    if (isOpen && diagramId) {
+      loadCollaborators();
+    }
     if (!isOpen) {
       setCopied(false);
       setError(null);
+      setSuccessMessage(null);
+      setNewCollaboratorEmail('');
     }
-  }, [isOpen]);
+  }, [isOpen, diagramId, loadCollaborators]);
 
   const handleTogglePublic = async () => {
     if (!diagramId) return;
@@ -52,6 +91,56 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
       setError(err.message || 'Failed to update visibility');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleAddCollaborator = async () => {
+    if (!diagramId || !newCollaboratorEmail.trim()) return;
+    
+    setIsAddingCollaborator(true);
+    setError(null);
+    setSuccessMessage(null);
+    
+    try {
+      await diagramsAPI.addCollaborator(diagramId, newCollaboratorEmail.trim(), newCollaboratorPermission);
+      setNewCollaboratorEmail('');
+      setSuccessMessage(`Collaborator added with ${newCollaboratorPermission} permission`);
+      await loadCollaborators();
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to add collaborator');
+    } finally {
+      setIsAddingCollaborator(false);
+    }
+  };
+
+  const handleRemoveCollaborator = async (userId: string) => {
+    if (!diagramId) return;
+    
+    try {
+      await diagramsAPI.removeCollaborator(diagramId, userId);
+      setCollaborators(prev => prev.filter(c => c.user._id !== userId));
+      setSuccessMessage('Collaborator removed');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to remove collaborator');
+    }
+  };
+
+  const handleUpdateCollaboratorPermission = async (userId: string, permission: 'view' | 'edit') => {
+    if (!diagramId) return;
+    
+    try {
+      const collaborator = collaborators.find(c => c.user._id === userId);
+      if (collaborator) {
+        await diagramsAPI.removeCollaborator(diagramId, userId);
+        await diagramsAPI.addCollaborator(diagramId, collaborator.user.email, permission);
+        await loadCollaborators();
+        setSuccessMessage('Permission updated');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to update permission');
     }
   };
 
@@ -79,7 +168,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
+      <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg border border-gray-700 max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <div className="flex items-center gap-3">
@@ -104,11 +193,18 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 overflow-y-auto flex-1">
           {/* Error message */}
           {error && (
             <div className="p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-300 text-sm">
               {error}
+            </div>
+          )}
+
+          {/* Success message */}
+          {successMessage && (
+            <div className="p-3 bg-green-900/50 border border-green-700 rounded-lg text-green-300 text-sm">
+              {successMessage}
             </div>
           )}
 
@@ -125,6 +221,115 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
                 You need to save your diagram before you can share it with others.
               </p>
             </div>
+          )}
+
+          {/* Collaborator section */}
+          {diagramId && (
+            <>
+              {/* Add Collaborator Section */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  Add Collaborator
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={newCollaboratorEmail}
+                    onChange={(e) => setNewCollaboratorEmail(e.target.value)}
+                    placeholder="Enter email address"
+                    className="flex-1 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddCollaborator()}
+                  />
+                  <select
+                    value={newCollaboratorPermission}
+                    onChange={(e) => setNewCollaboratorPermission(e.target.value as 'view' | 'edit')}
+                    className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="edit">Can edit</option>
+                    <option value="view">Can view</option>
+                  </select>
+                  <button
+                    onClick={handleAddCollaborator}
+                    disabled={isAddingCollaborator || !newCollaboratorEmail.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isAddingCollaborator ? (
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : (
+                      'Add'
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Current Collaborators */}
+              {(collaborators.length > 0 || isLoadingCollaborators) && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Collaborators ({collaborators.length})
+                  </label>
+                  
+                  {isLoadingCollaborators ? (
+                    <div className="flex items-center justify-center py-4">
+                      <svg className="w-6 h-6 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {collaborators.map((collab) => (
+                        <div
+                          key={collab.user._id}
+                          className="flex items-center justify-between p-3 bg-gray-900 rounded-lg border border-gray-700"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                              {collab.user.username.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-white">{collab.user.username}</p>
+                              <p className="text-xs text-gray-400">{collab.user.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={collab.permission}
+                              onChange={(e) => handleUpdateCollaboratorPermission(collab.user._id, e.target.value as 'view' | 'edit')}
+                              className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            >
+                              <option value="edit">Can edit</option>
+                              <option value="view">Can view</option>
+                            </select>
+                            <button
+                              onClick={() => handleRemoveCollaborator(collab.user._id)}
+                              className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                              title="Remove collaborator"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Divider */}
+              <div className="border-t border-gray-700" />
+            </>
           )}
 
           {/* Public toggle */}
@@ -150,7 +355,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
                     <p className="text-sm text-gray-400">
                       {isPublic 
                         ? 'Anyone with the link can view' 
-                        : 'Only you can access this diagram'}
+                        : 'Only you and collaborators can access'}
                     </p>
                   </div>
                 </div>
@@ -226,7 +431,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
           >
-            Close
+            Done
           </button>
         </div>
       </div>

@@ -124,7 +124,9 @@ router.get('/:id', protect, async (req, res) => {
     const diagram = await Diagram.findOne({
       _id: req.params.id,
       user: req.user._id
-    }).populate('user', 'username');
+    })
+    .populate('user', 'username')
+    .populate('collaborators.user', 'username email');
 
     if (!diagram) {
       return res.status(404).json({

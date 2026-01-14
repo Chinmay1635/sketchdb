@@ -213,6 +213,7 @@ function CanvasPlayground() {
     setEdges(prev => prev.filter(e => e.id !== edgeId));
   }, [setEdges]);
 
+  // Initialize collaboration hook FIRST - before any useEffect that uses it
   const collaboration = useCollaboration({
     diagramId: currentDiagramId || undefined,
     onNodeAdd: handleCollabNodeAdd,
@@ -222,6 +223,82 @@ function CanvasPlayground() {
     onEdgeAdd: handleCollabEdgeAdd,
     onEdgeDelete: handleCollabEdgeDelete,
   });
+
+  // Track previous nodes for detecting changes to broadcast
+  const prevNodesRef = useRef<string>('');
+  
+  // Auto-save and broadcast node changes
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const AUTO_SAVE_DELAY = 3000; // 3 seconds debounce
+  
+  // Refs for auto-save to avoid stale closures
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  useEffect(() => { nodesRef.current = nodes; }, [nodes]);
+  useEffect(() => { edgesRef.current = edges; }, [edges]);
+  
+  // Effect to detect and broadcast node changes + auto-save
+  useEffect(() => {
+    const currentNodesStr = JSON.stringify(nodes.map(n => ({ id: n.id, data: n.data, position: n.position })));
+    
+    if (prevNodesRef.current && prevNodesRef.current !== currentNodesStr) {
+      // Nodes changed - broadcast full state update to collaborators
+      if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+        // Parse to find what changed
+        try {
+          const prevNodes = JSON.parse(prevNodesRef.current);
+          const currNodes = nodes.map(n => ({ id: n.id, data: n.data, position: n.position }));
+          
+          // Find updated nodes (data changed, not position)
+          currNodes.forEach(curr => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const prev = prevNodes.find((p: any) => p.id === curr.id);
+            if (prev && JSON.stringify(prev.data) !== JSON.stringify(curr.data)) {
+              // Node data changed - broadcast update
+              collaboration.broadcastNodeUpdate(curr.id, { data: curr.data });
+            }
+          });
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+      
+      // Schedule auto-save for owner
+      if (currentDiagramId && isAuthenticated && currentPermission === 'owner') {
+        if (autoSaveTimeoutRef.current) {
+          clearTimeout(autoSaveTimeoutRef.current);
+        }
+        autoSaveTimeoutRef.current = setTimeout(async () => {
+          try {
+            setIsSaving(true);
+            const diagramData = {
+              name: currentDiagramName || 'Untitled Diagram',
+              description: '',
+              nodes: nodesRef.current, // Use ref to get current value
+              edges: edgesRef.current, // Use ref to get current value
+              sqlContent: safeGenerateSQL(nodesRef.current),
+              viewport: reactFlowInstance ? reactFlowInstance.getViewport() : { x: 0, y: 0, zoom: 1 },
+            };
+            await diagramsAPI.update(currentDiagramId, diagramData);
+            setLastSavedAt(new Date());
+            console.log('Auto-saved diagram');
+          } catch (error) {
+            console.error('Auto-save failed:', error);
+          } finally {
+            setIsSaving(false);
+          }
+        }, AUTO_SAVE_DELAY);
+      }
+    }
+    
+    prevNodesRef.current = currentNodesStr;
+    
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [nodes, collaboration.state.isConnected, collaboration.state.permission, currentDiagramId, isAuthenticated, currentPermission, currentDiagramName, reactFlowInstance, collaboration.broadcastNodeUpdate]);
 
   // Throttled cursor broadcast
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -504,8 +581,8 @@ function CanvasPlayground() {
         const newEdge = createStyledEdge(params, nodes);
         setEdges((eds) => addEdge(newEdge as Connection, eds));
         
-        // Broadcast edge to collaborators
-        if (collaboration.state.isConnected) {
+        // Broadcast edge to collaborators (broadcastEdgeAdd internally checks permission)
+        if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
           collaboration.broadcastEdgeAdd(newEdge as Edge);
         }
       } catch (error) {
@@ -516,13 +593,23 @@ function CanvasPlayground() {
     [setEdges, updateNodeAttributes, showError, nodes, collaboration]
   );
 
-  // Custom edges change handler
+  // Custom edges change handler with collaboration broadcast
   const onEdgesChange = useCallback(
-    async (changes: any[]) => {
+    (changes: any[]) => {
+      // Track removed edges for collaboration
+      const removedEdges = changes.filter((c: any) => c.type === 'remove');
+      
       // Handle the default React Flow changes
       onEdgesChangeDefault(changes);
+      
+      // Broadcast edge removals to collaborators
+      if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+        removedEdges.forEach((change: any) => {
+          collaboration.broadcastEdgeDelete(change.id);
+        });
+      }
     },
-    [onEdgesChangeDefault]
+    [onEdgesChangeDefault, collaboration]
   );
 
   // Wrapped onNodesChange with collaboration broadcast
@@ -741,7 +828,15 @@ function CanvasPlayground() {
   }
 
   // Determine if the current user can only view (not edit)
-  const isReadOnly = currentPermission === 'view' || (!!urlSlug && !isAuthenticated && currentPermission !== 'owner');
+  // User can edit if:
+  // - They are the owner (currentPermission === 'owner')
+  // - They are a collaborator with edit permission (currentPermission === 'edit')
+  // - They are on a playground without a slug (new diagram)
+  const canEdit = 
+    currentPermission === 'owner' || 
+    currentPermission === 'edit' || 
+    (!urlSlug && isAuthenticated);
+  const isReadOnly = !canEdit;
 
   return (
     <div className="w-screen h-screen flex bg-gray-900">
