@@ -16,7 +16,7 @@ export const DiagramPage: React.FC<DiagramPageProps> = ({ onLoadDiagram, onError
   useEffect(() => {
     const loadDiagram = async () => {
       if (!username || !slug) {
-        navigate('/', { replace: true });
+        navigate('/playground', { replace: true });
         return;
       }
 
@@ -70,7 +70,7 @@ export const DiagramPage: React.FC<DiagramPageProps> = ({ onLoadDiagram, onError
           <p className="text-gray-400 mb-6">{error}</p>
           <div className="flex gap-4 justify-center">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/playground')}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Go to Home

@@ -26,9 +26,9 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Generate the public URL
+  // Generate the public URL with /playground prefix
   const publicUrl = ownerUsername && diagramSlug 
-    ? `${window.location.origin}/${ownerUsername}/${diagramSlug}`
+    ? `${window.location.origin}/playground/${ownerUsername}/${diagramSlug}`
     : null;
 
   useEffect(() => {

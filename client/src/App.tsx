@@ -40,6 +40,7 @@ import {
 import AuthDialog from "./components/AuthDialog";
 import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
 import UserMenu from "./components/UserMenu";
+import LandingPage from "./components/LandingPage";
 
 // Context
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -298,7 +299,7 @@ function CanvasPlayground() {
       // Navigate to diagram URL
       const ownerUsername = diagram.ownerUsername || diagram.username || user?.username;
       if (ownerUsername && diagram.slug) {
-        navigate(`/${ownerUsername}/${diagram.slug}`, { replace: true });
+        navigate(`/playground/${ownerUsername}/${diagram.slug}`, { replace: true });
       }
       
       console.log('Diagram loaded successfully:', diagram.name);
@@ -354,7 +355,7 @@ function CanvasPlayground() {
       setCurrentDiagramSlug(slug);
       setCurrentOwnerUsername(user.username);
       setCurrentPermission('owner');
-      navigate(`/${user.username}/${slug}`, { replace: true });
+      navigate(`/playground/${user.username}/${slug}`, { replace: true });
     }
   }, [navigate, user]);
 
@@ -584,7 +585,7 @@ function CanvasPlayground() {
     setCurrentOwnerUsername(null);
     setCurrentPermission(null);
     setLastSavedAt(null);
-    navigate('/', { replace: true });
+    navigate('/playground', { replace: true });
   }, [importNodes, setEdges, navigate]);
 
   // Show loading state when loading diagram from URL
@@ -611,7 +612,7 @@ function CanvasPlayground() {
           </p>
           <div className="flex gap-4 justify-center">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/playground')}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Go to Home
@@ -802,11 +803,12 @@ function CanvasPlayground() {
 }
 
 // Wrapper component for the canvas with routes
-function CanvasWithRoutes() {
+function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<CanvasPlayground />} />
-      <Route path="/:username/:slug" element={<CanvasPlayground />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/playground" element={<CanvasPlayground />} />
+      <Route path="/playground/:username/:slug" element={<CanvasPlayground />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -817,7 +819,7 @@ export default function App() {
   return (
     <AuthProvider>
       <ReactFlowProvider>
-        <CanvasWithRoutes />
+        <AppRoutes />
       </ReactFlowProvider>
     </AuthProvider>
   );
