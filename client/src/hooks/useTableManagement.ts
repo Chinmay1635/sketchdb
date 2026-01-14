@@ -329,18 +329,56 @@ export const useTableManagement = (
   const saveTableName = useCallback(() => {
     if (!selectedTableId || !editTableName.trim()) return;
     
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id !== selectedTableId) return node;
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            label: editTableName.trim(),
-          },
-        };
-      })
-    );
+    setNodes((nds) => {
+      // Find the old table name
+      const tableToUpdate = nds.find(n => n.id === selectedTableId);
+      if (!tableToUpdate) return nds;
+      
+      const oldTableName = typeof tableToUpdate.data?.label === 'string' 
+        ? tableToUpdate.data.label.replace(/\s+/g, '_')
+        : `Table_${selectedTableId}`;
+      const newTableName = editTableName.trim().replace(/\s+/g, '_');
+      
+      console.log(`Renaming table from '${oldTableName}' to '${newTableName}'`);
+      
+      // Update all nodes - rename the table and update FK references
+      return nds.map((node) => {
+        const nodeData = node.data as TableData;
+        
+        if (node.id === selectedTableId) {
+          // Update the table name
+          return {
+            ...node,
+            data: {
+              ...nodeData,
+              label: editTableName.trim(),
+            },
+          };
+        } else {
+          // Update FK references in other tables that point to the renamed table
+          const hasChanges = nodeData.attributes?.some((attr: TableAttribute) => 
+            attr.type === 'FK' && attr.refTable === oldTableName
+          );
+          
+          if (!hasChanges) return node;
+          
+          console.log(`Updating FK references in table ${node.id}`);
+          
+          const updatedAttrs = nodeData.attributes.map((attr: TableAttribute) => {
+            if (attr.type === 'FK' && attr.refTable === oldTableName) {
+              console.log(`  Updating FK ${attr.name}: ${oldTableName} -> ${newTableName}`);
+              return {
+                ...attr,
+                refTable: newTableName,
+              };
+            }
+            return attr;
+          });
+          
+          return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+        }
+      });
+    });
     setIsEditingTableName(false);
     setEditTableName("");
   }, [selectedTableId, editTableName, setNodes]);
@@ -464,67 +502,82 @@ export const useTableManagement = (
   const onSaveAttrName = useCallback((idx: number) => {
     if (!selectedTableId) return;
     
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id !== selectedTableId) return node;
-        const nodeData = node.data as TableData;
-        const attr = nodeData.attributes[idx];
-        const oldType = attr.type;
-        const newType = attr.editType || attr.type;
-        const oldRefTable = attr.refTable;
-        const oldRefAttr = attr.refAttr;
-        const newRefTable = attr.editRefTable || attr.refTable;
-        const newRefAttr = attr.editRefAttr || attr.refAttr;
-        
-        // Handle edge management for FK changes
-        if (setEdges) {
-          // If changing FROM FK to something else, remove the old edge
-          if (oldType === 'FK' && newType !== 'FK') {
-            // Remove any edge involving this attribute
-            removeEdgesByAttribute(selectedTableId, attr.name);
-          }
-          
-          // If changing FK reference (but staying FK), remove old edge first
-          if (oldType === 'FK' && newType === 'FK' && 
-              (oldRefTable !== newRefTable || oldRefAttr !== newRefAttr)) {
-            removeEdgesByAttribute(selectedTableId, attr.name);
-          }
-          
-          // If changing TO FK, validate and create new edge
-          if (newType === 'FK') {
-            const refTableName = newRefTable;
-            const refAttrName = newRefAttr;
-            
-            if (!refTableName || !refAttrName) {
-              console.warn('Foreign key reference is incomplete');
-              return node; // Don't save if FK reference is incomplete
-            }
-            
-            // Find the referenced table by label
-            const refTable = nds.find(n => 
-              typeof n.data?.label === 'string' && n.data.label === refTableName
-            );
-            
-            if (!refTable) {
-              console.warn(`Referenced table "${refTableName}" not found`);
-              return node; // Don't save if referenced table doesn't exist
-            }
-            
-            // Check if referenced attribute exists
-            const refAttrExists = Array.isArray(refTable.data?.attributes) && 
-              refTable.data.attributes.some((a: TableAttribute) => a.name === refAttrName);
-            
-            if (!refAttrExists) {
-              console.warn(`Referenced attribute "${refAttrName}" not found in table "${refTableName}"`);
-              return node; // Don't save if referenced attribute doesn't exist
-            }
-            
-            // Create the FK edge
-            createFKEdge(refTable.id, refAttrName, selectedTableId, attr.name);
-          }
+    // First, gather the necessary information to handle edge updates
+    let edgeUpdates: { action: 'remove' | 'create', sourceTableId?: string, sourceAttrName?: string, targetTableId?: string, targetAttrName?: string, tableId?: string, attrName?: string }[] = [];
+    
+    setNodes((nds) => {
+      const nodeToUpdate = nds.find(n => n.id === selectedTableId);
+      if (!nodeToUpdate) return nds;
+      
+      const nodeData = nodeToUpdate.data as TableData;
+      if (!nodeData.attributes || !nodeData.attributes[idx]) return nds;
+      
+      const attr = nodeData.attributes[idx];
+      const oldType = attr.type;
+      const newType = attr.editType || attr.type;
+      const oldRefTable = attr.refTable;
+      const oldRefAttr = attr.refAttr;
+      const newRefTable = attr.editRefTable || attr.refTable;
+      const newRefAttr = attr.editRefAttr || attr.refAttr;
+      
+      // Prepare edge updates
+      if (setEdges) {
+        // If changing FROM FK to something else, remove the old edge
+        if (oldType === 'FK' && newType !== 'FK') {
+          edgeUpdates.push({ action: 'remove', tableId: selectedTableId, attrName: attr.name });
         }
         
-        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+        // If changing FK reference (but staying FK), remove old edge first
+        if (oldType === 'FK' && newType === 'FK' && 
+            (oldRefTable !== newRefTable || oldRefAttr !== newRefAttr)) {
+          edgeUpdates.push({ action: 'remove', tableId: selectedTableId, attrName: attr.name });
+        }
+        
+        // If changing TO FK, validate and prepare edge creation
+        if (newType === 'FK') {
+          const refTableName = newRefTable;
+          const refAttrName = newRefAttr;
+          
+          if (!refTableName || !refAttrName) {
+            console.warn('Foreign key reference is incomplete');
+            return nds; // Don't save if FK reference is incomplete
+          }
+          
+          // Find the referenced table by label
+          const refTable = nds.find(n => 
+            typeof n.data?.label === 'string' && n.data.label === refTableName
+          );
+          
+          if (!refTable) {
+            console.warn(`Referenced table "${refTableName}" not found`);
+            return nds; // Don't save if referenced table doesn't exist
+          }
+          
+          // Check if referenced attribute exists
+          const refAttrExists = Array.isArray(refTable.data?.attributes) && 
+            refTable.data.attributes.some((a: TableAttribute) => a.name === refAttrName);
+          
+          if (!refAttrExists) {
+            console.warn(`Referenced attribute "${refAttrName}" not found in table "${refTableName}"`);
+            return nds; // Don't save if referenced attribute doesn't exist
+          }
+          
+          // Queue edge creation
+          edgeUpdates.push({ 
+            action: 'create', 
+            sourceTableId: refTable.id, 
+            sourceAttrName: refAttrName, 
+            targetTableId: selectedTableId, 
+            targetAttrName: attr.editName || attr.name 
+          });
+        }
+      }
+      
+      // Update the node
+      return nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const currentNodeData = node.data as TableData;
+        const updatedAttrs = currentNodeData.attributes.map((attr: TableAttribute, i: number) =>
           i === idx ? { 
             ...attr, 
             name: attr.editName || attr.name, 
@@ -540,10 +593,23 @@ export const useTableManagement = (
             editRefAttr: ""
           } : attr
         );
-        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
-      })
-    );
-  }, [selectedTableId, setNodes, setEdges, createFKEdge, removeFKEdge]);
+        return { ...node, data: { ...currentNodeData, attributes: updatedAttrs } };
+      });
+    });
+    
+    // Apply edge updates after nodes are updated
+    if (setEdges && edgeUpdates.length > 0) {
+      setTimeout(() => {
+        edgeUpdates.forEach(update => {
+          if (update.action === 'remove' && update.tableId && update.attrName) {
+            removeEdgesByAttribute(update.tableId, update.attrName);
+          } else if (update.action === 'create' && update.sourceTableId && update.sourceAttrName && update.targetTableId && update.targetAttrName) {
+            createFKEdge(update.sourceTableId, update.sourceAttrName, update.targetTableId, update.targetAttrName);
+          }
+        });
+      }, 0);
+    }
+  }, [selectedTableId, setNodes, setEdges, createFKEdge, removeEdgesByAttribute]);
 
   const onCancelAttrEdit = useCallback((idx: number) => {
     if (!selectedTableId) return;
@@ -573,42 +639,85 @@ export const useTableManagement = (
     try {
       console.log(`Deleting attribute at index: ${idx} from table: ${selectedTableId}`);
       
-      // First, get the attribute that will be deleted to clean up references
-      const nodeToUpdate = nodes.find(n => n.id === selectedTableId);
-      if (!nodeToUpdate) return;
-      
-      const nodeData = nodeToUpdate.data as TableData;
-      const attrToDelete = nodeData.attributes[idx];
-      
-      if (!attrToDelete) return;
-      
-      console.log(`Deleting attribute: ${attrToDelete.name}`);
-      
-      // Clean up any foreign key references to this attribute in other tables
-      cleanupForeignKeyReferences(selectedTableId, attrToDelete.name);
-      
-      // Then remove the attribute from its own table
-      setNodes((nds) =>
-        nds.map((node) => {
-          if (node.id !== selectedTableId) return node;
+      // Use setNodes with functional update to get current state
+      setNodes((nds) => {
+        const nodeToUpdate = nds.find(n => n.id === selectedTableId);
+        if (!nodeToUpdate) return nds;
+        
+        const nodeData = nodeToUpdate.data as TableData;
+        if (!nodeData.attributes || !nodeData.attributes[idx]) return nds;
+        
+        const attrToDelete = nodeData.attributes[idx];
+        console.log(`Deleting attribute: ${attrToDelete.name}`);
+        
+        // Get the attribute name before deletion for edge cleanup
+        const attrName = attrToDelete.name;
+        const tableId = selectedTableId;
+        
+        // Clean up edges involving this attribute
+        if (setEdges) {
+          setEdges((edges) => 
+            edges.filter(edge => {
+              const sourceHandle = `${tableId}-${attrName}-source`;
+              const targetHandle = `${tableId}-${attrName}-target`;
+              
+              return !(
+                edge.sourceHandle === sourceHandle || 
+                edge.targetHandle === targetHandle ||
+                (edge.source === tableId && edge.sourceHandle?.includes(`-${attrName}-`)) ||
+                (edge.target === tableId && edge.targetHandle?.includes(`-${attrName}-`))
+              );
+            })
+          );
+        }
+        
+        // Find the source table name for FK cleanup
+        const sourceTableName = typeof nodeToUpdate.data?.label === 'string' 
+          ? nodeToUpdate.data.label.replace(/\s+/g, '_')
+          : `Table_${tableId}`;
+        
+        // Update all nodes - remove the attribute and clean up FK references
+        return nds.map((node) => {
+          const currentNodeData = node.data as TableData;
           
-          const nodeData = node.data as TableData;
-          const updatedAttrs = nodeData.attributes.filter((_: TableAttribute, i: number) => i !== idx);
-          
-          console.log(`Removed attribute ${attrToDelete.name}, remaining attributes:`, updatedAttrs.map(a => a.name));
-          
-          return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
-        })
-      );
-      
-      // Remove any remaining edges involving this attribute
-      removeEdgesByAttribute(selectedTableId, attrToDelete.name);
+          if (node.id === selectedTableId) {
+            // Remove the attribute from this table
+            const updatedAttrs = currentNodeData.attributes.filter((_: TableAttribute, i: number) => i !== idx);
+            console.log(`Removed attribute ${attrName}, remaining attributes:`, updatedAttrs.map(a => a.name));
+            return { ...node, data: { ...currentNodeData, attributes: updatedAttrs } };
+          } else {
+            // Clean up FK references in other tables
+            const hasChanges = currentNodeData.attributes?.some((attr: TableAttribute) => 
+              attr.type === 'FK' && 
+              attr.refTable === sourceTableName && 
+              attr.refAttr === attrName
+            );
+            
+            if (!hasChanges) return node;
+            
+            const updatedAttrs = currentNodeData.attributes.map((attr: TableAttribute) => {
+              if (attr.type === 'FK' && attr.refTable === sourceTableName && attr.refAttr === attrName) {
+                console.log(`Converting FK ${attr.name} back to normal attribute`);
+                return {
+                  ...attr,
+                  type: 'normal' as const,
+                  refTable: undefined,
+                  refAttr: undefined,
+                };
+              }
+              return attr;
+            });
+            
+            return { ...node, data: { ...currentNodeData, attributes: updatedAttrs } };
+          }
+        });
+      });
       
     } catch (error) {
       console.error('Error deleting attribute:', error);
       showError(error, 'validation');
     }
-  }, [selectedTableId, setNodes, setEdges, removeEdgesByAttribute, cleanupForeignKeyReferences, nodes, showError]);
+  }, [selectedTableId, setNodes, setEdges, showError]);
 
   // Connection handling
   const updateNodeAttributes = useCallback((connectionInfo: any) => {

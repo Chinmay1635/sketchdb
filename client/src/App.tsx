@@ -49,6 +49,16 @@ import { diagramsAPI } from "./services/api";
 // Types
 import { AttributeType, DataType } from "./types";
 
+// Safe SQL generator that doesn't throw
+const safeGenerateSQL = (nodes: Node[]): string => {
+  try {
+    return generateSQL(nodes);
+  } catch (e) {
+    console.error('SQL generation error:', e);
+    return '-- SQL generation failed. Please check your schema for errors.';
+  }
+};
+
 // Node types configuration
 const nodeTypes: NodeTypes = {
   tableNode: TableNode,
@@ -490,7 +500,7 @@ function CanvasPlayground() {
         onSaveComplete={handleSaveComplete}
         currentNodes={nodes}
         currentEdges={edges}
-        sqlContent={generateSQL(nodes)}
+        sqlContent={safeGenerateSQL(nodes)}
         viewport={getViewport()}
         currentDiagramId={currentDiagramId}
       />
