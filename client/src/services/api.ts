@@ -123,6 +123,30 @@ export const diagramsAPI = {
     return apiRequest(`/diagrams/${id}`);
   },
 
+  // Get diagram by URL params (username and slug)
+  getBySlug: async (username: string, slug: string) => {
+    return apiRequest(`/diagrams/by-slug/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`);
+  },
+
+  // Update diagram by slug
+  updateBySlug: async (
+    slug: string,
+    diagramData: {
+      name: string;
+      description?: string;
+      nodes: any[];
+      edges: any[];
+      sqlContent: string;
+      viewport?: { x: number; y: number; zoom: number };
+      isPublic?: boolean;
+    }
+  ) => {
+    return apiRequest(`/diagrams/by-slug/${encodeURIComponent(slug)}`, {
+      method: 'PUT',
+      body: JSON.stringify(diagramData),
+    });
+  },
+
   create: async (diagramData: {
     name: string;
     description?: string;
@@ -146,6 +170,7 @@ export const diagramsAPI = {
       edges: any[];
       sqlContent: string;
       viewport?: { x: number; y: number; zoom: number };
+      isPublic?: boolean;
     }
   ) => {
     return apiRequest(`/diagrams/${id}`, {
@@ -163,6 +188,29 @@ export const diagramsAPI = {
   duplicate: async (id: string) => {
     return apiRequest(`/diagrams/${id}/duplicate`, {
       method: 'POST',
+    });
+  },
+
+  // Add collaborator to diagram
+  addCollaborator: async (id: string, email: string, permission: 'view' | 'edit') => {
+    return apiRequest(`/diagrams/${id}/collaborators`, {
+      method: 'POST',
+      body: JSON.stringify({ email, permission }),
+    });
+  },
+
+  // Remove collaborator from diagram
+  removeCollaborator: async (id: string, userId: string) => {
+    return apiRequest(`/diagrams/${id}/collaborators/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Update diagram visibility (public/private)
+  updateVisibility: async (id: string, isPublic: boolean) => {
+    return apiRequest(`/diagrams/${id}/visibility`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isPublic }),
     });
   },
 };

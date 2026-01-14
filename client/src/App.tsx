@@ -35,6 +35,7 @@ import {
   ErrorDialog,
   CustomEdge,
   NotFound,
+  ShareDialog,
 } from "./components";
 import AuthDialog from "./components/AuthDialog";
 import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
@@ -109,9 +110,11 @@ function CanvasPlayground() {
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [loadingDialogOpen, setLoadingDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [sqlText, setSqlText] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [lastOperation, setLastOperation] = useState<(() => void) | null>(null);
+  const [isPublic, setIsPublic] = useState(false);
 
   // Table management
   const tableManagement = useTableManagement(
@@ -220,6 +223,7 @@ function CanvasPlayground() {
           setCurrentDiagramName(diagram.name);
           setCurrentOwnerUsername(diagram.ownerUsername);
           setCurrentPermission(diagram.permission);
+          setIsPublic(diagram.isPublic || false);
           setLastSavedAt(diagram.updatedAt ? new Date(diagram.updatedAt) : new Date());
           
           console.log('Diagram loaded from URL:', diagram.name);
@@ -288,6 +292,7 @@ function CanvasPlayground() {
       setCurrentDiagramName(diagram.name);
       setCurrentOwnerUsername(diagram.ownerUsername || diagram.username);
       setCurrentPermission(diagram.permission || 'owner');
+      setIsPublic(diagram.isPublic || false);
       setLastSavedAt(diagram.updatedAt ? new Date(diagram.updatedAt) : new Date());
       
       // Navigate to diagram URL
@@ -626,6 +631,9 @@ function CanvasPlayground() {
     );
   }
 
+  // Determine if the current user can only view (not edit)
+  const isReadOnly = currentPermission === 'view' || (!!urlSlug && !isAuthenticated && currentPermission !== 'owner');
+
   return (
     <div className="w-screen h-screen flex bg-gray-900">
       {/* Navbar - Fixed at top */}
@@ -638,12 +646,15 @@ function CanvasPlayground() {
         onExportSQLFile={downloadSQL}
         onImportSQLFile={handleImportSQLFile}
         onSave={handleQuickSave}
+        onShare={() => setShareDialogOpen(true)}
         isSaving={isSaving}
         lastSavedAt={lastSavedAt}
         currentDiagramName={currentDiagramName}
+        currentDiagramId={currentDiagramId}
         isAuthenticated={isAuthenticated}
         onLoginClick={() => setAuthDialogOpen(true)}
         onSavedDiagramsClick={() => setSavedDiagramsDialogOpen(true)}
+        isReadOnly={isReadOnly}
       />
 
       {/* Auth Dialog */}
@@ -665,7 +676,20 @@ function CanvasPlayground() {
         currentDiagramId={currentDiagramId}
       />
 
-      {/* Sidebar */}
+      {/* Share Dialog */}
+      <ShareDialog
+        isOpen={shareDialogOpen}
+        onClose={() => setShareDialogOpen(false)}
+        diagramId={currentDiagramId}
+        diagramSlug={currentDiagramSlug}
+        ownerUsername={currentOwnerUsername}
+        diagramName={currentDiagramName}
+        isPublic={isPublic}
+        onVisibilityChange={setIsPublic}
+      />
+
+      {/* Sidebar - Hidden in read-only mode */}
+      {!isReadOnly && (
       <Sidebar
         selectedTable={selectedTable}
         attributes={attributes}
@@ -701,9 +725,10 @@ function CanvasPlayground() {
         getAttributesForTable={getAttributesForTable}
         validateFKReference={validateFKReference}
       />
+      )}
 
       {/* Main Canvas Area */}
-      <div className="flex-1 relative pt-14 bg-black">
+      <div className={`flex-1 relative bg-black ${isReadOnly ? 'pt-[86px]' : 'pt-14'}`}>
         {/* Loading Dialog */}
         <LoadingDialog
           isOpen={loadingDialogOpen}
