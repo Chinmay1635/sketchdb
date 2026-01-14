@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const http = require('http');
 const connectDB = require('./config/db');
+const { initializeSocket, getRoomStats } = require('./socket');
 
 // Load environment variables
 dotenv.config();
@@ -10,6 +12,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const httpServer = http.createServer(app);
 
 // CORS configuration
 app.use(cors({
@@ -38,6 +41,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Socket.IO room statistics (for debugging/monitoring)
+app.get('/api/socket-stats', (req, res) => {
+  try {
+    const stats = getRoomStats();
+    res.json({ success: true, stats });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to get stats' });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -57,7 +70,13 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// Initialize Socket.IO for real-time collaboration
+const io = initializeSocket(httpServer);
+
+// Make io available to routes if needed
+app.set('io', io);
+
+httpServer.listen(PORT, () => {
   console.log(`
   ╔═══════════════════════════════════════════════╗
   ║                                               ║
@@ -66,6 +85,7 @@ app.listen(PORT, () => {
   ║                                               ║
   ║   Server running on port ${PORT}                 ║
   ║   Environment: ${process.env.NODE_ENV || 'development'}                    ║
+  ║   Socket.IO: ✅ Enabled                       ║
   ║                                               ║
   ╚═══════════════════════════════════════════════╝
   `);

@@ -36,6 +36,8 @@ import {
   CustomEdge,
   NotFound,
   ShareDialog,
+  CollaboratorCursors,
+  CollaboratorAvatars,
 } from "./components";
 import AuthDialog from "./components/AuthDialog";
 import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
@@ -47,6 +49,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Hooks
 import { useTableManagement } from "./hooks/useTableManagement";
+import { useCollaboration } from "./hooks/useCollaboration";
 
 // Utils
 import { parseConnectionHandles, createStyledEdge, isValidConnection } from "./utils/connectionUtils";
@@ -173,7 +176,71 @@ function CanvasPlayground() {
     createFKEdge,
     removeFKEdge,
     importNodes,
+    setNodes, // For collaboration updates
   } = tableManagement;
+
+  // Collaboration hook - handles real-time sync
+  const cursorThrottleRef = useRef<number>(0);
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleCollabNodeAdd = useCallback((node: any) => {
+    setNodes((prev: Node[]) => [...prev, node as Node]);
+  }, [setNodes]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleCollabNodeUpdate = useCallback((nodeId: string, changes: any) => {
+    setNodes((prev: Node[]) => prev.map(n => 
+      n.id === nodeId ? { ...n, ...changes, data: { ...n.data, ...(changes.data || {}) } } : n
+    ));
+  }, [setNodes]);
+
+  const handleCollabNodeDelete = useCallback((nodeId: string) => {
+    setNodes((prev: Node[]) => prev.filter(n => n.id !== nodeId));
+  }, [setNodes]);
+
+  const handleCollabNodeMove = useCallback((nodeId: string, position: { x: number; y: number }) => {
+    setNodes((prev: Node[]) => prev.map(n =>
+      n.id === nodeId ? { ...n, position } : n
+    ));
+  }, [setNodes]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleCollabEdgeAdd = useCallback((edge: any) => {
+    setEdges(prev => [...prev, edge as Edge]);
+  }, [setEdges]);
+
+  const handleCollabEdgeDelete = useCallback((edgeId: string) => {
+    setEdges(prev => prev.filter(e => e.id !== edgeId));
+  }, [setEdges]);
+
+  const collaboration = useCollaboration({
+    diagramId: currentDiagramId || undefined,
+    onNodeAdd: handleCollabNodeAdd,
+    onNodeUpdate: handleCollabNodeUpdate,
+    onNodeDelete: handleCollabNodeDelete,
+    onNodeMove: handleCollabNodeMove,
+    onEdgeAdd: handleCollabEdgeAdd,
+    onEdgeDelete: handleCollabEdgeDelete,
+  });
+
+  // Throttled cursor broadcast
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!collaboration.state.isConnected || !collaboration.state.diagramId) return;
+    
+    const now = Date.now();
+    if (now - cursorThrottleRef.current < 50) return; // 20fps max
+    cursorThrottleRef.current = now;
+
+    // Convert screen coordinates to flow coordinates
+    const bounds = e.currentTarget.getBoundingClientRect();
+    const viewport = reactFlowInstance?.getViewport();
+    if (!viewport) return;
+
+    const x = (e.clientX - bounds.left - viewport.x) / viewport.zoom;
+    const y = (e.clientY - bounds.top - viewport.y) / viewport.zoom;
+
+    collaboration.broadcastCursor(x, y);
+  }, [collaboration, reactFlowInstance]);
 
   // Load diagram from URL parameters
   useEffect(() => {
@@ -436,12 +503,17 @@ function CanvasPlayground() {
 
         const newEdge = createStyledEdge(params, nodes);
         setEdges((eds) => addEdge(newEdge as Connection, eds));
+        
+        // Broadcast edge to collaborators
+        if (collaboration.state.isConnected) {
+          collaboration.broadcastEdgeAdd(newEdge as Edge);
+        }
       } catch (error) {
         console.error('Failed to create connection:', error);
         showError(new Error('Failed to create connection between tables. Please try again.'), 'validation');
       }
     },
-    [setEdges, updateNodeAttributes, showError, nodes]
+    [setEdges, updateNodeAttributes, showError, nodes, collaboration]
   );
 
   // Custom edges change handler
@@ -452,6 +524,33 @@ function CanvasPlayground() {
     },
     [onEdgesChangeDefault]
   );
+
+  // Wrapped onNodesChange with collaboration broadcast
+  const lastNodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const nodePositionThrottleRef = useRef<Map<string, number>>(new Map());
+  
+  const handleNodesChange = useCallback((changes: any[]) => {
+    onNodesChange(changes);
+    
+    // Broadcast position changes to collaborators
+    if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+      changes.forEach((change: any) => {
+        if (change.type === 'position' && change.position && !change.dragging) {
+          // Node drag ended - broadcast final position
+          const nodeId = change.id;
+          const position = change.position;
+          
+          // Throttle broadcasts per node
+          const now = Date.now();
+          const lastBroadcast = nodePositionThrottleRef.current.get(nodeId) || 0;
+          if (now - lastBroadcast > 100) {
+            collaboration.broadcastNodeMove(nodeId, position);
+            nodePositionThrottleRef.current.set(nodeId, now);
+          }
+        }
+      });
+    }
+  }, [onNodesChange, collaboration]);
 
   // Node selection
   const onNodeClick = useCallback(
@@ -531,7 +630,7 @@ function CanvasPlayground() {
     }
   }, [sqlText, showError]);
 
-  // Wrapped functions with error handling
+  // Wrapped functions with error handling and collaboration broadcast
   const handleAddAttribute = useCallback(() => {
     try {
       addAttribute();
@@ -543,12 +642,16 @@ function CanvasPlayground() {
 
   const handleAddTable = useCallback(() => {
     try {
-      addTable();
+      const newNode = addTable();
+      // Broadcast to collaborators
+      if (newNode && collaboration.state.isConnected) {
+        collaboration.broadcastNodeAdd(newNode);
+      }
     } catch (error) {
       console.error('Failed to add table:', error);
       showError(error, 'validation');
     }
-  }, [addTable, showError]);
+  }, [addTable, showError, collaboration]);
 
   // Error handling
   const handleRetryOperation = useCallback(() => {
@@ -563,13 +666,18 @@ function CanvasPlayground() {
   // Delete handlers
   const handleDeleteTable = useCallback(() => {
     try {
+      const deletedId = selectedTableId;
       deleteTable();
       setDeleteConfirmOpen(false);
+      // Broadcast to collaborators
+      if (deletedId && collaboration.state.isConnected) {
+        collaboration.broadcastNodeDelete(deletedId);
+      }
     } catch (error) {
       console.error('Failed to delete table:', error);
       showError(error, 'validation');
     }
-  }, [deleteTable, showError]);
+  }, [deleteTable, showError, selectedTableId, collaboration]);
 
   const handleDeleteConfirm = useCallback(() => {
     setDeleteConfirmOpen(true);
@@ -657,6 +765,48 @@ function CanvasPlayground() {
         onSavedDiagramsClick={() => setSavedDiagramsDialogOpen(true)}
         isReadOnly={isReadOnly}
       />
+
+      {/* Collaboration Status Bar - Shows when collaborators are present */}
+      {collaboration.state.isConnected && collaboration.state.collaborators.length > 0 && (
+        <div className="fixed top-14 right-4 z-40 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 shadow-lg">
+          <CollaboratorAvatars
+            collaborators={collaboration.state.collaborators}
+            ownerUsername={collaboration.state.ownerUsername}
+            currentUserPermission={collaboration.state.permission}
+          />
+        </div>
+      )}
+
+      {/* Connection Status Indicator */}
+      {currentDiagramId && (
+        <div className="fixed bottom-4 right-4 z-40">
+          <div 
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+              collaboration.state.isConnected 
+                ? 'bg-green-900/50 text-green-400 border border-green-700' 
+                : collaboration.state.isConnecting
+                  ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-700'
+                  : 'bg-gray-800 text-gray-400 border border-gray-700'
+            }`}
+          >
+            <div 
+              className={`w-2 h-2 rounded-full ${
+                collaboration.state.isConnected 
+                  ? 'bg-green-400 animate-pulse' 
+                  : collaboration.state.isConnecting
+                    ? 'bg-yellow-400 animate-pulse'
+                    : 'bg-gray-500'
+              }`}
+            />
+            {collaboration.state.isConnected 
+              ? `Live • ${collaboration.state.collaborators.length + 1} user${collaboration.state.collaborators.length > 0 ? 's' : ''}`
+              : collaboration.state.isConnecting
+                ? 'Connecting...'
+                : 'Offline'
+            }
+          </div>
+        </div>
+      )}
 
       {/* Auth Dialog */}
       <AuthDialog
@@ -773,30 +923,40 @@ function CanvasPlayground() {
         />
 
         {/* React Flow */}
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          isValidConnection={isValidConnection}
-          fitView
-          connectionLineStyle={{ stroke: "#60a5fa", strokeWidth: 3 }}
-          defaultEdgeOptions={{
-            type: "customEdge",
-            style: { stroke: "#60a5fa", strokeWidth: 2 },
-            markerEnd: { type: "arrowclosed", color: "#60a5fa" },
-            labelBgStyle: { fill: "#1f2937", fillOpacity: 0.9 },
-            labelStyle: { fill: "#60a5fa", fontWeight: "bold" },
-          }}
+        <div 
+          className="w-full h-full"
+          onMouseMove={handleMouseMove}
         >
-          <MiniMap style={{ backgroundColor: '#374151' }} />
-          <Controls />
-          <Background color="#4b5563" />
-        </ReactFlow>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            isValidConnection={isValidConnection}
+            fitView
+            connectionLineStyle={{ stroke: "#60a5fa", strokeWidth: 3 }}
+            defaultEdgeOptions={{
+              type: "customEdge",
+              style: { stroke: "#60a5fa", strokeWidth: 2 },
+              markerEnd: { type: "arrowclosed", color: "#60a5fa" },
+              labelBgStyle: { fill: "#1f2937", fillOpacity: 0.9 },
+              labelStyle: { fill: "#60a5fa", fontWeight: "bold" },
+            }}
+          >
+            <MiniMap style={{ backgroundColor: '#374151' }} />
+            <Controls />
+            <Background color="#4b5563" />
+            
+            {/* Collaborator Cursors */}
+            {collaboration.state.collaborators.length > 0 && (
+              <CollaboratorCursors collaborators={collaboration.state.collaborators} />
+            )}
+          </ReactFlow>
+        </div>
       </div>
     </div>
   );

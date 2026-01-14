@@ -203,12 +203,13 @@ export const useTableManagement = (
     setSelectedTableId(null);
   }, [setNodes, setSelectedTableId]);
 
-  // Add Table
-  const addTable = useCallback(() => {
-    setNodes((nds) => [
-      ...nds,
-      {
-        id: `table-${nds.length + 1}`,
+  // Add Table - returns the new node for collaboration broadcasting
+  const addTable = useCallback((): Node | undefined => {
+    let newNode: Node | undefined;
+    
+    setNodes((nds) => {
+      newNode = {
+        id: `table-${nds.length + 1}-${Date.now()}`, // Add timestamp for uniqueness across clients
         data: {
           label: `Table ${nds.length + 1}`,
           attributes: [],
@@ -216,8 +217,11 @@ export const useTableManagement = (
         },
         position: { x: 100 + nds.length * 50, y: 100 + nds.length * 50 },
         type: 'tableNode',
-      },
-    ]);
+      };
+      return [...nds, newNode];
+    });
+    
+    return newNode;
   }, [setNodes]);
 
   // Delete Table
@@ -824,5 +828,6 @@ export const useTableManagement = (
     removeFKEdge,
     removeEdgesByAttribute,
     importNodes,
+    setNodes, // Exposed for collaboration updates
   };
 };

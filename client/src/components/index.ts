@@ -16,3 +16,5 @@ export { default as DiagramPage } from './DiagramPage';
 export { default as NotFound } from './NotFound';
 export { default as ShareDialog } from './ShareDialog';
 export { default as LandingPage } from './LandingPage';
+export { CollaboratorCursors } from './CollaboratorCursors';
+export { CollaboratorAvatars } from './CollaboratorAvatars';
