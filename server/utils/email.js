@@ -1,15 +1,30 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter
+// Create transporter with validation
 const createTransporter = () => {
+  // Validate required environment variables
+  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error('Missing email configuration:', {
+      EMAIL_HOST: !!process.env.EMAIL_HOST,
+      EMAIL_USER: !!process.env.EMAIL_USER,
+      EMAIL_PASS: !!process.env.EMAIL_PASS,
+      EMAIL_PORT: process.env.EMAIL_PORT || '587 (default)'
+    });
+    throw new Error('Email configuration is incomplete. Please check EMAIL_HOST, EMAIL_USER, and EMAIL_PASS environment variables.');
+  }
+
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false,
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
-    }
+    },
+    // Add timeout settings for Render
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
 };
 
@@ -62,10 +77,17 @@ const sendOTPEmail = async (email, otp, username) => {
 
   try {
     await transporter.sendMail(mailOptions);
+    console.log(`OTP email sent successfully to ${email}`);
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
-    throw new Error('Failed to send verification email');
+    console.error('Email sending error details:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      responseCode: error.responseCode,
+      response: error.response
+    });
+    throw new Error(`Failed to send verification email: ${error.message}`);
   }
 };
 
@@ -118,10 +140,17 @@ const sendPasswordResetEmail = async (email, otp, username) => {
 
   try {
     await transporter.sendMail(mailOptions);
+    console.log(`Password reset email sent successfully to ${email}`);
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
-    throw new Error('Failed to send password reset email');
+    console.error('Email sending error details:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      responseCode: error.responseCode,
+      response: error.response
+    });
+    throw new Error(`Failed to send password reset email: ${error.message}`);
   }
 };
 
