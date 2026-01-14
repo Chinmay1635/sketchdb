@@ -1,4 +1,11 @@
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
+import {
+  Routes,
+  Route,
+  useParams,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import {
   ReactFlow,
   addEdge,
@@ -27,6 +34,7 @@ import {
   LoadingDialog,
   ErrorDialog,
   CustomEdge,
+  NotFound,
 } from "./components";
 import AuthDialog from "./components/AuthDialog";
 import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
@@ -76,15 +84,23 @@ const initialEdges: Edge[] = [];
 function CanvasPlayground() {
   const [edges, setEdges, onEdgesChangeDefault] = useEdgesState(initialEdges);
   const reactFlowInstance = useReactFlow();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { username: urlUsername, slug: urlSlug } = useParams<{ username: string; slug: string }>();
 
   // Auth state
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [savedDiagramsDialogOpen, setSavedDiagramsDialogOpen] = useState(false);
   const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(null);
+  const [currentDiagramSlug, setCurrentDiagramSlug] = useState<string | null>(null);
   const [currentDiagramName, setCurrentDiagramName] = useState<string | null>(null);
+  const [currentOwnerUsername, setCurrentOwnerUsername] = useState<string | null>(null);
+  const [currentPermission, setCurrentPermission] = useState<'owner' | 'edit' | 'view' | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingDiagram, setIsLoadingDiagram] = useState(false);
+  const [diagramNotFound, setDiagramNotFound] = useState(false);
 
   // Error handling
   const { error, showError, clearError, retryOperation, hasError } = useErrorHandler();
@@ -155,6 +171,76 @@ function CanvasPlayground() {
     importNodes,
   } = tableManagement;
 
+  // Load diagram from URL parameters
+  useEffect(() => {
+    const loadDiagramFromURL = async () => {
+      // Only load if we have URL params and not already loading
+      if (!urlUsername || !urlSlug) {
+        setDiagramNotFound(false);
+        return;
+      }
+
+      // Skip if we already have this diagram loaded
+      if (currentDiagramSlug === urlSlug && currentOwnerUsername?.toLowerCase() === urlUsername.toLowerCase()) {
+        return;
+      }
+
+      setIsLoadingDiagram(true);
+      setDiagramNotFound(false);
+
+      try {
+        const response = await diagramsAPI.getBySlug(urlUsername, urlSlug);
+        if (response.success && response.diagram) {
+          const diagram = response.diagram;
+          
+          // Load nodes
+          if (diagram.nodes && diagram.nodes.length > 0) {
+            importNodes(diagram.nodes);
+          } else {
+            importNodes([]);
+          }
+          
+          // Load edges
+          if (diagram.edges) {
+            setEdges(diagram.edges);
+          } else {
+            setEdges([]);
+          }
+          
+          // Set viewport if available
+          if (diagram.viewport && reactFlowInstance) {
+            setTimeout(() => {
+              reactFlowInstance.setViewport(diagram.viewport);
+            }, 100);
+          }
+          
+          // Store diagram info
+          setCurrentDiagramId(diagram._id);
+          setCurrentDiagramSlug(diagram.slug);
+          setCurrentDiagramName(diagram.name);
+          setCurrentOwnerUsername(diagram.ownerUsername);
+          setCurrentPermission(diagram.permission);
+          setLastSavedAt(diagram.updatedAt ? new Date(diagram.updatedAt) : new Date());
+          
+          console.log('Diagram loaded from URL:', diagram.name);
+        } else {
+          setDiagramNotFound(true);
+        }
+      } catch (err: any) {
+        console.error('Failed to load diagram from URL:', err);
+        if (err.message?.includes('not found') || err.message?.includes('permission')) {
+          setDiagramNotFound(true);
+        } else {
+          showError(new Error('Failed to load diagram. Please try again.'), 'import');
+        }
+      } finally {
+        setIsLoadingDiagram(false);
+      }
+    };
+
+    loadDiagramFromURL();
+  }, [urlUsername, urlSlug, currentDiagramSlug, currentOwnerUsername, importNodes, setEdges, reactFlowInstance, showError]);
+
   // Import schema functionality
   const importSchema = useCallback((sqlText: string) => {
     try {
@@ -172,7 +258,7 @@ function CanvasPlayground() {
     }
   }, [importNodes, setEdges]);
 
-  // Load diagram from saved data
+  // Load diagram from saved data (from dialogs)
   const handleLoadDiagram = useCallback((diagram: any) => {
     try {
       // Load nodes
@@ -196,17 +282,26 @@ function CanvasPlayground() {
         }, 100);
       }
       
-      // Store current diagram ID and name for future saves
+      // Store current diagram info
       setCurrentDiagramId(diagram._id);
+      setCurrentDiagramSlug(diagram.slug);
       setCurrentDiagramName(diagram.name);
+      setCurrentOwnerUsername(diagram.ownerUsername || diagram.username);
+      setCurrentPermission(diagram.permission || 'owner');
       setLastSavedAt(diagram.updatedAt ? new Date(diagram.updatedAt) : new Date());
+      
+      // Navigate to diagram URL
+      const ownerUsername = diagram.ownerUsername || diagram.username || user?.username;
+      if (ownerUsername && diagram.slug) {
+        navigate(`/${ownerUsername}/${diagram.slug}`, { replace: true });
+      }
       
       console.log('Diagram loaded successfully:', diagram.name);
     } catch (error) {
       console.error('Failed to load diagram:', error);
       showError(new Error('Failed to load diagram. Please try again.'), 'import');
     }
-  }, [importNodes, setEdges, reactFlowInstance, showError]);
+  }, [importNodes, setEdges, reactFlowInstance, showError, navigate, user]);
 
   // Quick save current diagram
   const handleQuickSave = useCallback(async () => {
@@ -244,11 +339,19 @@ function CanvasPlayground() {
   }, [isAuthenticated, currentDiagramId, currentDiagramName, nodes, edges, reactFlowInstance, showError]);
 
   // Handle save completion from dialog (for new diagrams)
-  const handleSaveComplete = useCallback((diagramId: string, name: string) => {
+  const handleSaveComplete = useCallback((diagramId: string, name: string, slug?: string) => {
     setCurrentDiagramId(diagramId);
     setCurrentDiagramName(name);
     setLastSavedAt(new Date());
-  }, []);
+    
+    // Navigate to new diagram URL
+    if (slug && user?.username) {
+      setCurrentDiagramSlug(slug);
+      setCurrentOwnerUsername(user.username);
+      setCurrentPermission('owner');
+      navigate(`/${user.username}/${slug}`, { replace: true });
+    }
+  }, [navigate, user]);
 
   // Get current viewport
   const getViewport = useCallback(() => {
@@ -466,6 +569,63 @@ function CanvasPlayground() {
     setDeleteConfirmOpen(true);
   }, []);
 
+  // Handle "New Diagram" - clear everything and go to home
+  const handleNewDiagram = useCallback(() => {
+    importNodes([]);
+    setEdges([]);
+    setCurrentDiagramId(null);
+    setCurrentDiagramSlug(null);
+    setCurrentDiagramName(null);
+    setCurrentOwnerUsername(null);
+    setCurrentPermission(null);
+    setLastSavedAt(null);
+    navigate('/', { replace: true });
+  }, [importNodes, setEdges, navigate]);
+
+  // Show loading state when loading diagram from URL
+  if (isLoadingDiagram) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-300 text-lg">Loading diagram...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show 404 if diagram not found
+  if (diagramNotFound) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="text-6xl mb-4">🔍</div>
+          <h1 className="text-2xl font-bold text-white mb-2">Diagram Not Found</h1>
+          <p className="text-gray-400 mb-6">
+            This diagram doesn't exist or you don't have permission to view it.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => navigate('/')}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go to Home
+            </button>
+            <button
+              onClick={() => {
+                setDiagramNotFound(false);
+                window.location.reload();
+              }}
+              className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-screen h-screen flex bg-gray-900">
       {/* Navbar - Fixed at top */}
@@ -616,12 +776,23 @@ function CanvasPlayground() {
   );
 }
 
+// Wrapper component for the canvas with routes
+function CanvasWithRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<CanvasPlayground />} />
+      <Route path="/:username/:slug" element={<CanvasPlayground />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 // App component
 export default function App() {
   return (
     <AuthProvider>
       <ReactFlowProvider>
-        <CanvasPlayground />
+        <CanvasWithRoutes />
       </ReactFlowProvider>
     </AuthProvider>
   );

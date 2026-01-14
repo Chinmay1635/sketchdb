@@ -6,6 +6,8 @@ interface Diagram {
   _id: string;
   name: string;
   description: string;
+  slug: string;
+  username?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -14,7 +16,7 @@ interface SavedDiagramsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onLoad: (diagram: any) => void;
-  onSaveComplete?: (diagramId: string, diagramName: string) => void;
+  onSaveComplete?: (diagramId: string, diagramName: string, slug?: string) => void;
   currentNodes: any[];
   currentEdges: any[];
   sqlContent: string;
@@ -96,19 +98,22 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
       };
 
       let savedDiagramId = editingId;
+      let savedSlug: string | undefined;
       
       if (editingId) {
-        await diagramsAPI.update(editingId, diagramData);
+        const result = await diagramsAPI.update(editingId, diagramData);
+        savedSlug = result.diagram?.slug;
         setSuccess('Diagram updated successfully!');
       } else {
         const result = await diagramsAPI.create(diagramData);
         savedDiagramId = result.diagram._id;
+        savedSlug = result.diagram.slug;
         setSuccess('Diagram saved successfully!');
       }
 
       // Notify parent of save completion
       if (onSaveComplete && savedDiagramId) {
-        onSaveComplete(savedDiagramId, diagramName);
+        onSaveComplete(savedDiagramId, diagramName, savedSlug);
       }
 
       setDiagramName('');
