@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useViewport } from 'reactflow';
+import { useViewport } from '@xyflow/react';
 import type { CollaboratorInfo } from '../types/collaboration';
 
 interface CollaboratorCursorsProps {
