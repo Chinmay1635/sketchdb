@@ -111,7 +111,7 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
   const handleOpenDiagram = (diagram: DiagramItem) => {
     onClose();
     // Navigate to the diagram using the owner's username and slug
-    navigate(`/${diagram.ownerUsername}/${diagram.slug}`);
+    navigate(`/playground/${diagram.ownerUsername}/${diagram.slug}`);
   };
 
   const formatDate = (dateString: string) => {
