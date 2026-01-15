@@ -137,6 +137,30 @@ router.post('/signup', signupValidation, async (req, res) => {
       password
     });
 
+    // ============================================
+    // EMAIL VERIFICATION TEMPORARILY DISABLED
+    // Auto-verify user without sending OTP email
+    // ============================================
+    user.isVerified = true;
+    await user.save();
+
+    // Generate token immediately since user is auto-verified
+    const token = generateToken(user._id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully!',
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        prn: user.prn
+      }
+    });
+
+    // COMMENTED OUT: OTP Generation and Email Sending
+    /*
     // Generate and send OTP
     const otp = user.generateOTP();
     await user.save();
@@ -158,6 +182,7 @@ router.post('/signup', signupValidation, async (req, res) => {
       message: 'Account created successfully. Please check your email for OTP verification.',
       userId: user._id
     });
+    */
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({
