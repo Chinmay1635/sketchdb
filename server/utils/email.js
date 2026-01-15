@@ -1,5 +1,49 @@
 const nodemailer = require('nodemailer');
 
+// Retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  initialDelayMs: 1000, // 1 second
+  maxDelayMs: 10000,    // 10 seconds
+  backoffMultiplier: 2  // Exponential backoff
+};
+
+// Sleep helper function
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Retry wrapper with exponential backoff
+const withRetry = async (operation, operationName) => {
+  let lastError;
+  let delay = RETRY_CONFIG.initialDelayMs;
+
+  for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      
+      // Don't retry on authentication errors or invalid recipient
+      const nonRetryableCodes = ['EAUTH', 'EINVALIDRECIPIENT', 'EENVELOPE'];
+      if (nonRetryableCodes.includes(error.code)) {
+        console.error(`${operationName} failed with non-retryable error:`, error.message);
+        throw error;
+      }
+
+      if (attempt < RETRY_CONFIG.maxRetries) {
+        console.log(`${operationName} attempt ${attempt} failed. Retrying in ${delay}ms...`, {
+          error: error.message,
+          code: error.code
+        });
+        await sleep(delay);
+        delay = Math.min(delay * RETRY_CONFIG.backoffMultiplier, RETRY_CONFIG.maxDelayMs);
+      }
+    }
+  }
+
+  console.error(`${operationName} failed after ${RETRY_CONFIG.maxRetries} attempts`);
+  throw lastError;
+};
+
 // Create transporter with validation
 const createTransporter = () => {
   // Validate required environment variables
@@ -76,7 +120,10 @@ const sendOTPEmail = async (email, otp, username) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await withRetry(async () => {
+      await transporter.sendMail(mailOptions);
+    }, `OTP email to ${email}`);
+    
     console.log(`OTP email sent successfully to ${email}`);
     return true;
   } catch (error) {
@@ -139,7 +186,10 @@ const sendPasswordResetEmail = async (email, otp, username) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await withRetry(async () => {
+      await transporter.sendMail(mailOptions);
+    }, `Password reset email to ${email}`);
+    
     console.log(`Password reset email sent successfully to ${email}`);
     return true;
   } catch (error) {
