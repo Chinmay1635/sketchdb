@@ -31,6 +31,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/diagrams', require('./routes/diagrams'));
+app.use('/api/ai', require('./routes/ai'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

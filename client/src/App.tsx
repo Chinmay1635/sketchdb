@@ -39,6 +39,7 @@ import {
   CollaboratorCursors,
   CollaboratorAvatars,
   MyDiagramsDialog,
+  AIChatSidebar,
 } from "./components";
 import AuthDialog from "./components/AuthDialog";
 import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
@@ -53,7 +54,7 @@ import { useTableManagement } from "./hooks/useTableManagement";
 import { useCollaboration } from "./hooks/useCollaboration";
 
 // Utils
-import { parseConnectionHandles, createStyledEdge, isValidConnection } from "./utils/connectionUtils";
+import { parseConnectionHandles, createStyledEdge, isValidConnection, createEdgesFromForeignKeys } from "./utils/connectionUtils";
 import { generateSQL, copyToClipboard } from "./utils/sqlGenerator";
 import { parseSQLSchema } from "./utils/sqlParser";
 import { exportCanvasAsPNG, exportCanvasAsPDF } from "./utils/canvasExport";
@@ -117,6 +118,7 @@ function CanvasPlayground() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [loadingDialogOpen, setLoadingDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
   const [sqlText, setSqlText] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [lastOperation, setLastOperation] = useState<(() => void) | null>(null);
@@ -540,6 +542,78 @@ function CanvasPlayground() {
     }
   }, [importSchema, showError, handleImportSchema]);
 
+  // Handle applying AI-generated schema
+  const handleApplyAISchema = useCallback((newNodes: Node[], newEdges: Edge[]) => {
+    try {
+      // The AI generates nodes with FK attributes containing refTable (could be node ID or table label)
+      // We normalize refTable to use table LABEL for SQL generation consistency
+      const nodesWithFixedRefs = newNodes.map(node => {
+        const nodeData = node.data as any;
+        if (!nodeData.attributes) return node;
+        
+        const fixedAttributes = nodeData.attributes.map((attr: any) => {
+          if (attr.type === 'FK' && attr.refTable) {
+            // Find the referenced node by ID or label
+            const referencedNode = newNodes.find(n => {
+              const label = (n.data as any)?.label;
+              return n.id === attr.refTable || label === attr.refTable;
+            });
+            
+            if (referencedNode) {
+              // Normalize refTable to use table LABEL (for SQL generation)
+              const refTableLabel = (referencedNode.data as any)?.label || attr.refTable;
+              return {
+                ...attr,
+                refTable: refTableLabel, // Use table label for SQL compatibility
+              };
+            }
+          }
+          return attr;
+        });
+        
+        return {
+          ...node,
+          data: {
+            ...nodeData,
+            attributes: fixedAttributes,
+          },
+        };
+      });
+      
+      // Import the AI-generated nodes
+      importNodes(nodesWithFixedRefs);
+      
+      // Regenerate edges from FK relationships in nodes
+      // This ensures edges use correct handle IDs that match TableNode component
+      const generatedEdges = createEdgesFromForeignKeys(nodesWithFixedRefs);
+      setEdges(generatedEdges);
+      
+      console.log('AI Schema applied:', { 
+        nodes: nodesWithFixedRefs, 
+        generatedEdges,
+        originalAIEdges: newEdges 
+      });
+      
+      // Broadcast changes to collaborators if connected with edit permission
+      if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+        // Broadcast each new node
+        nodesWithFixedRefs.forEach(node => {
+          collaboration.broadcastNodeAdd(node);
+        });
+        // Broadcast each generated edge
+        generatedEdges.forEach(edge => {
+          collaboration.broadcastEdgeAdd(edge);
+        });
+      }
+      
+      // Close the AI chat sidebar after applying
+      setAiChatOpen(false);
+    } catch (error) {
+      console.error('Apply AI schema failed:', error);
+      showError(error, 'import');
+    }
+  }, [importNodes, setEdges, collaboration, showError]);
+
   // Canvas export handlers
   const handleExportPNG = useCallback(async () => {
     try {
@@ -853,6 +927,7 @@ function CanvasPlayground() {
         onImportSQLFile={handleImportSQLFile}
         onSave={handleQuickSave}
         onShare={() => setShareDialogOpen(true)}
+        onAIAssistantClick={() => setAiChatOpen(true)}
         isSaving={isSaving}
         lastSavedAt={lastSavedAt}
         currentDiagramName={currentDiagramName}
@@ -941,6 +1016,16 @@ function CanvasPlayground() {
         diagramName={currentDiagramName}
         isPublic={isPublic}
         onVisibilityChange={setIsPublic}
+      />
+
+      {/* AI Chat Sidebar */}
+      <AIChatSidebar
+        isOpen={aiChatOpen}
+        onClose={() => setAiChatOpen(false)}
+        diagramId={currentDiagramId}
+        currentSchema={{ nodes, edges }}
+        onApplySchema={handleApplyAISchema}
+        isReadOnly={isReadOnly}
       />
 
       {/* Sidebar - Hidden in read-only mode */}

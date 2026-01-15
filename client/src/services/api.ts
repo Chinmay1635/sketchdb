@@ -220,4 +220,38 @@ export const diagramsAPI = {
   },
 };
 
+// AI Chat API
+export const aiAPI = {
+  // Get chat history for a diagram
+  getChat: async (diagramId: string) => {
+    return apiRequest(`/ai/chat/${diagramId}`);
+  },
+
+  // Send a message and get AI response
+  sendMessage: async (
+    diagramId: string,
+    message: string,
+    currentSchema?: { nodes: any[]; edges: any[] }
+  ) => {
+    return apiRequest(`/ai/chat/${diagramId}`, {
+      method: 'POST',
+      body: JSON.stringify({ message, currentSchema }),
+    });
+  },
+
+  // Mark a schema as applied
+  markSchemaApplied: async (diagramId: string, messageId: string) => {
+    return apiRequest(`/ai/chat/${diagramId}/apply/${messageId}`, {
+      method: 'POST',
+    });
+  },
+
+  // Clear chat history
+  clearChat: async (diagramId: string) => {
+    return apiRequest(`/ai/chat/${diagramId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 export { getToken, setToken, removeToken };

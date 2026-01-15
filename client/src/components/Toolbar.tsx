@@ -11,6 +11,7 @@ interface ToolbarProps {
   onImportSQLFile: (sqlText: string) => void;
   onSave?: () => void;
   onShare?: () => void;
+  onAIAssistantClick?: () => void;
   isSaving?: boolean;
   lastSavedAt?: Date | null;
   currentDiagramName?: string | null;
@@ -102,6 +103,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onImportSQLFile,
   onSave,
   onShare,
+  onAIAssistantClick,
   isSaving,
   lastSavedAt,
   currentDiagramName,
@@ -209,6 +211,20 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               </svg>
               Add Table
             </button>
+
+            {/* AI Assistant Button (visible when authenticated and diagram is saved) */}
+            {isAuthenticated && currentDiagramId && onAIAssistantClick && (
+              <button
+                onClick={onAIAssistantClick}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-colors"
+                title="AI Assistant - Generate schemas from natural language"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                AI Assistant
+              </button>
+            )}
 
             {/* Import Dropdown */}
             <DropdownMenu

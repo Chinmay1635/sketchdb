@@ -74,10 +74,14 @@ export const generateSQL = (nodes: Node[]): string => {
         if (!attr.refTable || !attr.refAttr) {
           validationErrors.push(`Table ${tableName}, attribute ${attr.name}: Foreign key missing reference information`);
         } else {
-          // Check if referenced table exists in the nodes
+          // Check if referenced table exists in the nodes (by label, normalized label, or node ID)
           const referencedNode = nodes.find(n => {
             const refLabel = typeof n.data.label === 'string' ? n.data.label : `Table_${n.id}`;
-            return refLabel.replace(/\s+/g, '_') === attr.refTable;
+            const normalizedLabel = refLabel.replace(/\s+/g, '_');
+            const normalizedRefTable = attr.refTable.replace(/\s+/g, '_');
+            return refLabel === attr.refTable || 
+                   normalizedLabel === normalizedRefTable || 
+                   n.id === attr.refTable;
           });
           
           if (!referencedNode) {

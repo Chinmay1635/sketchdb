@@ -83,10 +83,16 @@ export const createEdgesFromForeignKeys = (nodes: Node[]): Edge[] => {
     tableData.attributes.forEach((attr: any) => {
       // Check if this attribute is a foreign key
       if (attr.type === 'FK' && attr.refTable && attr.refAttr) {
-        // Find the target node (referenced table)
+        // Find the target node (referenced table) - check by label, id, or normalized label
         const referencedNode = nodes.find(n => {
           const targetData = n.data as any;
-          return targetData?.table === attr.refTable || targetData?.label === attr.refTable || n.id === attr.refTable;
+          const targetLabel = targetData?.label || '';
+          const normalizedTargetLabel = targetLabel.replace(/\s+/g, '_');
+          const normalizedRefTable = attr.refTable.replace(/\s+/g, '_');
+          return targetData?.table === attr.refTable || 
+                 targetLabel === attr.refTable || 
+                 normalizedTargetLabel === normalizedRefTable ||
+                 n.id === attr.refTable;
         });
         
         if (referencedNode) {
