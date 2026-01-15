@@ -43,6 +43,82 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+// @route   GET /api/diagrams/my-diagrams
+// @desc    Get all diagrams user has access to (owned + collaborated) - like Canva's "My Designs"
+// @access  Private
+router.get('/my-diagrams', protect, async (req, res) => {
+  try {
+    // Get diagrams owned by user
+    const ownedDiagrams = await Diagram.find({ user: req.user._id })
+      .select('name description slug isPublic createdAt updatedAt nodes')
+      .populate('user', 'username')
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    // Get diagrams where user is a collaborator
+    const collaboratedDiagrams = await Diagram.find({
+      'collaborators.user': req.user._id
+    })
+      .select('name description slug isPublic createdAt updatedAt collaborators nodes')
+      .populate('user', 'username')
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    // Format owned diagrams
+    const formattedOwned = ownedDiagrams.map(d => ({
+      _id: d._id,
+      name: d.name,
+      description: d.description,
+      slug: d.slug,
+      isPublic: d.isPublic,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+      ownerUsername: req.user.username,
+      permission: 'owner',
+      tableCount: d.nodes?.length || 0,
+      role: 'owner'
+    }));
+
+    // Format collaborated diagrams with permission info
+    const formattedCollaborated = collaboratedDiagrams.map(d => {
+      const collaborator = d.collaborators?.find(
+        c => c.user?.toString() === req.user._id.toString()
+      );
+      return {
+        _id: d._id,
+        name: d.name,
+        description: d.description,
+        slug: d.slug,
+        isPublic: d.isPublic,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+        ownerUsername: d.user?.username || 'Unknown',
+        permission: collaborator?.permission || 'view',
+        tableCount: d.nodes?.length || 0,
+        role: 'collaborator'
+      };
+    });
+
+    // Combine and sort by updatedAt
+    const allDiagrams = [...formattedOwned, ...formattedCollaborated]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    res.json({
+      success: true,
+      count: allDiagrams.length,
+      ownedCount: formattedOwned.length,
+      collaboratedCount: formattedCollaborated.length,
+      diagrams: allDiagrams
+    });
+  } catch (error) {
+    console.error('Get my diagrams error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching diagrams'
+    });
+  }
+});
+
 // @route   GET /api/diagrams/by-slug/:username/:slug
 // @desc    Get a diagram by username and slug (for URL routing)
 // @access  Public (if diagram is public) or Private (if owner/collaborator)

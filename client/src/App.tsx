@@ -38,6 +38,7 @@ import {
   ShareDialog,
   CollaboratorCursors,
   CollaboratorAvatars,
+  MyDiagramsDialog,
 } from "./components";
 import AuthDialog from "./components/AuthDialog";
 import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
@@ -97,6 +98,7 @@ function CanvasPlayground() {
   const { isAuthenticated, user } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [savedDiagramsDialogOpen, setSavedDiagramsDialogOpen] = useState(false);
+  const [myDiagramsDialogOpen, setMyDiagramsDialogOpen] = useState(false);
   const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(null);
   const [currentDiagramSlug, setCurrentDiagramSlug] = useState<string | null>(null);
   const [currentDiagramName, setCurrentDiagramName] = useState<string | null>(null);
@@ -858,6 +860,7 @@ function CanvasPlayground() {
         isAuthenticated={isAuthenticated}
         onLoginClick={() => setAuthDialogOpen(true)}
         onSavedDiagramsClick={() => setSavedDiagramsDialogOpen(true)}
+        onMyDiagramsClick={() => setMyDiagramsDialogOpen(true)}
         isReadOnly={isReadOnly}
       />
 
@@ -920,6 +923,12 @@ function CanvasPlayground() {
         sqlContent={safeGenerateSQL(nodes)}
         viewport={getViewport()}
         currentDiagramId={currentDiagramId}
+      />
+
+      {/* My Diagrams Dialog - Like Canva's My Designs */}
+      <MyDiagramsDialog
+        isOpen={myDiagramsDialogOpen}
+        onClose={() => setMyDiagramsDialogOpen(false)}
       />
 
       {/* Share Dialog */}

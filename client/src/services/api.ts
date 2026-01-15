@@ -119,6 +119,11 @@ export const diagramsAPI = {
     return apiRequest('/diagrams');
   },
 
+  // Get all diagrams user has access to (owned + collaborated) - like Canva's "My Designs"
+  getMyDiagrams: async () => {
+    return apiRequest('/diagrams/my-diagrams');
+  },
+
   getById: async (id: string) => {
     return apiRequest(`/diagrams/${id}`);
   },
