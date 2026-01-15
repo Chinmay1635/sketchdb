@@ -44,38 +44,72 @@ const withRetry = async (operation, operationName) => {
   throw lastError;
 };
 
-// Create transporter with validation
-const createTransporter = () => {
+// Create transporter with validation - tries SSL (465) first, then STARTTLS (587)
+const createTransporter = (useSSL = true) => {
   // Validate required environment variables
   if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     console.error('Missing email configuration:', {
       EMAIL_HOST: !!process.env.EMAIL_HOST,
       EMAIL_USER: !!process.env.EMAIL_USER,
       EMAIL_PASS: !!process.env.EMAIL_PASS,
-      EMAIL_PORT: process.env.EMAIL_PORT || '587 (default)'
+      EMAIL_PORT: process.env.EMAIL_PORT || '465 (default)'
     });
     throw new Error('Email configuration is incomplete. Please check EMAIL_HOST, EMAIL_USER, and EMAIL_PASS environment variables.');
   }
 
+  const port = useSSL ? 465 : (parseInt(process.env.EMAIL_PORT) || 587);
+  
+  console.log(`Creating email transporter: ${process.env.EMAIL_HOST}:${port} (${useSSL ? 'SSL' : 'STARTTLS'})`);
+
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
+    port: port,
+    secure: useSSL, // true for 465 (SSL), false for 587 (STARTTLS)
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
     },
-    // Add timeout settings for Render
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000
+    // Increased timeout settings for Render's slower network
+    connectionTimeout: 60000,  // 60 seconds
+    greetingTimeout: 30000,    // 30 seconds
+    socketTimeout: 60000,      // 60 seconds
+    // Additional settings for better reliability
+    pool: false,
+    maxConnections: 1,
+    rateDelta: 1000,
+    rateLimit: 5,
+    // TLS options
+    tls: {
+      rejectUnauthorized: true,
+      minVersion: 'TLSv1.2'
+    }
   });
+};
+
+// Send email with automatic fallback between SSL and STARTTLS
+const sendMailWithFallback = async (mailOptions) => {
+  // Try SSL (port 465) first - more reliable on cloud platforms
+  try {
+    const transporter = createTransporter(true);
+    await transporter.sendMail(mailOptions);
+    return;
+  } catch (sslError) {
+    console.log('SSL connection failed, trying STARTTLS...', { error: sslError.message, code: sslError.code });
+    
+    // Fallback to STARTTLS (port 587)
+    try {
+      const transporter = createTransporter(false);
+      await transporter.sendMail(mailOptions);
+      return;
+    } catch (starttlsError) {
+      console.error('Both SSL and STARTTLS failed');
+      throw starttlsError;
+    }
+  }
 };
 
 // Send OTP email
 const sendOTPEmail = async (email, otp, username) => {
-  const transporter = createTransporter();
-
   const mailOptions = {
     from: `"SketchDB" <${process.env.EMAIL_USER}>`,
     to: email,
@@ -121,7 +155,7 @@ const sendOTPEmail = async (email, otp, username) => {
 
   try {
     await withRetry(async () => {
-      await transporter.sendMail(mailOptions);
+      await sendMailWithFallback(mailOptions);
     }, `OTP email to ${email}`);
     
     console.log(`OTP email sent successfully to ${email}`);
@@ -140,8 +174,6 @@ const sendOTPEmail = async (email, otp, username) => {
 
 // Send password reset email
 const sendPasswordResetEmail = async (email, otp, username) => {
-  const transporter = createTransporter();
-
   const mailOptions = {
     from: `"SketchDB" <${process.env.EMAIL_USER}>`,
     to: email,
@@ -187,7 +219,7 @@ const sendPasswordResetEmail = async (email, otp, username) => {
 
   try {
     await withRetry(async () => {
-      await transporter.sendMail(mailOptions);
+      await sendMailWithFallback(mailOptions);
     }, `Password reset email to ${email}`);
     
     console.log(`Password reset email sent successfully to ${email}`);
