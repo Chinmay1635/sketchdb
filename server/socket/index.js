@@ -7,6 +7,7 @@
  * - Room management for diagram collaboration
  * - Presence system for online users
  * - Connection health monitoring
+ * - Rate limiting and throttling for free tier optimization
  */
 
 const { Server } = require('socket.io');
@@ -18,7 +19,73 @@ const { createClient } = require('ioredis');
 
 // Store for active connections and rooms
 const activeConnections = new Map(); // socketId -> { userId, diagramId, username }
-const diagramRooms = new Map(); // diagramId -> Set of { socketId, userId, username, cursor }
+const diagramRooms = new Map(); // diagramId -> Map of { socketId -> userData }
+
+// ============ FREE TIER OPTIMIZATIONS ============
+// Rate limiting and throttling stores
+const cursorThrottles = new Map(); // socketId -> lastCursorTime
+const eventRateLimits = new Map(); // socketId -> { count, resetTime }
+
+// Configuration for free tier limits (optimized for 10 users/diagram)
+const FREE_TIER_LIMITS = {
+  MAX_USERS_PER_DIAGRAM: 10,      // Max collaborators per diagram
+  MAX_TOTAL_CONNECTIONS: 150,     // Supports ~15 diagrams at full capacity
+  CURSOR_THROTTLE_MS: 50,         // 20 cursor updates/sec max per user
+  EVENT_RATE_LIMIT: 30,           // 30 operations/sec per user (450 total at capacity)
+  EVENT_RATE_WINDOW_MS: 1000,     // Rate limit window
+  STALE_CONNECTION_MS: 300000,    // 5 min - cleanup inactive connections
+};
+
+// Get current stats for monitoring
+function getServerStats() {
+  return {
+    totalConnections: activeConnections.size,
+    activeRooms: diagramRooms.size,
+    roomDetails: Array.from(diagramRooms.entries()).map(([id, users]) => ({
+      diagramId: id,
+      userCount: users.size
+    })),
+    memory: {
+      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+      rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
+    },
+    uptime: Math.round(process.uptime())
+  };
+}
+
+// Check rate limit for a socket
+function checkRateLimit(socketId) {
+  const now = Date.now();
+  let rateData = eventRateLimits.get(socketId);
+  
+  if (!rateData || now > rateData.resetTime) {
+    rateData = { count: 1, resetTime: now + FREE_TIER_LIMITS.EVENT_RATE_WINDOW_MS };
+    eventRateLimits.set(socketId, rateData);
+    return true;
+  }
+  
+  if (rateData.count >= FREE_TIER_LIMITS.EVENT_RATE_LIMIT) {
+    return false; // Rate limited
+  }
+  
+  rateData.count++;
+  return true;
+}
+
+// Update last activity timestamp for a connection
+function updateActivity(socketId) {
+  const connection = activeConnections.get(socketId);
+  if (connection) {
+    connection.lastActivity = Date.now();
+  }
+}
+
+// Cleanup throttle/rate limit data for disconnected users
+function cleanupUserData(socketId) {
+  cursorThrottles.delete(socketId);
+  eventRateLimits.delete(socketId);
+}
 
 /**
  * Initialize Socket.IO server with authentication and Redis adapter
@@ -85,52 +152,91 @@ function initializeSocket(httpServer) {
 
   // Handle connections
   io.on('connection', (socket) => {
-    console.log(`🔌 User connected: ${socket.user.username} (${socket.id})`);
+    // Check total connection limit
+    if (activeConnections.size >= FREE_TIER_LIMITS.MAX_TOTAL_CONNECTIONS) {
+      console.log(`⚠️ Connection rejected: Server at capacity (${activeConnections.size} connections)`);
+      socket.emit('error', { message: 'Server is at capacity. Please try again later.' });
+      socket.disconnect(true);
+      return;
+    }
+
+    console.log(`🔌 User connected: ${socket.user.username} (${socket.id}) [${activeConnections.size + 1} total]`);
     
-    // Store connection info
+    // Store connection info with timestamp for stale cleanup
     activeConnections.set(socket.id, {
       userId: socket.user.id,
       username: socket.user.username,
-      diagramId: null
+      diagramId: null,
+      connectedAt: Date.now(),
+      lastActivity: Date.now()
     });
 
     // Join diagram room for collaboration
     socket.on('join-diagram', async (data) => {
+      updateActivity(socket.id);
       await handleJoinDiagram(io, socket, data);
     });
 
     // Leave diagram room
     socket.on('leave-diagram', (data) => {
+      updateActivity(socket.id);
       handleLeaveDiagram(io, socket, data);
     });
 
-    // Handle cursor position updates
+    // Handle cursor position updates (with throttling)
     socket.on('cursor-move', (data) => {
       handleCursorMove(io, socket, data);
     });
 
     // Handle real-time diagram updates (Yjs sync)
     socket.on('sync-update', (data) => {
+      if (!checkRateLimit(socket.id)) return;
+      updateActivity(socket.id);
       handleSyncUpdate(io, socket, data);
     });
 
     // Handle awareness updates (presence)
     socket.on('awareness-update', (data) => {
+      if (!checkRateLimit(socket.id)) return;
       handleAwarenessUpdate(io, socket, data);
     });
 
-    // Handle node operations
-    socket.on('node-add', (data) => handleNodeOperation(io, socket, 'node-add', data));
-    socket.on('node-update', (data) => handleNodeOperation(io, socket, 'node-update', data));
-    socket.on('node-delete', (data) => handleNodeOperation(io, socket, 'node-delete', data));
-    socket.on('node-move', (data) => handleNodeOperation(io, socket, 'node-move', data));
+    // Handle node operations (with rate limiting)
+    socket.on('node-add', (data) => {
+      if (!checkRateLimit(socket.id)) return;
+      updateActivity(socket.id);
+      handleNodeOperation(io, socket, 'node-add', data);
+    });
+    socket.on('node-update', (data) => {
+      if (!checkRateLimit(socket.id)) return;
+      updateActivity(socket.id);
+      handleNodeOperation(io, socket, 'node-update', data);
+    });
+    socket.on('node-delete', (data) => {
+      if (!checkRateLimit(socket.id)) return;
+      updateActivity(socket.id);
+      handleNodeOperation(io, socket, 'node-delete', data);
+    });
+    socket.on('node-move', (data) => {
+      if (!checkRateLimit(socket.id)) return;
+      handleNodeOperation(io, socket, 'node-move', data);
+    });
 
-    // Handle edge operations
-    socket.on('edge-add', (data) => handleEdgeOperation(io, socket, 'edge-add', data));
-    socket.on('edge-delete', (data) => handleEdgeOperation(io, socket, 'edge-delete', data));
+    // Handle edge operations (with rate limiting)
+    socket.on('edge-add', (data) => {
+      if (!checkRateLimit(socket.id)) return;
+      updateActivity(socket.id);
+      handleEdgeOperation(io, socket, 'edge-add', data);
+    });
+    socket.on('edge-delete', (data) => {
+      if (!checkRateLimit(socket.id)) return;
+      updateActivity(socket.id);
+      handleEdgeOperation(io, socket, 'edge-delete', data);
+    });
 
     // Handle selection changes
     socket.on('selection-change', (data) => {
+      if (!checkRateLimit(socket.id)) return;
       handleSelectionChange(io, socket, data);
     });
 
@@ -142,6 +248,7 @@ function initializeSocket(httpServer) {
     // Handle disconnection
     socket.on('disconnect', (reason) => {
       handleDisconnect(io, socket, reason);
+      cleanupUserData(socket.id); // Clean up throttle/rate limit data
     });
 
     // Handle errors
@@ -150,9 +257,16 @@ function initializeSocket(httpServer) {
     });
   });
 
-  // Heartbeat to clean up stale connections
+  // Heartbeat to clean up stale connections and throttle data
   setInterval(() => {
     cleanupStaleConnections(io);
+    // Clean up old rate limit entries
+    const now = Date.now();
+    for (const [socketId, data] of eventRateLimits.entries()) {
+      if (now > data.resetTime + 60000) {
+        eventRateLimits.delete(socketId);
+      }
+    }
   }, 30000);
 
   return io;
@@ -224,6 +338,18 @@ async function handleJoinDiagram(io, socket, data) {
     } else if (isCollaborator) {
       const collab = diagram.collaborators.find(c => c.user?.toString() === socket.user.id);
       permission = collab?.permission || 'view';
+    }
+
+    // Check room capacity limit (free tier optimization)
+    const existingRoom = diagramRooms.get(diagramId);
+    if (existingRoom && existingRoom.size >= FREE_TIER_LIMITS.MAX_USERS_PER_DIAGRAM) {
+      // Check if user is already in the room (reconnecting)
+      if (!existingRoom.has(socket.id)) {
+        socket.emit('error', { 
+          message: `This diagram has reached capacity (${FREE_TIER_LIMITS.MAX_USERS_PER_DIAGRAM} users). Please try again later.` 
+        });
+        return;
+      }
     }
 
     // Leave any previous diagram room
@@ -331,12 +457,20 @@ function handleLeaveDiagram(io, socket, data) {
 }
 
 /**
- * Handle cursor position updates
+ * Handle cursor position updates (with server-side throttling)
  */
 function handleCursorMove(io, socket, data) {
   const { diagramId, x, y } = data;
   
   if (!diagramId) return;
+
+  // Server-side throttling - limit cursor updates per user
+  const now = Date.now();
+  const lastUpdate = cursorThrottles.get(socket.id) || 0;
+  if (now - lastUpdate < FREE_TIER_LIMITS.CURSOR_THROTTLE_MS) {
+    return; // Throttled - skip this update
+  }
+  cursorThrottles.set(socket.id, now);
 
   // Update cursor in room tracking
   const roomUsers = diagramRooms.get(diagramId);
@@ -567,6 +701,7 @@ function getRoomStats() {
 module.exports = {
   initializeSocket,
   getRoomStats,
+  getServerStats,
   activeConnections,
   diagramRooms
 };

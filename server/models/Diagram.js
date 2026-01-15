@@ -141,6 +141,7 @@ diagramSchema.pre('findOneAndUpdate', function(next) {
 
 // Index for faster queries
 diagramSchema.index({ user: 1, createdAt: -1 });
+diagramSchema.index({ user: 1, slug: 1 }); // Compound index for by-slug lookups
 // Note: slug index is already defined inline with 'index: true'
 diagramSchema.index({ 'collaborators.user': 1 }); // For collaboration queries
 

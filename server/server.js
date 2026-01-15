@@ -3,7 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const http = require('http');
 const connectDB = require('./config/db');
-const { initializeSocket, getRoomStats } = require('./socket');
+const { initializeSocket, getRoomStats, getServerStats } = require('./socket');
 
 // Load environment variables
 dotenv.config();
@@ -44,8 +44,15 @@ app.get('/api/health', (req, res) => {
 // Socket.IO room statistics (for debugging/monitoring)
 app.get('/api/socket-stats', (req, res) => {
   try {
-    const stats = getRoomStats();
-    res.json({ success: true, stats });
+    const roomStats = getRoomStats();
+    const serverStats = getServerStats();
+    res.json({ 
+      success: true, 
+      stats: {
+        ...serverStats,
+        rooms: roomStats
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get stats' });
   }
@@ -78,15 +85,15 @@ app.set('io', io);
 
 httpServer.listen(PORT, () => {
   console.log(`
-  ╔═══════════════════════════════════════════════╗
-  ║                                               ║
-  ║   🎨 SketchDB Server                          ║
-  ║   Database Diagram Tool Backend               ║
-  ║                                               ║
-  ║   Server running on port ${PORT}                 ║
-  ║   Environment: ${process.env.NODE_ENV || 'development'}                    ║
-  ║   Socket.IO: ✅ Enabled                       ║
-  ║                                               ║
-  ╚═══════════════════════════════════════════════╝
+  ╔════════════════════════════════════════════════════════╗
+  ║                                                        ║
+  ║   SketchDB Server                                      ║
+  ║   Database Diagram Tool Backend                        ║
+  ║                                                        ║
+  ║   Server running on port ${PORT}                       ║
+  ║   Environment: ${process.env.NODE_ENV || 'development'}║                    ║
+  ║   Socket.IO: Enabled                                   ║
+  ║                                                        ║
+  ╚════════════════════════════════════════════════════════╝
   `);
 });

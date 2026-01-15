@@ -20,16 +20,17 @@ const diagramValidation = [
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
+    // Use .lean() for read-only queries - returns plain JS objects (faster, less memory)
     const diagrams = await Diagram.find({ user: req.user._id })
       .select('name description slug isPublic createdAt updatedAt')
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .lean();
 
     res.json({
       success: true,
       count: diagrams.length,
       diagrams: diagrams.map(d => ({
-        ...d.toObject(),
-        _id: d._id,
+        ...d,
         username: req.user.username
       }))
     });
