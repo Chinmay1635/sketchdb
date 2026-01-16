@@ -44,61 +44,23 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4"
     >
       <div
-        style={{
-          backgroundColor: '#1f2937',
-          borderRadius: 8,
-          padding: 24,
-          maxWidth: '80%',
-          maxHeight: '80%',
-          width: 600,
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
-        }}
+        className="bg-slate-800 rounded-lg p-4 sm:p-6 w-full max-w-[95vw] sm:max-w-[600px] max-h-[90vh] flex flex-col shadow-xl"
       >
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: 16 
-        }}>
-          <h2 style={{ margin: 0, color: '#60a5fa' }}>Import SQL Schema</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="m-0 text-indigo-400 text-base sm:text-lg font-semibold">Import SQL Schema</h2>
           <button
             onClick={handleClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 20,
-              cursor: 'pointer',
-              color: '#9ca3af',
-              padding: 4,
-            }}
+            className="bg-transparent border-none text-xl cursor-pointer text-slate-400 p-1 hover:text-slate-200 transition-colors"
           >
             ✕
           </button>
         </div>
         
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: 8, 
-            fontWeight: 'bold',
-            color: '#e5e7eb'
-          }}>
+        <div className="mb-4 flex-1 min-h-0">
+          <label className="block mb-2 font-semibold text-slate-200 text-sm">
             Paste your SQL schema here:
           </label>
           <textarea
@@ -116,60 +78,28 @@ CREATE TABLE posts (
   user_id INT,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );"
-            style={{
-              width: '100%',
-              height: 300,
-              padding: 12,
-              border: '1px solid #4b5563',
-              borderRadius: 4,
-              fontFamily: 'monospace',
-              fontSize: 14,
-              resize: 'vertical',
-              outline: 'none',
-              backgroundColor: '#374151',
-              color: '#e5e7eb',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#60a5fa';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#4b5563';
-            }}
+            className="w-full h-48 sm:h-[300px] p-3 border border-slate-600 rounded-md font-mono text-xs sm:text-sm resize-y bg-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
         
-        <div style={{
-          display: 'flex',
-          gap: 12,
-          justifyContent: 'flex-end',
-        }}>
+        <div className="flex gap-3 justify-end">
           <button
             onClick={handleClose}
             disabled={isLoading}
-            style={{
-              padding: '8px 16px',
-              border: '1px solid #4b5563',
-              borderRadius: 4,
-              background: '#374151',
-              color: '#e5e7eb',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.6 : 1,
-            }}
+            className={`px-4 py-2 border border-slate-600 rounded-md bg-slate-700 text-slate-200 text-sm ${
+              isLoading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-slate-600'
+            } transition-colors`}
           >
             Cancel
           </button>
           <button
             onClick={handleImport}
             disabled={!sqlText.trim() || isLoading}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: 4,
-              background: !sqlText.trim() || isLoading ? '#4b5563' : '#3b82f6',
-              color: 'white',
-              cursor: !sqlText.trim() || isLoading ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-            }}
+            className={`px-4 py-2 border-none rounded-md text-white font-semibold text-sm ${
+              !sqlText.trim() || isLoading 
+                ? 'bg-slate-600 cursor-not-allowed' 
+                : 'bg-indigo-600 cursor-pointer hover:bg-indigo-500'
+            } transition-colors`}
           >
             {isLoading ? 'Importing...' : 'Import Schema'}
           </button>

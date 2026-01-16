@@ -11,19 +11,19 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   onColorChange,
 }) => {
   return (
-    <div className="mt-4">
-      <label className="block text-sm font-medium text-gray-300 mb-2">
+    <div className="mt-3 sm:mt-4">
+      <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
         Table Color
       </label>
-      <div className="grid grid-cols-8 gap-2 p-3 bg-gray-800 rounded-lg border border-gray-700">
+      <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5 sm:gap-2 p-2 sm:p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
         {TABLE_COLORS.map((color) => (
           <button
             key={color}
             onClick={() => onColorChange(color)}
-            className={`w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+            className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
               currentColor === color 
-                ? 'border-gray-400 ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-800' 
-                : 'border-gray-600 hover:border-gray-400'
+                ? 'border-slate-400 ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-800' 
+                : 'border-slate-600 hover:border-slate-400'
             }`}
             style={{ backgroundColor: color }}
             title={`Change table color to ${color}`}
@@ -33,17 +33,17 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
       </div>
       
       {/* Custom Color Input */}
-      <div className="mt-3 flex items-center gap-2">
-        <label className="text-xs text-gray-400">Custom:</label>
+      <div className="mt-2 sm:mt-3 flex items-center gap-2">
+        <label className="text-[10px] sm:text-xs text-slate-400">Custom:</label>
         <input
           type="color"
           value={currentColor}
           onChange={(e) => onColorChange(e.target.value)}
-          className="w-8 h-8 border-2 border-gray-600 rounded cursor-pointer hover:border-gray-400 transition-colors bg-gray-800"
+          className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-slate-600 rounded cursor-pointer hover:border-slate-400 transition-colors bg-slate-800"
           title="Choose custom color"
           aria-label="Choose custom color"
         />
-        <span className="text-xs text-gray-400 font-mono">
+        <span className="text-[10px] sm:text-xs text-slate-400 font-mono">
           {currentColor.toUpperCase()}
         </span>
       </div>

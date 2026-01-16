@@ -21,9 +21,9 @@ export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
 
   return (
     <div 
-      className="border-2 rounded-lg min-w-[200px] shadow-md relative"
+      className="border-2 rounded-lg min-w-[160px] sm:min-w-[200px] shadow-md relative"
       style={{
-        backgroundColor: '#1f2937',
+        backgroundColor: '#1e293b',
         borderColor: tableColor,
         boxShadow: `0 4px 6px -1px ${getLighterColor(tableColor, 0.3)}`
       }}
@@ -40,13 +40,13 @@ export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
       </div>
 
       {/* Attributes List */}
-      <div className="py-2">
+      <div className="py-1.5 sm:py-2">
         {attributes.length > 0 ? (
           attributes.map((attr, idx) => (
             <div
               key={idx}
-              className={`px-3 py-1 text-xs flex justify-between items-center relative min-h-[24px] text-gray-200 ${
-                idx < attributes.length - 1 ? "border-b border-gray-700" : ""
+              className={`px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs flex justify-between items-center relative min-h-[20px] sm:min-h-[24px] text-slate-200 ${
+                idx < attributes.length - 1 ? "border-b border-slate-700" : ""
               }`}
               style={{
                 backgroundColor: idx % 2 === 0 ? lightBackground : 'transparent'
@@ -98,13 +98,13 @@ export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
                 )}
               </span>
 
-              <span className="text-gray-400 text-[10px]">
+              <span className="text-slate-400 text-[8px] sm:text-[10px]">
                 {attr.dataType || "VARCHAR(255)"}
               </span>
             </div>
           ))
         ) : (
-          <div className="px-3 py-2 text-xs text-gray-500 italic">
+          <div className="px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs text-slate-500 italic">
             No attributes
           </div>
         )}

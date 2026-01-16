@@ -862,10 +862,10 @@ function CanvasPlayground() {
   // Show loading state when loading diagram from URL
   if (isLoadingDiagram) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-900">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-300 text-lg">Loading diagram...</p>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-300 text-base sm:text-lg">Loading diagram...</p>
         </div>
       </div>
     );
@@ -874,17 +874,17 @@ function CanvasPlayground() {
   // Show 404 if diagram not found
   if (diagramNotFound) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-900">
         <div className="text-center max-w-md mx-auto px-4">
-          <div className="text-6xl mb-4">🔍</div>
-          <h1 className="text-2xl font-bold text-white mb-2">Diagram Not Found</h1>
-          <p className="text-gray-400 mb-6">
+          <div className="text-5xl sm:text-6xl mb-4">🔍</div>
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">Diagram Not Found</h1>
+          <p className="text-slate-400 text-sm sm:text-base mb-6">
             This diagram doesn't exist or you don't have permission to view it.
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <button
               onClick={() => navigate('/playground')}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-5 sm:px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors text-sm sm:text-base"
             >
               Go to Home
             </button>
@@ -893,7 +893,7 @@ function CanvasPlayground() {
                 setDiagramNotFound(false);
                 window.location.reload();
               }}
-              className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              className="px-5 sm:px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-sm sm:text-base"
             >
               Try Again
             </button>
@@ -915,7 +915,7 @@ function CanvasPlayground() {
   const isReadOnly = !canEdit;
 
   return (
-    <div className="w-screen h-screen flex bg-gray-900">
+    <div className="w-screen h-screen flex flex-col md:flex-row bg-slate-900 overflow-hidden">
       {/* Navbar - Fixed at top */}
       <Toolbar 
         onAddTable={handleAddTable} 
@@ -941,7 +941,7 @@ function CanvasPlayground() {
 
       {/* Collaboration Status Bar - Shows when collaborators are present */}
       {collaboration.state.isConnected && collaboration.state.collaborators.length > 0 && (
-        <div className="fixed top-14 right-4 z-40 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 shadow-lg">
+        <div className="fixed top-14 right-2 sm:right-4 z-40 bg-slate-800 border border-slate-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-lg">
           <CollaboratorAvatars
             collaborators={collaboration.state.collaborators}
             ownerUsername={collaboration.state.ownerUsername}
@@ -952,31 +952,41 @@ function CanvasPlayground() {
 
       {/* Connection Status Indicator */}
       {currentDiagramId && (
-        <div className="fixed bottom-4 right-4 z-40">
+        <div className="fixed bottom-2 sm:bottom-4 right-2 sm:right-4 z-40">
           <div 
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-medium ${
               collaboration.state.isConnected 
-                ? 'bg-green-900/50 text-green-400 border border-green-700' 
+                ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700' 
                 : collaboration.state.isConnecting
-                  ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-700'
-                  : 'bg-gray-800 text-gray-400 border border-gray-700'
+                  ? 'bg-amber-900/50 text-amber-400 border border-amber-700'
+                  : 'bg-slate-800 text-slate-400 border border-slate-700'
             }`}
           >
             <div 
-              className={`w-2 h-2 rounded-full ${
+              className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${
                 collaboration.state.isConnected 
-                  ? 'bg-green-400 animate-pulse' 
+                  ? 'bg-emerald-400 animate-pulse' 
                   : collaboration.state.isConnecting
-                    ? 'bg-yellow-400 animate-pulse'
-                    : 'bg-gray-500'
+                    ? 'bg-amber-400 animate-pulse'
+                    : 'bg-slate-500'
               }`}
             />
+            <span className="hidden xs:inline">
             {collaboration.state.isConnected 
               ? `Live • ${collaboration.state.collaborators.length + 1} user${collaboration.state.collaborators.length > 0 ? 's' : ''}`
               : collaboration.state.isConnecting
                 ? 'Connecting...'
                 : 'Offline'
             }
+            </span>
+            <span className="xs:hidden">
+            {collaboration.state.isConnected 
+              ? `${collaboration.state.collaborators.length + 1}`
+              : collaboration.state.isConnecting
+                ? '...'
+                : '—'
+            }
+            </span>
           </div>
         </div>
       )}
@@ -1064,11 +1074,12 @@ function CanvasPlayground() {
         getAvailableTables={getAvailableTables}
         getAttributesForTable={getAttributesForTable}
         validateFKReference={validateFKReference}
+        onClose={() => setSelectedTableId(null)}
       />
       )}
 
       {/* Main Canvas Area */}
-      <div className={`flex-1 relative bg-black ${isReadOnly ? 'pt-[86px]' : 'pt-14'}`}>
+      <div className={`flex-1 relative bg-slate-950 ${isReadOnly ? 'pt-[86px] md:pt-[86px]' : 'pt-14'}`}>
         {/* Loading Dialog */}
         <LoadingDialog
           isOpen={loadingDialogOpen}
@@ -1127,18 +1138,18 @@ function CanvasPlayground() {
             onNodeClick={onNodeClick}
             isValidConnection={isValidConnection}
             fitView
-            connectionLineStyle={{ stroke: "#60a5fa", strokeWidth: 3 }}
+            connectionLineStyle={{ stroke: "#818cf8", strokeWidth: 3 }}
             defaultEdgeOptions={{
               type: "customEdge",
-              style: { stroke: "#60a5fa", strokeWidth: 2 },
-              markerEnd: { type: "arrowclosed", color: "#60a5fa" },
-              labelBgStyle: { fill: "#1f2937", fillOpacity: 0.9 },
-              labelStyle: { fill: "#60a5fa", fontWeight: "bold" },
+              style: { stroke: "#818cf8", strokeWidth: 2 },
+              markerEnd: { type: "arrowclosed", color: "#818cf8" },
+              labelBgStyle: { fill: "#1e293b", fillOpacity: 0.9 },
+              labelStyle: { fill: "#818cf8", fontWeight: "bold" },
             }}
           >
-            <MiniMap style={{ backgroundColor: '#374151' }} />
+            <MiniMap style={{ backgroundColor: '#1e293b' }} />
             <Controls />
-            <Background color="#4b5563" />
+            <Background color="#475569" />
             
             {/* Collaborator Cursors */}
             {collaboration.state.collaborators.length > 0 && (

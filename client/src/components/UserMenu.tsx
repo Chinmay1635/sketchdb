@@ -29,16 +29,16 @@ const UserMenu: React.FC<UserMenuProps> = ({ onLoginClick, onSavedDiagramsClick,
     <div className="relative">
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+        className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
+        <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
           {user?.username?.charAt(0).toUpperCase()}
         </div>
-        <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
+        {/* <span className="text-sm font-sm text-gray-700 max-w-[50px] truncate">
           {user?.username}
-        </span>
+        </span> */}
         <svg
-          className={`w-4 h-4 text-gray-500 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+          className={`w-3 h-3 text-gray-500 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

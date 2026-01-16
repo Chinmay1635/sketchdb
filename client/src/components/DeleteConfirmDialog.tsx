@@ -26,24 +26,24 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   return (
     <div
       className="
-        absolute top-[150px] left-1/2 -translate-x-1/2 
-        z-[100] bg-gray-800 border-2 border-red-500 
-        rounded-lg shadow-lg p-6 min-w-[300px]
+        absolute top-20 sm:top-[150px] left-1/2 -translate-x-1/2 
+        z-[100] bg-slate-800 border-2 border-rose-500/50 
+        rounded-lg shadow-xl p-4 sm:p-6 w-[calc(100%-2rem)] sm:w-auto sm:min-w-[300px] max-w-[90vw]
       "
     >
-      <h3 className="mt-0 text-red-400 font-semibold text-lg">Delete Table</h3>
-      <p className="text-gray-200">Are you sure you want to delete "{tableName}"?</p>
-      <p className="text-sm text-gray-400">This action cannot be undone.</p>
-      <div className="flex justify-between mt-4">
+      <h3 className="mt-0 text-rose-400 font-semibold text-base sm:text-lg">Delete Table</h3>
+      <p className="text-slate-200 text-sm sm:text-base">Are you sure you want to delete "{tableName}"?</p>
+      <p className="text-xs sm:text-sm text-slate-400">This action cannot be undone.</p>
+      <div className="flex justify-between gap-3 mt-4">
         <button
           onClick={onConfirm}
-          className="cursor-pointer bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+          className="cursor-pointer flex-1 sm:flex-none bg-rose-600 text-white px-4 py-2 rounded-md hover:bg-rose-500 transition-colors text-sm"
         >
           Delete
         </button>
         <button
           onClick={onCancel}
-          className="cursor-pointer bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+          className="cursor-pointer flex-1 sm:flex-none bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-500 transition-colors text-sm"
         >
           Cancel
         </button>

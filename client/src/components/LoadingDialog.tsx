@@ -18,28 +18,28 @@ export const LoadingDialog: React.FC<LoadingDialogProps> = ({
       className="
         absolute top-1/2 left-1/2 -translate-x-1/2
         -translate-y-1/2
-        z-[100] bg-gray-800 border-2 border-blue-500
-        rounded-lg shadow-lg p-8 min-w-[500px]
+        z-[100] bg-slate-800 border-2 border-indigo-500/50
+        rounded-lg shadow-xl p-6 sm:p-8 w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] lg:min-w-[500px] max-w-[90vw]
         text-center
       "
     >
       {/* Loading Spinner */}
       <div
         className="
-          w-10 h-10 border-4 border-gray-600 
-          border-t-blue-500 rounded-full 
-          animate-spin mx-auto mb-5
+          w-8 h-8 sm:w-10 sm:h-10 border-4 border-slate-600 
+          border-t-indigo-500 rounded-full 
+          animate-spin mx-auto mb-4 sm:mb-5
         "
       ></div>
 
       {/* Loading Message */}
-      <h3 className="text-blue-400 mt-0 mb-2 text-lg font-bold">
+      <h3 className="text-indigo-400 mt-0 mb-2 text-base sm:text-lg font-bold">
         {message}
       </h3>
 
       <p
         className={`
-          text-gray-400 text-sm mb-${onCancel ? "5" : "0"}
+          text-slate-400 text-xs sm:text-sm mb-${onCancel ? "4 sm:mb-5" : "0"}
         `}
       >
         Please wait while we generate your SQL schema...
@@ -50,8 +50,8 @@ export const LoadingDialog: React.FC<LoadingDialogProps> = ({
         <button
           onClick={onCancel}
           className="cursor-pointer
-            bg-gray-600 text-white px-4 py-2 
-            rounded-md text-sm hover:bg-gray-700
+            bg-slate-600 text-white px-4 py-2 
+            rounded-md text-sm hover:bg-slate-500 transition-colors
           "
         >
           Cancel
