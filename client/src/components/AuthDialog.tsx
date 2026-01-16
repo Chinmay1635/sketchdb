@@ -115,8 +115,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
     try {
       await signup({ username, email, prn, password, turnstileToken });
       authToasts.signupSuccess();
-      setMode('verify-otp');
-      setSuccess('Account created! Please check your email for the verification code.');
+      // setMode('verify-otp');
+      // setSuccess('Account created! Please check your email for the verification code.');
+      // OTP verification is disabled - user is auto-verified on signup
+      onClose();
+      resetForm();
     } catch (err: any) {
       authToasts.signupError(err.message);
       setError(err.message);

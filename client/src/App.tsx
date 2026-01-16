@@ -388,14 +388,20 @@ function CanvasPlayground() {
           
           console.log('Diagram loaded from URL:', diagram.name);
         } else {
+          diagramToasts.notFound();
           setDiagramNotFound(true);
         }
       } catch (err: any) {
         console.error('Failed to load diagram from URL:', err);
-        if (err.message?.includes('not found') || err.message?.includes('permission')) {
+        if (err.message?.includes('not found') || err.message?.includes('404')) {
+          diagramToasts.notFound();
+          setDiagramNotFound(true);
+        } else if (err.message?.includes('permission') || err.message?.includes('403')) {
+          diagramToasts.permissionDenied();
           setDiagramNotFound(true);
         } else {
-          showError(new Error('Failed to load diagram. Please try again.'), 'import');
+          diagramToasts.loadError(err.message || 'Failed to load diagram');
+          setDiagramNotFound(true);
         }
       } finally {
         setIsLoadingDiagram(false);
