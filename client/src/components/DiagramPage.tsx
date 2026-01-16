@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { diagramsAPI } from '../services/api';
+import { diagramToasts } from '../utils/toast';
 
 interface DiagramPageProps {
   onLoadDiagram: (diagram: any) => void;
@@ -26,17 +27,22 @@ export const DiagramPage: React.FC<DiagramPageProps> = ({ onLoadDiagram, onError
       try {
         const response = await diagramsAPI.getBySlug(username, slug);
         if (response.success && response.diagram) {
+          diagramToasts.loaded(response.diagram.name);
           onLoadDiagram(response.diagram);
         } else {
+          diagramToasts.notFound();
           setError('Diagram not found');
         }
       } catch (err: any) {
         console.error('Failed to load diagram:', err);
         if (err.message?.includes('not found') || err.message?.includes('404')) {
+          diagramToasts.notFound();
           setError('Diagram not found');
         } else if (err.message?.includes('permission') || err.message?.includes('403')) {
+          diagramToasts.permissionDenied();
           setError('You do not have permission to view this diagram');
         } else {
+          diagramToasts.loadError(err.message);
           setError(err.message || 'Failed to load diagram');
           onError(err);
         }

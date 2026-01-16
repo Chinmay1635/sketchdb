@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { diagramsAPI } from '../services/api';
+import { diagramToasts } from '../utils/toast';
 
 interface Diagram {
   _id: string;
@@ -149,10 +150,12 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
 
     try {
       await diagramsAPI.delete(id);
+      diagramToasts.deleted();
       setSuccess('Diagram deleted successfully!');
       setDeleteConfirmId(null);
       fetchDiagrams();
     } catch (err: any) {
+      diagramToasts.deleteError(err.message);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -165,6 +168,7 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
 
     try {
       await diagramsAPI.duplicate(id);
+      diagramToasts.created('Diagram copy');
       setSuccess('Diagram duplicated successfully!');
       fetchDiagrams();
     } catch (err: any) {

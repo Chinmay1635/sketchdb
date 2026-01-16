@@ -60,6 +60,17 @@ import { parseSQLSchema } from "./utils/sqlParser";
 import { exportCanvasAsPNG, exportCanvasAsPDF } from "./utils/canvasExport";
 import { useErrorHandler } from "./utils/errorHandler";
 import { diagramsAPI } from "./services/api";
+import { 
+  Toaster, 
+  toastConfig,
+  collaborationToasts, 
+  diagramToasts, 
+  importExportToasts, 
+  aiToasts,
+  shareToasts,
+  tableToasts,
+  generalToasts 
+} from "./utils/toast";
 
 // Types
 import { AttributeType, DataType } from "./types";
@@ -404,9 +415,11 @@ function CanvasPlayground() {
       importNodes(parsedNodes);
       setEdges(parsedEdges);
       
+      importExportToasts.importSuccess(parsedNodes.length);
       console.log('Schema imported successfully:', { parsedNodes, parsedEdges });
     } catch (error) {
       console.error('Failed to import schema:', error);
+      importExportToasts.importError();
       throw error; // Re-throw to be handled by ImportDialog
     }
   }, [importNodes, setEdges]);
@@ -483,9 +496,11 @@ function CanvasPlayground() {
 
       await diagramsAPI.update(currentDiagramId, diagramData);
       setLastSavedAt(new Date());
+      diagramToasts.saved(currentDiagramName || undefined);
       console.log('Diagram saved successfully');
     } catch (error) {
       console.error('Failed to save diagram:', error);
+      diagramToasts.saveError();
       showError(new Error('Failed to save diagram. Please try again.'), 'export');
     } finally {
       setIsSaving(false);
@@ -497,6 +512,7 @@ function CanvasPlayground() {
     setCurrentDiagramId(diagramId);
     setCurrentDiagramName(name);
     setLastSavedAt(new Date());
+    diagramToasts.saved(name);
     
     // Navigate to new diagram URL
     if (slug && user?.username) {
@@ -606,10 +622,14 @@ function CanvasPlayground() {
         });
       }
       
+      // Show success toast
+      aiToasts.schemaApplied(nodesWithFixedRefs.length);
+      
       // Close the AI chat sidebar after applying
       setAiChatOpen(false);
     } catch (error) {
       console.error('Apply AI schema failed:', error);
+      aiToasts.schemaError();
       showError(error, 'import');
     }
   }, [importNodes, setEdges, collaboration, showError]);
@@ -619,8 +639,10 @@ function CanvasPlayground() {
     try {
       setLoadingDialogOpen(true);
       await exportCanvasAsPNG();
+      importExportToasts.exportPNGSuccess();
     } catch (error) {
       console.error('Export PNG failed:', error);
+      importExportToasts.exportError('PNG');
       showError(error, 'export');
       setLastOperation(() => handleExportPNG);
     } finally {
@@ -632,8 +654,10 @@ function CanvasPlayground() {
     try {
       setLoadingDialogOpen(true);
       await exportCanvasAsPDF();
+      importExportToasts.exportPDFSuccess();
     } catch (error) {
       console.error('Export PDF failed:', error);
+      importExportToasts.exportError('PDF');
       showError(error, 'export');
       setLastOperation(() => handleExportPDF);
     } finally {
@@ -786,7 +810,7 @@ function CanvasPlayground() {
   const handleCopySQL = useCallback(() => {
     try {
       copyToClipboard(sqlText);
-      // You could show a success toast here
+      importExportToasts.sqlCopied();
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
       showError(new Error('Failed to copy SQL to clipboard. Please try selecting and copying manually.'), 'export');
@@ -810,6 +834,7 @@ function CanvasPlayground() {
       if (newNode && collaboration.state.isConnected) {
         collaboration.broadcastNodeAdd(newNode);
       }
+      tableToasts.created();
     } catch (error) {
       console.error('Failed to add table:', error);
       showError(error, 'validation');
@@ -832,6 +857,7 @@ function CanvasPlayground() {
       const deletedId = selectedTableId;
       deleteTable();
       setDeleteConfirmOpen(false);
+      tableToasts.deleted();
       // Broadcast to collaborators
       if (deletedId && collaboration.state.isConnected) {
         collaboration.broadcastNodeDelete(deletedId);
@@ -1180,6 +1206,16 @@ export default function App() {
     <AuthProvider>
       <ReactFlowProvider>
         <AppRoutes />
+        {/* Global Toast Container */}
+        <Toaster
+          position={toastConfig.position}
+          toastOptions={{
+            duration: toastConfig.duration,
+            style: toastConfig.style,
+            success: toastConfig.success,
+            error: toastConfig.error,
+          }}
+        />
       </ReactFlowProvider>
     </AuthProvider>
   );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { diagramsAPI } from '../services/api';
+import { shareToasts } from '../utils/toast';
 
 interface Collaborator {
   user: {
@@ -87,7 +88,9 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
       // Update the diagram's public status
       await diagramsAPI.updateVisibility(diagramId, !isPublic);
       onVisibilityChange(!isPublic);
+      shareToasts.visibilityChanged(!isPublic);
     } catch (err: any) {
+      shareToasts.shareError(err.message);
       setError(err.message || 'Failed to update visibility');
     } finally {
       setIsUpdating(false);
@@ -104,10 +107,12 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
     try {
       await diagramsAPI.addCollaborator(diagramId, newCollaboratorEmail.trim(), newCollaboratorPermission);
       setNewCollaboratorEmail('');
+      shareToasts.collaboratorAdded(newCollaboratorEmail.trim(), newCollaboratorPermission);
       setSuccessMessage(`Collaborator added with ${newCollaboratorPermission} permission`);
       await loadCollaborators();
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
+      shareToasts.shareError(err.message);
       setError(err.message || 'Failed to add collaborator');
     } finally {
       setIsAddingCollaborator(false);
@@ -118,11 +123,14 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
     if (!diagramId) return;
     
     try {
+      const removedUser = collaborators.find(c => c.user._id === userId);
       await diagramsAPI.removeCollaborator(diagramId, userId);
       setCollaborators(prev => prev.filter(c => c.user._id !== userId));
+      shareToasts.collaboratorRemoved(removedUser?.user.username || 'User');
       setSuccessMessage('Collaborator removed');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
+      shareToasts.shareError(err.message);
       setError(err.message || 'Failed to remove collaborator');
     }
   };
@@ -136,10 +144,12 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
         await diagramsAPI.removeCollaborator(diagramId, userId);
         await diagramsAPI.addCollaborator(diagramId, collaborator.user.email, permission);
         await loadCollaborators();
+        shareToasts.permissionUpdated(collaborator.user.username, permission);
         setSuccessMessage('Permission updated');
         setTimeout(() => setSuccessMessage(null), 3000);
       }
     } catch (err: any) {
+      shareToasts.shareError(err.message);
       setError(err.message || 'Failed to update permission');
     }
   };
@@ -149,6 +159,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
     
     try {
       await navigator.clipboard.writeText(publicUrl);
+      shareToasts.linkCopied();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -159,6 +170,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
       textArea.select();
       document.execCommand('copy');
       document.body.removeChild(textArea);
+      shareToasts.linkCopied();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

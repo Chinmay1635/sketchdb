@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Turnstile from './Turnstile';
+import { authToasts } from '../utils/toast';
 
 // Turnstile site key - use test key for localhost, real key for production
 const getTurnstileSiteKey = () => {
@@ -75,10 +76,12 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
         setMode('verify-otp');
         setSuccess('A verification code has been sent to your email.');
       } else {
+        authToasts.loginSuccess(email.split('@')[0]);
         onClose();
         resetForm();
       }
     } catch (err: any) {
+      authToasts.loginError(err.message);
       setError(err.message);
       setTurnstileToken(null); // Reset token on error
     } finally {
@@ -111,9 +114,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
 
     try {
       await signup({ username, email, prn, password, turnstileToken });
+      authToasts.signupSuccess();
       setMode('verify-otp');
       setSuccess('Account created! Please check your email for the verification code.');
     } catch (err: any) {
+      authToasts.signupError(err.message);
       setError(err.message);
       setTurnstileToken(null); // Reset token on error
     } finally {
@@ -128,9 +133,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
 
     try {
       await verifyOTP(email, otp);
+      authToasts.otpVerified();
       onClose();
       resetForm();
     } catch (err: any) {
+      authToasts.otpError(err.message);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -143,6 +150,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
 
     try {
       await resendOTP(email);
+      authToasts.otpSent(email);
       setSuccess('A new verification code has been sent to your email.');
     } catch (err: any) {
       setError(err.message);

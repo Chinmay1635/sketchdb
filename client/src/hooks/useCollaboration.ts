@@ -22,6 +22,7 @@ import {
   UserLeftEvent,
   getCollaboratorColor
 } from '../types/collaboration';
+import { collaborationToasts } from '../utils/toast';
 
 // Use generic types for nodes/edges to avoid version conflicts
 type GenericNode = { id: string; position?: { x: number; y: number }; [key: string]: unknown };
@@ -174,7 +175,8 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
 
     // Connection events
     socket.on('connect', () => {
-      console.log('🔌 Connected to collaboration server');
+      console.log('Connected to collaboration server');
+      collaborationToasts.connected();
       setState(prev => ({
         ...prev,
         isConnected: true,
@@ -185,6 +187,7 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
 
     socket.on('connect_error', (error) => {
       console.error('Connection error:', error.message);
+      collaborationToasts.connectionError(error.message);
       setState(prev => ({
         ...prev,
         isConnected: false,
@@ -194,7 +197,10 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('🔌 Disconnected:', reason);
+      console.log('Disconnected:', reason);
+      if (reason === 'io server disconnect' || reason === 'transport close') {
+        collaborationToasts.disconnected();
+      }
       setState(prev => ({
         ...prev,
         isConnected: false,
@@ -206,7 +212,7 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
 
     // Diagram room events
     socket.on('joined-diagram', (data: DiagramJoinedEvent) => {
-      console.log('✅ Joined diagram:', data.diagramId);
+      console.log('Joined diagram:', data.diagramId);
       
       // Add colors to users
       const usersWithColors = data.users
@@ -224,7 +230,8 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     });
 
     socket.on('user-joined', (user: UserJoinedEvent) => {
-      console.log(`👤 ${user.username} joined`);
+      console.log(`${user.username} joined`);
+      collaborationToasts.userJoined(user.username);
       addCollaborator({
         ...user,
         color: getCollaboratorColor(user.id)
@@ -232,7 +239,8 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     });
 
     socket.on('user-left', (data: UserLeftEvent) => {
-      console.log(`👤 ${data.username} left`);
+      console.log(`${data.username} left`);
+      collaborationToasts.userLeft(data.username);
       removeCollaborator(data.id);
     });
 
@@ -243,17 +251,17 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
 
     // Node operations from others - use refs to avoid stale closures
     socket.on('node-add', (data: { node: GenericNode; userId: string; username: string }) => {
-      console.log(`📦 Node added by ${data.username}`);
+      console.log(`Node added by ${data.username}`);
       callbacksRef.current.onNodeAdd?.(data.node);
     });
 
     socket.on('node-update', (data: { nodeId: string; changes: Partial<GenericNode>; userId: string; username: string }) => {
-      console.log(`📝 Node updated by ${data.username}`);
+      console.log(`Node updated by ${data.username}`);
       callbacksRef.current.onNodeUpdate?.(data.nodeId, data.changes);
     });
 
     socket.on('node-delete', (data: { nodeId: string; userId: string; username: string }) => {
-      console.log(`🗑️ Node deleted by ${data.username}`);
+      console.log(`Node deleted by ${data.username}`);
       callbacksRef.current.onNodeDelete?.(data.nodeId);
     });
 
@@ -263,24 +271,24 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
 
     // Edge operations from others - use refs to avoid stale closures
     socket.on('edge-add', (data: { edge: GenericEdge; userId: string; username: string }) => {
-      console.log(`🔗 Edge added by ${data.username}`);
+      console.log(`Edge added by ${data.username}`);
       callbacksRef.current.onEdgeAdd?.(data.edge);
     });
 
     socket.on('edge-delete', (data: { edgeId: string; userId: string; username: string }) => {
-      console.log(`🗑️ Edge deleted by ${data.username}`);
+      console.log(`Edge deleted by ${data.username}`);
       callbacksRef.current.onEdgeDelete?.(data.edgeId);
     });
 
     // State request from late joiners
     socket.on('provide-state', (data: { requesterId: string; requesterUsername: string }) => {
-      console.log(`📋 State requested by ${data.requesterUsername}`);
+      console.log(`State requested by ${data.requesterUsername}`);
       stateProviderRequesterId.current = data.requesterId;
     });
 
     // Receive state from another user
     socket.on('state-provided', (data: { nodes: GenericNode[]; edges: GenericEdge[] }) => {
-      console.log('📋 State received from collaborator');
+      console.log('State received from collaborator');
       callbacksRef.current.onStateReceived?.(data);
     });
 

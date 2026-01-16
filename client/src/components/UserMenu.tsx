@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { authToasts } from '../utils/toast';
 
 interface UserMenuProps {
   onLoginClick: () => void;
@@ -92,6 +93,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ onLoginClick, onSavedDiagramsClick,
               <button
                 onClick={() => {
                   logout();
+                  authToasts.logoutSuccess();
                   setIsMenuOpen(false);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"

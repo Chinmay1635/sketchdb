@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { aiAPI } from '../services/api';
+import { aiToasts } from '../utils/toast';
 
 interface ChatMessage {
   _id: string;
@@ -132,6 +133,7 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
         setMessages(prev => prev.filter(m => !m._id.startsWith('temp-')));
       }
     } catch (err: any) {
+      aiToasts.schemaError(err.message);
       setError(err.message || 'Failed to send message');
       setMessages(prev => prev.filter(m => !m._id.startsWith('temp-')));
     } finally {
@@ -159,6 +161,7 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       setPendingSchema(null);
       setExplanation(null);
     } catch (err: any) {
+      aiToasts.schemaError('Failed to apply schema');
       setError('Failed to apply schema');
     }
   }, [pendingSchema, diagramId, onApplySchema]);
