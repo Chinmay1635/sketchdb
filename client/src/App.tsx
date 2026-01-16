@@ -334,20 +334,31 @@ function CanvasPlayground() {
     collaboration.broadcastCursor(x, y);
   }, [collaboration, reactFlowInstance]);
 
+  // Track attempted diagram loads to prevent infinite retries
+  const attemptedDiagramRef = useRef<string | null>(null);
+
   // Load diagram from URL parameters
   useEffect(() => {
     const loadDiagramFromURL = async () => {
-      // Only load if we have URL params and not already loading
+      // Only load if we have URL params
       if (!urlUsername || !urlSlug) {
         setDiagramNotFound(false);
         return;
       }
+
+      const diagramKey = `${urlUsername.toLowerCase()}/${urlSlug}`;
 
       // Skip if we already have this diagram loaded
       if (currentDiagramSlug === urlSlug && currentOwnerUsername?.toLowerCase() === urlUsername.toLowerCase()) {
         return;
       }
 
+      // Skip if we already attempted to load this diagram (prevents infinite retry on error)
+      if (attemptedDiagramRef.current === diagramKey) {
+        return;
+      }
+
+      attemptedDiagramRef.current = diagramKey;
       setIsLoadingDiagram(true);
       setDiagramNotFound(false);
 
@@ -409,7 +420,7 @@ function CanvasPlayground() {
     };
 
     loadDiagramFromURL();
-  }, [urlUsername, urlSlug, currentDiagramSlug, currentOwnerUsername, importNodes, setEdges, reactFlowInstance, showError]);
+  }, [urlUsername, urlSlug, currentDiagramSlug, currentOwnerUsername, importNodes, setEdges, reactFlowInstance]);
 
   // Import schema functionality
   const importSchema = useCallback((sqlText: string) => {
@@ -922,6 +933,7 @@ function CanvasPlayground() {
             </button>
             <button
               onClick={() => {
+                attemptedDiagramRef.current = null; // Reset to allow retry
                 setDiagramNotFound(false);
                 window.location.reload();
               }}
