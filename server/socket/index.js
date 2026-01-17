@@ -381,16 +381,20 @@ async function handleJoinDiagram(io, socket, data) {
       username: socket.user.username,
       permission: permission,
       cursor: null,
+      selectedNodes: [],
+      selectedEdges: [],
       joinedAt: Date.now()
     });
 
-    // Get current users in the room
+    // Get current users in the room (including their selections)
     const currentUsers = Array.from(roomUsers.values()).map(u => ({
       id: u.socketId,
       odUserId: u.userId,
       username: u.username,
       permission: u.permission,
-      cursor: u.cursor
+      cursor: u.cursor,
+      selectedNodes: u.selectedNodes || [],
+      selectedEdges: u.selectedEdges || []
     }));
 
     // Notify the joining user
@@ -599,10 +603,21 @@ function handleSelectionChange(io, socket, data) {
   
   if (!diagramId) return;
 
+  // Update selection in room tracking
+  const roomUsers = diagramRooms.get(diagramId);
+  if (roomUsers) {
+    const user = roomUsers.get(socket.id);
+    if (user) {
+      user.selectedNodes = selectedNodes || [];
+      user.selectedEdges = selectedEdges || [];
+    }
+  }
+
   const roomName = `diagram:${diagramId}`;
   socket.to(roomName).emit('selection-change', {
     userId: socket.user.id,
     username: socket.user.username,
+    socketId: socket.id,
     selectedNodes: selectedNodes || [],
     selectedEdges: selectedEdges || []
   });

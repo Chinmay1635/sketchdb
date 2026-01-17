@@ -1,33 +1,94 @@
 import React from "react";
-import { Handle, Position } from "@xyflow/react";
+import { Handle, Position, NodeProps } from "@xyflow/react";
 import { TableAttribute } from "../types";
 import { getLighterColor, getDarkerColor, isLightColor } from "../utils/colorUtils";
 
-interface TableNodeProps {
-  data: {
-    label: string;
-    attributes: TableAttribute[];
-    color?: string;
-  };
-  id: string;
+// Interface for collaborator selection info passed to the node
+export interface CollaboratorSelection {
+  odUserId: string;
+  username: string;
+  color: string;
 }
 
-export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
-  const attributes = Array.isArray(data.attributes) ? data.attributes : [];
-  const tableColor = data.color || '#0074D9'; // Default blue color
+// Custom data type for TableNode
+interface TableNodeData {
+  label: string;
+  attributes: TableAttribute[];
+  color?: string;
+  selectedBy?: CollaboratorSelection[]; // Collaborators who have selected this node
+}
+
+export const TableNode: React.FC<NodeProps> = ({ data, id, selected }) => {
+  // Cast data to our expected type (ReactFlow passes data as Record<string, unknown>)
+  const nodeData = data as unknown as TableNodeData;
+  const attributes = Array.isArray(nodeData.attributes) ? nodeData.attributes : [];
+  const tableColor = nodeData.color || '#0074D9'; // Default blue color
   const lightBackground = getLighterColor(tableColor, 0.05);
   const darkerBorder = getDarkerColor(tableColor);
   const textColor = isLightColor(tableColor) ? '#000000' : '#FFFFFF';
+  
+  // Get collaborators who selected this node
+  const selectedBy = nodeData.selectedBy || [];
+  const hasCollaboratorSelection = selectedBy.length > 0;
+  
+  // Use the first collaborator's color for the selection border, or combine multiple
+  const selectionBorderColor = hasCollaboratorSelection 
+    ? selectedBy[0].color 
+    : tableColor;
 
   return (
     <div 
       className="border-2 rounded-lg min-w-[160px] sm:min-w-[200px] shadow-md relative"
       style={{
         backgroundColor: '#1e293b',
-        borderColor: tableColor,
-        boxShadow: `0 4px 6px -1px ${getLighterColor(tableColor, 0.3)}`
+        borderColor: hasCollaboratorSelection ? selectionBorderColor : tableColor,
+        borderWidth: hasCollaboratorSelection ? '3px' : '2px',
+        boxShadow: hasCollaboratorSelection 
+          ? `0 0 0 2px ${selectionBorderColor}40, 0 4px 12px -1px ${selectionBorderColor}60`
+          : `0 4px 6px -1px ${getLighterColor(tableColor, 0.3)}`,
+        transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
       }}
     >
+      {/* Collaborator selection indicator badges */}
+      {hasCollaboratorSelection && (
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 flex -space-x-1 z-10">
+          {selectedBy.slice(0, 3).map((collab, index) => (
+            <div
+              key={collab.odUserId}
+              className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-slate-800 shadow-sm"
+              style={{ 
+                backgroundColor: collab.color,
+                zIndex: selectedBy.length - index
+              }}
+              title={`Selected by ${collab.username}`}
+            >
+              {collab.username.slice(0, 1).toUpperCase()}
+            </div>
+          ))}
+          {selectedBy.length > 3 && (
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-slate-600 border-2 border-slate-800 shadow-sm"
+              title={`+${selectedBy.length - 3} more`}
+            >
+              +{selectedBy.length - 3}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* "Editing" tooltip when collaborator has selection */}
+      {hasCollaboratorSelection && (
+        <div 
+          className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-0.5 rounded text-[10px] text-white whitespace-nowrap shadow-lg z-20"
+          style={{ backgroundColor: selectionBorderColor }}
+        >
+          {selectedBy.length === 1 
+            ? `${selectedBy[0].username} is viewing`
+            : `${selectedBy.length} users viewing`
+          }
+        </div>
+      )}
+
       {/* Table Header */}
       <div 
         className="text-white px-3 py-2 rounded-t-lg font-bold text-center"
@@ -36,7 +97,7 @@ export const TableNode: React.FC<TableNodeProps> = ({ data, id }) => {
           color: textColor
         }}
       >
-        {typeof data.label === "string" ? data.label : `Table ${id}`}
+        {typeof nodeData.label === "string" ? nodeData.label : `Table ${id}`}
       </div>
 
       {/* Attributes List */}

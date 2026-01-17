@@ -149,6 +149,16 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     }));
   }, []);
 
+  // Update collaborator selection
+  const updateCollaboratorSelection = useCallback((socketId: string, selectedNodes: string[], selectedEdges: string[]) => {
+    setState(prev => ({
+      ...prev,
+      collaborators: prev.collaborators.map(c =>
+        c.id === socketId ? { ...c, selectedNodes, selectedEdges } : c
+      )
+    }));
+  }, []);
+
   // Connect to socket server
   const connect = useCallback(() => {
     const token = getToken();
@@ -247,6 +257,17 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     // Cursor updates
     socket.on('cursor-update', (data: CursorUpdateEvent) => {
       updateCollaboratorCursor(data.id, data.x, data.y);
+    });
+
+    // Selection updates from other users
+    socket.on('selection-change', (data: { userId: string; username: string; selectedNodes: string[]; selectedEdges: string[] }) => {
+      // Find the collaborator by odUserId and update their selection
+      setState(prev => ({
+        ...prev,
+        collaborators: prev.collaborators.map(c =>
+          c.odUserId === data.userId ? { ...c, selectedNodes: data.selectedNodes, selectedEdges: data.selectedEdges } : c
+        )
+      }));
     });
 
     // Node operations from others - use refs to avoid stale closures

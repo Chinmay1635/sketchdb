@@ -1,4 +1,5 @@
 export { TableNode } from './TableNode';
+export type { CollaboratorSelection } from './TableNode';
 export { Sidebar } from './Sidebar';
 export { SQLDialog } from './SQLDialog';
 export { ImportDialog } from './ImportDialog';

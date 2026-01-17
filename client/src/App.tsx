@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef, useEffect } from "react";
+import React, { useCallback, useState, useRef, useEffect, useMemo } from "react";
 import {
   Routes,
   Route,
@@ -74,6 +74,7 @@ import {
 
 // Types
 import { AttributeType, DataType } from "./types";
+import { CollaboratorSelection } from "./components/TableNode";
 
 // Safe SQL generator that doesn't throw
 const safeGenerateSQL = (nodes: Node[]): string => {
@@ -756,18 +757,81 @@ function CanvasPlayground() {
     }
   }, [onNodesChange, collaboration]);
 
-  // Node selection
+  // Node selection - also broadcasts to collaborators
   const onNodeClick = useCallback(
     (_: any, node: Node) => {
       try {
         setSelectedTableId(node.id);
+        
+        // Broadcast selection to collaborators
+        if (collaboration.state.isConnected) {
+          collaboration.broadcastSelection([node.id], []);
+        }
       } catch (error) {
         console.error('Failed to select node:', error);
         showError(new Error('Failed to select table. Please try again.'), 'validation');
       }
     },
-    [setSelectedTableId, showError]
+    [setSelectedTableId, showError, collaboration]
   );
+
+  // Handle click on empty canvas to deselect
+  const onPaneClick = useCallback(() => {
+    try {
+      setSelectedTableId(null);
+      
+      // Broadcast empty selection to collaborators
+      if (collaboration.state.isConnected) {
+        collaboration.broadcastSelection([], []);
+      }
+    } catch (error) {
+      console.error('Failed to deselect:', error);
+    }
+  }, [setSelectedTableId, collaboration]);
+
+  // Compute nodes with collaborator selection data injected
+  const nodesWithSelections = useMemo(() => {
+    if (!collaboration.state.collaborators.length) {
+      return nodes; // No collaborators, return nodes as-is
+    }
+
+    // Build a map of nodeId -> array of collaborators who selected it
+    const selectionMap = new Map<string, CollaboratorSelection[]>();
+    
+    collaboration.state.collaborators.forEach(collab => {
+      const selectedNodes = collab.selectedNodes || [];
+      selectedNodes.forEach(nodeId => {
+        if (!selectionMap.has(nodeId)) {
+          selectionMap.set(nodeId, []);
+        }
+        selectionMap.get(nodeId)!.push({
+          odUserId: collab.odUserId,
+          username: collab.username,
+          color: collab.color || '#6366f1'
+        });
+      });
+    });
+
+    // If no selections, return nodes as-is
+    if (selectionMap.size === 0) {
+      return nodes;
+    }
+
+    // Inject selectedBy into node data
+    return nodes.map(node => {
+      const selectedBy = selectionMap.get(node.id);
+      if (selectedBy && selectedBy.length > 0) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            selectedBy
+          }
+        };
+      }
+      return node;
+    });
+  }, [nodes, collaboration.state.collaborators]);
 
   // SQL Export with loading animation and error handling
   const exportToSQL = useCallback(() => {
@@ -1172,7 +1236,7 @@ function CanvasPlayground() {
           onMouseMove={handleMouseMove}
         >
           <ReactFlow
-            nodes={nodes}
+            nodes={nodesWithSelections}
             edges={edges}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
@@ -1180,6 +1244,7 @@ function CanvasPlayground() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
             isValidConnection={isValidConnection}
             fitView
             connectionLineStyle={{ stroke: "#818cf8", strokeWidth: 3 }}

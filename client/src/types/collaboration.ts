@@ -9,6 +9,8 @@ export interface CollaboratorInfo {
   permission: 'view' | 'edit';
   cursor?: CursorPosition;
   color?: string;
+  selectedNodes?: string[];
+  selectedEdges?: string[];
 }
 
 export interface CursorPosition {
