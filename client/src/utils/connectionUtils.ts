@@ -1,4 +1,5 @@
 import { Edge, Connection, Node } from '@xyflow/react';
+import { Cardinality } from '../types';
 
 export interface ConnectionInfo {
   sourceTableId: string;
@@ -98,6 +99,18 @@ export const createEdgesFromForeignKeys = (nodes: Node[]): Edge[] => {
         if (referencedNode) {
           const targetColor = (referencedNode.data as any)?.color || '#0074D9';
           
+          // Get cardinality and optional flag from the attribute
+          const cardinalityValue: Cardinality = attr.cardinality || 'one-to-many';
+          const isOptionalFK = attr.isOptional || false;
+          
+          // Determine edge color based on cardinality
+          const getEdgeColor = (card: Cardinality) => {
+            if (card === 'many-to-many') return '#FF6B6B'; // Red for M:N
+            return targetColor; // Use target table color for 1:1 and 1:N
+          };
+          
+          const edgeColor = getEdgeColor(cardinalityValue);
+          
           // Edge direction: FROM referenced PK TO foreign key
           // This shows: "Primary key is referenced by foreign key"
           const sourceHandle = `${referencedNode.id}-${attr.refAttr}-source`;  // PK side
@@ -109,22 +122,30 @@ export const createEdgesFromForeignKeys = (nodes: Node[]): Edge[] => {
             target: node.id,              // Target: table with FK
             sourceHandle,                 // Source: referenced column (PK)
             targetHandle,                 // Target: FK column
-            type: 'customEdge',
+            type: 'custom',
+            data: {
+              cardinality: cardinalityValue,
+              isOptional: isOptionalFK,
+            },
             style: {
-              stroke: targetColor, // Use target table color for the edge
+              stroke: edgeColor,
               strokeWidth: 2,
+              strokeDasharray: isOptionalFK ? '5,5' : undefined,
             },
             markerEnd: {
               type: 'arrowclosed' as const,
-              color: targetColor,
+              color: edgeColor,
             },
-            label: 'FK',
-            labelStyle: { fill: targetColor, fontWeight: 'bold', fontSize: 10 },
+            label: cardinalityValue === 'one-to-one' ? '1:1' : 
+                   cardinalityValue === 'many-to-many' ? 'M:N' : '1:N',
+            labelStyle: { fill: edgeColor, fontWeight: 'bold', fontSize: 10 },
           };
           
           console.log('Creating edge:', {
             from: `${referencedNode.id}.${attr.refAttr} (PK)`,
             to: `${node.id}.${attr.name} (FK)`,
+            cardinality: cardinalityValue,
+            isOptional: isOptionalFK,
             edge
           });
           

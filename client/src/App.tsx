@@ -87,6 +87,7 @@ const safeGenerateSQL = (nodes: Node[]): string => {
 };
 
 // Node types configuration
+// Node types configuration
 const nodeTypes: NodeTypes = {
   tableNode: TableNode,
 };
@@ -94,6 +95,7 @@ const nodeTypes: NodeTypes = {
 // Edge types configuration
 const edgeTypes: EdgeTypes = {
   customEdge: CustomEdge,
+  custom: CustomEdge, // Also register as 'custom' for cardinality edges
 };
 
 const initialNodes: Node[] = [];
@@ -154,6 +156,16 @@ function CanvasPlayground() {
     attrDataType,
     refTable,
     refAttr,
+    // Enhanced FK options
+    cardinality,
+    onDeleteAction,
+    onUpdateAction,
+    isOptional,
+    // Column constraints
+    checkConstraint,
+    defaultValue,
+    isNotNull,
+    isUnique,
 
     setSelectedTableId,
     onNodesChange,
@@ -184,6 +196,16 @@ function CanvasPlayground() {
     setAttrDataType,
     setRefTable,
     setRefAttr,
+    // Enhanced FK option setters
+    setCardinality,
+    setOnDeleteAction,
+    setOnUpdateAction,
+    setIsOptional,
+    // Column constraint setters
+    setCheckConstraint,
+    setDefaultValue,
+    setIsNotNull,
+    setIsUnique,
     
     // FK Helper functions
     getAvailableTables,
@@ -1158,6 +1180,16 @@ function CanvasPlayground() {
         attrDataType={attrDataType}
         refTable={refTable}
         refAttr={refAttr}
+        // Enhanced FK options
+        cardinality={cardinality}
+        onDelete={onDeleteAction}
+        onUpdate={onUpdateAction}
+        isOptional={isOptional}
+        // Column constraints
+        checkConstraint={checkConstraint}
+        defaultValue={defaultValue}
+        isNotNull={isNotNull}
+        isUnique={isUnique}
         onStartEditTableName={startEditTableName}
         onSaveTableName={saveTableName}
         onCancelEditTableName={cancelEditTableName}
@@ -1169,6 +1201,16 @@ function CanvasPlayground() {
         onAttrTypeChange={setAttrType}
         onRefTableChange={setRefTable}
         onRefAttrChange={setRefAttr}
+        // Enhanced FK option handlers
+        onCardinalityChange={setCardinality}
+        onOnDeleteChange={setOnDeleteAction}
+        onOnUpdateChange={setOnUpdateAction}
+        onIsOptionalChange={setIsOptional}
+        // Column constraint handlers
+        onCheckConstraintChange={setCheckConstraint}
+        onDefaultValueChange={setDefaultValue}
+        onIsNotNullChange={setIsNotNull}
+        onIsUniqueChange={setIsUnique}
         onAddAttribute={handleAddAttribute}
         onStartAttrEdit={onStartAttrEdit}
         onAttrEditNameChange={onAttrEditNameChange}

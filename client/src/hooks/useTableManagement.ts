@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Node, useNodesState, Edge } from '@xyflow/react';
-import { TableAttribute, AttributeType, DataType, TableData } from '../types';
+import { TableAttribute, AttributeType, DataType, TableData, Cardinality, CascadeAction } from '../types';
 import { getRandomTableColor } from '../utils/colorUtils';
 import { useErrorHandler } from '../utils/errorHandler';
 
@@ -23,6 +23,18 @@ export const useTableManagement = (
   const [attrDataType, setAttrDataType] = useState<DataType>("VARCHAR(255)");
   const [refTable, setRefTable] = useState("");
   const [refAttr, setRefAttr] = useState("");
+  
+  // Enhanced FK options state
+  const [cardinality, setCardinality] = useState<Cardinality>('one-to-many');
+  const [onDeleteAction, setOnDeleteAction] = useState<CascadeAction>('NO ACTION');
+  const [onUpdateAction, setOnUpdateAction] = useState<CascadeAction>('NO ACTION');
+  const [isOptional, setIsOptional] = useState(false);
+  
+  // Column constraint state
+  const [checkConstraint, setCheckConstraint] = useState("");
+  const [defaultValue, setDefaultValue] = useState("");
+  const [isNotNull, setIsNotNull] = useState(false);
+  const [isUnique, setIsUnique] = useState(false);
   
   // Error handling
   const { showError } = useErrorHandler();
@@ -64,12 +76,27 @@ export const useTableManagement = (
   }, [nodes]);
 
   // Edge management functions
-  const createFKEdge = useCallback((sourceTableId: string, sourceAttrName: string, targetTableId: string, targetAttrName: string) => {
+  const createFKEdge = useCallback((
+    sourceTableId: string, 
+    sourceAttrName: string, 
+    targetTableId: string, 
+    targetAttrName: string,
+    edgeCardinality?: Cardinality,
+    edgeIsOptional?: boolean
+  ) => {
     if (!setEdges) return;
     
     const sourceHandle = `${sourceTableId}-${sourceAttrName}-source`;
     const targetHandle = `${targetTableId}-${targetAttrName}-target`;
     const edgeId = `${sourceTableId}-${sourceAttrName}-to-${targetTableId}-${targetAttrName}`;
+    
+    // Determine edge color based on cardinality
+    const getEdgeColor = (card?: Cardinality) => {
+      if (card === 'many-to-many') return '#FF6B6B'; // Red for M:N
+      return '#0074D9'; // Blue for 1:1 and 1:N
+    };
+    
+    const edgeColor = getEdgeColor(edgeCardinality);
     
     setEdges((edges) => {
       // Remove any existing edge with the same source/target handles or ID
@@ -87,9 +114,15 @@ export const useTableManagement = (
         target: targetTableId,
         sourceHandle,
         targetHandle,
+        type: 'custom', // Use our CustomEdge component
+        data: {
+          cardinality: edgeCardinality || 'one-to-many',
+          isOptional: edgeIsOptional || false,
+        },
         style: {
-          stroke: '#0074D9',
+          stroke: edgeColor,
           strokeWidth: 2,
+          strokeDasharray: edgeIsOptional ? '5,5' : undefined,
         },
         markerEnd: {
           type: 'arrowclosed' as const,
@@ -283,7 +316,7 @@ export const useTableManagement = (
       
       // Create FK edge if validation passes
       if (setEdges) {
-        createFKEdge(refTableNode.id, refAttr, selectedTableId, attrName);
+        createFKEdge(refTableNode.id, refAttr, selectedTableId, attrName, cardinality, isOptional);
       }
     }
     
@@ -297,6 +330,16 @@ export const useTableManagement = (
           dataType: attrDataType,
           refTable: attrType === 'FK' ? refTable : undefined, 
           refAttr: attrType === 'FK' ? refAttr : undefined,
+          // Enhanced FK options
+          cardinality: attrType === 'FK' ? cardinality : undefined,
+          onDelete: attrType === 'FK' ? onDeleteAction : undefined,
+          onUpdate: attrType === 'FK' ? onUpdateAction : undefined,
+          isOptional: attrType === 'FK' ? isOptional : undefined,
+          // Column constraints
+          checkConstraint: checkConstraint || undefined,
+          defaultValue: defaultValue || undefined,
+          isNotNull: isNotNull || undefined,
+          isUnique: isUnique || undefined,
           isEditing: false,   
           editName: ""        
         };
@@ -316,7 +359,17 @@ export const useTableManagement = (
     setAttrDataType("VARCHAR(255)");
     setRefTable("");
     setRefAttr("");
-  }, [selectedTableId, attrName, attrType, attrDataType, refTable, refAttr, setNodes, nodes, setEdges, createFKEdge, attributes]);
+    // Reset enhanced FK options
+    setCardinality('one-to-many');
+    setOnDeleteAction('NO ACTION');
+    setOnUpdateAction('NO ACTION');
+    setIsOptional(false);
+    // Reset column constraints
+    setCheckConstraint("");
+    setDefaultValue("");
+    setIsNotNull(false);
+    setIsUnique(false);
+  }, [selectedTableId, attrName, attrType, attrDataType, refTable, refAttr, cardinality, onDeleteAction, onUpdateAction, isOptional, checkConstraint, defaultValue, isNotNull, isUnique, setNodes, nodes, setEdges, createFKEdge, attributes]);
 
   // Start Editing Table Name
   const startEditTableName = useCallback(() => {
@@ -503,6 +556,120 @@ export const useTableManagement = (
     );
   }, [selectedTableId, setNodes]);
 
+  // Enhanced FK option edit handlers
+  const onAttrEditCardinalityChange = useCallback((idx: number, value: Cardinality) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editCardinality: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditOnDeleteChange = useCallback((idx: number, value: CascadeAction) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editOnDelete: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditOnUpdateChange = useCallback((idx: number, value: CascadeAction) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editOnUpdate: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditIsOptionalChange = useCallback((idx: number, value: boolean) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editIsOptional: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  // Column constraint edit handlers
+  const onAttrEditCheckConstraintChange = useCallback((idx: number, value: string) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editCheckConstraint: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditDefaultValueChange = useCallback((idx: number, value: string) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editDefaultValue: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditIsNotNullChange = useCallback((idx: number, value: boolean) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editIsNotNull: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
+  const onAttrEditIsUniqueChange = useCallback((idx: number, value: boolean) => {
+    if (!selectedTableId) return;
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id !== selectedTableId) return node;
+        const nodeData = node.data as TableData;
+        const updatedAttrs = nodeData.attributes.map((attr: TableAttribute, i: number) =>
+          i === idx ? { ...attr, editIsUnique: value } : attr
+        );
+        return { ...node, data: { ...nodeData, attributes: updatedAttrs } };
+      })
+    );
+  }, [selectedTableId, setNodes]);
+
   const onSaveAttrName = useCallback((idx: number) => {
     if (!selectedTableId) return;
     
@@ -589,12 +756,31 @@ export const useTableManagement = (
             type: attr.editType || attr.type,
             refTable: attr.editType === 'FK' ? (attr.editRefTable || attr.refTable) : undefined,
             refAttr: attr.editType === 'FK' ? (attr.editRefAttr || attr.refAttr) : undefined,
+            // Enhanced FK options
+            cardinality: attr.editType === 'FK' ? (attr.editCardinality || attr.cardinality || 'one-to-many') : undefined,
+            onDelete: attr.editType === 'FK' ? (attr.editOnDelete || attr.onDelete || 'NO ACTION') : undefined,
+            onUpdate: attr.editType === 'FK' ? (attr.editOnUpdate || attr.onUpdate || 'NO ACTION') : undefined,
+            isOptional: attr.editType === 'FK' ? (attr.editIsOptional ?? attr.isOptional ?? false) : undefined,
+            // Column constraints
+            checkConstraint: attr.editCheckConstraint ?? attr.checkConstraint,
+            defaultValue: attr.editDefaultValue ?? attr.defaultValue,
+            isNotNull: attr.editIsNotNull ?? attr.isNotNull,
+            isUnique: attr.editIsUnique ?? attr.isUnique,
+            // Reset edit state
             isEditing: false, 
             editName: "",
             editDataType: undefined,
             editType: undefined,
             editRefTable: "",
-            editRefAttr: ""
+            editRefAttr: "",
+            editCardinality: undefined,
+            editOnDelete: undefined,
+            editOnUpdate: undefined,
+            editIsOptional: undefined,
+            editCheckConstraint: undefined,
+            editDefaultValue: undefined,
+            editIsNotNull: undefined,
+            editIsUnique: undefined,
           } : attr
         );
         return { ...node, data: { ...currentNodeData, attributes: updatedAttrs } };
@@ -788,6 +974,16 @@ export const useTableManagement = (
     attrDataType,
     refTable,
     refAttr,
+    // Enhanced FK options
+    cardinality,
+    onDeleteAction,
+    onUpdateAction,
+    isOptional,
+    // Column constraints
+    checkConstraint,
+    defaultValue,
+    isNotNull,
+    isUnique,
     
     // Actions
     setSelectedTableId,
@@ -808,6 +1004,16 @@ export const useTableManagement = (
     onAttrEditTypeChange,
     onAttrEditRefTableChange,
     onAttrEditRefAttrChange,
+    // Enhanced FK option edit handlers
+    onAttrEditCardinalityChange,
+    onAttrEditOnDeleteChange,
+    onAttrEditOnUpdateChange,
+    onAttrEditIsOptionalChange,
+    // Column constraint edit handlers
+    onAttrEditCheckConstraintChange,
+    onAttrEditDefaultValueChange,
+    onAttrEditIsNotNullChange,
+    onAttrEditIsUniqueChange,
     onSaveAttrName,
     onCancelAttrEdit,
     onDeleteAttribute,
@@ -819,6 +1025,16 @@ export const useTableManagement = (
     setAttrDataType,
     setRefTable,
     setRefAttr,
+    // Enhanced FK option setters
+    setCardinality,
+    setOnDeleteAction,
+    setOnUpdateAction,
+    setIsOptional,
+    // Column constraint setters
+    setCheckConstraint,
+    setDefaultValue,
+    setIsNotNull,
+    setIsUnique,
     
     // FK Helper functions
     getAvailableTables,

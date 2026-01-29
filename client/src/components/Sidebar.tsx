@@ -1,6 +1,15 @@
 import React from "react";
 import { Node } from "@xyflow/react";
-import { TableAttribute, AttributeType, DataType, DATA_TYPES } from "../types";
+import { 
+  TableAttribute, 
+  AttributeType, 
+  DataType, 
+  DATA_TYPES,
+  Cardinality,
+  CascadeAction,
+  CARDINALITY_OPTIONS,
+  CASCADE_ACTIONS
+} from "../types";
 import { ColorPicker } from "./ColorPicker";
 
 interface TableNodeData {
@@ -19,6 +28,15 @@ interface SidebarProps {
   attrDataType: DataType;
   refTable: string;
   refAttr: string;
+  // New FK options for adding attributes
+  cardinality?: Cardinality;
+  onDelete?: CascadeAction;
+  onUpdate?: CascadeAction;
+  isOptional?: boolean;
+  checkConstraint?: string;
+  defaultValue?: string;
+  isNotNull?: boolean;
+  isUnique?: boolean;
   onStartEditTableName?: () => void;
   onSaveTableName?: () => void;
   onCancelEditTableName?: () => void;
@@ -30,6 +48,14 @@ interface SidebarProps {
   onAttrTypeChange?: (val: AttributeType) => void;
   onRefTableChange?: (val: string) => void;
   onRefAttrChange?: (val: string) => void;
+  onCardinalityChange?: (val: Cardinality) => void;
+  onOnDeleteChange?: (val: CascadeAction) => void;
+  onOnUpdateChange?: (val: CascadeAction) => void;
+  onIsOptionalChange?: (val: boolean) => void;
+  onCheckConstraintChange?: (val: string) => void;
+  onDefaultValueChange?: (val: string) => void;
+  onIsNotNullChange?: (val: boolean) => void;
+  onIsUniqueChange?: (val: boolean) => void;
   onAddAttribute?: () => void;
 
   // Attribute editing
@@ -39,6 +65,14 @@ interface SidebarProps {
   onAttrEditTypeChange?: (idx: number, val: AttributeType) => void;
   onAttrEditRefTableChange?: (idx: number, val: string) => void;
   onAttrEditRefAttrChange?: (idx: number, val: string) => void;
+  onAttrEditCardinalityChange?: (idx: number, val: Cardinality) => void;
+  onAttrEditOnDeleteChange?: (idx: number, val: CascadeAction) => void;
+  onAttrEditOnUpdateChange?: (idx: number, val: CascadeAction) => void;
+  onAttrEditIsOptionalChange?: (idx: number, val: boolean) => void;
+  onAttrEditCheckConstraintChange?: (idx: number, val: string) => void;
+  onAttrEditDefaultValueChange?: (idx: number, val: string) => void;
+  onAttrEditIsNotNullChange?: (idx: number, val: boolean) => void;
+  onAttrEditIsUniqueChange?: (idx: number, val: boolean) => void;
   onSaveAttrName?: (idx: number) => void;
   onCancelAttrEdit?: (idx: number) => void;
   onDeleteAttribute?: (idx: number) => void;
@@ -62,6 +96,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   attrDataType,
   refTable,
   refAttr,
+  cardinality = 'one-to-many',
+  onDelete: onDeleteCascade = 'NO ACTION',
+  onUpdate: onUpdateCascade = 'NO ACTION',
+  isOptional = false,
+  checkConstraint = '',
+  defaultValue = '',
+  isNotNull = false,
+  isUnique = false,
   onStartEditTableName,
   onSaveTableName,
   onCancelEditTableName,
@@ -73,6 +115,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onAttrTypeChange,
   onRefTableChange,
   onRefAttrChange,
+  onCardinalityChange,
+  onOnDeleteChange,
+  onOnUpdateChange,
+  onIsOptionalChange,
+  onCheckConstraintChange,
+  onDefaultValueChange,
+  onIsNotNullChange,
+  onIsUniqueChange,
   onAddAttribute,
   onStartAttrEdit,
   onAttrEditNameChange,
@@ -80,6 +130,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onAttrEditTypeChange,
   onAttrEditRefTableChange,
   onAttrEditRefAttrChange,
+  onAttrEditCardinalityChange,
+  onAttrEditOnDeleteChange,
+  onAttrEditOnUpdateChange,
+  onAttrEditIsOptionalChange,
+  onAttrEditCheckConstraintChange,
+  onAttrEditDefaultValueChange,
+  onAttrEditIsNotNullChange,
+  onAttrEditIsUniqueChange,
   onSaveAttrName,
   onCancelAttrEdit,
   onDeleteAttribute,
@@ -330,6 +388,127 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     }
                                   </select>
                                 </div>
+                                
+                                {/* Cardinality */}
+                                <div>
+                                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Relationship Type
+                                  </label>
+                                  <select
+                                    value={attr.editCardinality || attr.cardinality || 'one-to-many'}
+                                    onChange={(e) => onAttrEditCardinalityChange?.(idx, e.target.value as Cardinality)}
+                                    className="w-full px-2 py-1.5 border border-slate-600 rounded-md bg-slate-600 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                    title="Select relationship cardinality"
+                                  >
+                                    {CARDINALITY_OPTIONS.map((opt) => (
+                                      <option key={opt.value} value={opt.value} title={opt.description}>
+                                        {opt.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                {/* Cascade Actions */}
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                                      ON DELETE
+                                    </label>
+                                    <select
+                                      value={attr.editOnDelete || attr.onDelete || 'NO ACTION'}
+                                      onChange={(e) => onAttrEditOnDeleteChange?.(idx, e.target.value as CascadeAction)}
+                                      className="w-full px-2 py-1.5 border border-slate-600 rounded-md bg-slate-600 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                                    >
+                                      {CASCADE_ACTIONS.map((action) => (
+                                        <option key={action} value={action}>{action}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                                      ON UPDATE
+                                    </label>
+                                    <select
+                                      value={attr.editOnUpdate || attr.onUpdate || 'NO ACTION'}
+                                      onChange={(e) => onAttrEditOnUpdateChange?.(idx, e.target.value as CascadeAction)}
+                                      className="w-full px-2 py-1.5 border border-slate-600 rounded-md bg-slate-600 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                                    >
+                                      {CASCADE_ACTIONS.map((action) => (
+                                        <option key={action} value={action}>{action}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                {/* Optional Toggle */}
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`optional-edit-${idx}`}
+                                    checked={attr.editIsOptional ?? attr.isOptional ?? false}
+                                    onChange={(e) => onAttrEditIsOptionalChange?.(idx, e.target.checked)}
+                                    className="w-4 h-4 rounded border-slate-600 bg-slate-600 text-indigo-500 focus:ring-indigo-500"
+                                  />
+                                  <label htmlFor={`optional-edit-${idx}`} className="text-xs text-slate-300">
+                                    Optional (nullable FK)
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Column Constraints (for non-FK columns) */}
+                            {(attr.editType !== "FK" && attr.type !== "FK") && (
+                              <div className="space-y-2 p-2.5 bg-slate-800/50 rounded-md border border-slate-600/50">
+                                <h6 className="text-xs font-medium text-slate-400">
+                                  Column Constraints
+                                </h6>
+                                
+                                <div className="flex flex-wrap gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      id={`notnull-edit-${idx}`}
+                                      checked={attr.editIsNotNull ?? attr.isNotNull ?? false}
+                                      onChange={(e) => onAttrEditIsNotNullChange?.(idx, e.target.checked)}
+                                      className="w-4 h-4 rounded border-slate-600 bg-slate-600 text-indigo-500 focus:ring-indigo-500"
+                                    />
+                                    <label htmlFor={`notnull-edit-${idx}`} className="text-xs text-slate-300">NOT NULL</label>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      id={`unique-edit-${idx}`}
+                                      checked={attr.editIsUnique ?? attr.isUnique ?? false}
+                                      onChange={(e) => onAttrEditIsUniqueChange?.(idx, e.target.checked)}
+                                      className="w-4 h-4 rounded border-slate-600 bg-slate-600 text-indigo-500 focus:ring-indigo-500"
+                                    />
+                                    <label htmlFor={`unique-edit-${idx}`} className="text-xs text-slate-300">UNIQUE</label>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Default Value
+                                  </label>
+                                  <input
+                                    value={attr.editDefaultValue ?? attr.defaultValue ?? ''}
+                                    onChange={(e) => onAttrEditDefaultValueChange?.(idx, e.target.value)}
+                                    placeholder="e.g., 0, 'active', NOW()"
+                                    className="w-full px-2 py-1.5 border border-slate-600 rounded-md bg-slate-600 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    CHECK Constraint
+                                  </label>
+                                  <input
+                                    value={attr.editCheckConstraint ?? attr.checkConstraint ?? ''}
+                                    onChange={(e) => onAttrEditCheckConstraintChange?.(idx, e.target.value)}
+                                    placeholder="e.g., age >= 0, status IN ('active','inactive')"
+                                    className="w-full px-2 py-1.5 border border-slate-600 rounded-md bg-slate-600 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                                  />
+                                </div>
                               </div>
                             )}
 
@@ -394,11 +573,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                       {/* FK reference */}
                       {attr.type === "FK" && attr.refTable && attr.refAttr && (
-                        <div className="mt-2 text-xs text-slate-400">
-                          References:{" "}
-                          <span className="font-medium text-slate-300">
-                            {attr.refTable}.{attr.refAttr}
-                          </span>
+                        <div className="mt-2 text-xs text-slate-400 space-y-1">
+                          <div>
+                            References:{" "}
+                            <span className="font-medium text-slate-300">
+                              {attr.refTable}.{attr.refAttr}
+                            </span>
+                          </div>
+                          {attr.cardinality && (
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded bg-indigo-900/40 text-indigo-300 text-[10px]">
+                                {attr.cardinality === 'one-to-one' ? '1:1' : 
+                                 attr.cardinality === 'one-to-many' ? '1:N' : 'M:N'}
+                              </span>
+                              {attr.isOptional && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 text-[10px]">
+                                  Optional
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {(attr.onDelete && attr.onDelete !== 'NO ACTION') && (
+                            <div className="text-[10px]">
+                              ON DELETE: <span className="text-rose-400">{attr.onDelete}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Show constraints for non-FK columns */}
+                      {attr.type !== "FK" && (attr.isNotNull || attr.isUnique || attr.defaultValue || attr.checkConstraint) && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {attr.isNotNull && (
+                            <span className="px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 text-[10px]">NOT NULL</span>
+                          )}
+                          {attr.isUnique && (
+                            <span className="px-1.5 py-0.5 rounded bg-green-900/40 text-green-300 text-[10px]">UNIQUE</span>
+                          )}
+                          {attr.defaultValue && (
+                            <span className="px-1.5 py-0.5 rounded bg-purple-900/40 text-purple-300 text-[10px]">
+                              DEFAULT: {attr.defaultValue}
+                            </span>
+                          )}
+                          {attr.checkConstraint && (
+                            <span className="px-1.5 py-0.5 rounded bg-orange-900/40 text-orange-300 text-[10px]" title={attr.checkConstraint}>
+                              CHECK
+                            </span>
+                          )}
                         </div>
                       )}
                     </li>
@@ -521,6 +742,130 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         ))
                     }
                   </select>
+                </div>
+
+                {/* Cardinality */}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">
+                    Relationship Type
+                  </label>
+                  <select
+                    value={cardinality}
+                    onChange={(e) => onCardinalityChange?.(e.target.value as Cardinality)}
+                    className="w-full px-3 py-2 border border-slate-600 rounded-md bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    title="Select relationship cardinality"
+                  >
+                    {CARDINALITY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value} title={opt.description}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {CARDINALITY_OPTIONS.find(o => o.value === cardinality)?.description}
+                  </p>
+                </div>
+
+                {/* Cascade Actions */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">
+                      ON DELETE
+                    </label>
+                    <select
+                      value={onDeleteCascade}
+                      onChange={(e) => onOnDeleteChange?.(e.target.value as CascadeAction)}
+                      className="w-full px-3 py-2 border border-slate-600 rounded-md bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                    >
+                      {CASCADE_ACTIONS.map((action) => (
+                        <option key={action} value={action}>{action}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">
+                      ON UPDATE
+                    </label>
+                    <select
+                      value={onUpdateCascade}
+                      onChange={(e) => onOnUpdateChange?.(e.target.value as CascadeAction)}
+                      className="w-full px-3 py-2 border border-slate-600 rounded-md bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                    >
+                      {CASCADE_ACTIONS.map((action) => (
+                        <option key={action} value={action}>{action}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Optional Toggle */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="optional-new"
+                    checked={isOptional}
+                    onChange={(e) => onIsOptionalChange?.(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="optional-new" className="text-xs sm:text-sm text-slate-300">
+                    Optional relationship (nullable FK)
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Column Constraints (for non-FK columns) */}
+            {attrType !== "FK" && (
+              <div className="space-y-3 p-3 bg-slate-800/50 rounded-md border border-slate-600/50">
+                <h6 className="text-xs sm:text-sm font-medium text-slate-400">
+                  Column Constraints
+                </h6>
+                
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="notnull-new"
+                      checked={isNotNull}
+                      onChange={(e) => onIsNotNullChange?.(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="notnull-new" className="text-xs sm:text-sm text-slate-300">NOT NULL</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="unique-new"
+                      checked={isUnique}
+                      onChange={(e) => onIsUniqueChange?.(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="unique-new" className="text-xs sm:text-sm text-slate-300">UNIQUE</label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">
+                    Default Value
+                  </label>
+                  <input
+                    value={defaultValue}
+                    onChange={(e) => onDefaultValueChange?.(e.target.value)}
+                    placeholder="e.g., 0, 'active', NOW()"
+                    className="w-full px-3 py-2 border border-slate-600 rounded-md bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">
+                    CHECK Constraint
+                  </label>
+                  <input
+                    value={checkConstraint}
+                    onChange={(e) => onCheckConstraintChange?.(e.target.value)}
+                    placeholder="e.g., age >= 0, status IN ('active','inactive')"
+                    className="w-full px-3 py-2 border border-slate-600 rounded-md bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  />
                 </div>
               </div>
             )}
