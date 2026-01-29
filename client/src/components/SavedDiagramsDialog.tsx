@@ -201,13 +201,16 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
   const currentDiagram = currentDiagramId ? diagrams.find(d => d._id === currentDiagramId) : null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 overflow-hidden max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full max-w-2xl mx-4 overflow-hidden max-h-[80vh] flex flex-col" style={{ backgroundColor: '#0a0a0f', border: '1px solid #2a2a3a', boxShadow: '0 0 40px rgba(0, 255, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+        {/* Gradient accent line */}
+        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #00ffff, #00ff88)' }} />
+        
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex-shrink-0">
+        <div className="px-6 py-4 flex-shrink-0" style={{ backgroundColor: '#0d0d14', borderBottom: '1px solid #2a2a3a' }}>
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-white">
-              {mode === 'list' ? 'My Diagrams' : editingId ? 'Update Diagram' : 'Save Diagram'}
+            <h2 className="text-xl font-bold" style={{ color: '#00ffff', fontFamily: "'Orbitron', monospace", textTransform: 'uppercase', letterSpacing: '0.1em', textShadow: '0 0 20px rgba(0,255,255,0.5)' }}>
+              {mode === 'list' ? 'MY DIAGRAMS' : editingId ? 'UPDATE DIAGRAM' : 'SAVE DIAGRAM'}
             </h2>
             <div className="flex items-center gap-2">
               {mode === 'list' && (
@@ -220,9 +223,12 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                         setDiagramName(currentDiagram.name);
                         setDiagramDescription(currentDiagram.description || '');
                       }}
-                      className="bg-green-500/80 text-white px-3 py-1 rounded hover:bg-green-500 transition-colors text-sm"
+                      className="px-3 py-1 text-sm font-mono transition-all"
+                      style={{ background: 'linear-gradient(135deg, #00ff88, #00ffff)', color: '#0a0a0f', fontWeight: '600' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,136,0.5)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                     >
-                      Update "{currentDiagram.name}"
+                      UPDATE "{currentDiagram.name}"
                     </button>
                   )}
                   <button
@@ -232,15 +238,21 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                       setDiagramName('');
                       setDiagramDescription('');
                     }}
-                    className="bg-white/20 text-white px-3 py-1 rounded hover:bg-white/30 transition-colors text-sm"
+                    className="px-3 py-1 text-sm font-mono transition-all"
+                    style={{ backgroundColor: 'rgba(0, 255, 255, 0.1)', border: '1px solid rgba(0, 255, 255, 0.3)', color: '#00ffff' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.1)'; }}
                   >
-                    Save as New
+                    SAVE AS NEW
                   </button>
                 </>
               )}
               <button
                 onClick={onClose}
-                className="text-white hover:text-gray-200 transition-colors"
+                className="transition-all p-1"
+                style={{ color: '#8a8a9a' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#ff3366'; e.currentTarget.style.textShadow = '0 0 10px rgba(255,51,102,0.5)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#8a8a9a'; e.currentTarget.style.textShadow = 'none'; }}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -251,15 +263,15 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-6 overflow-y-auto flex-1" style={{ backgroundColor: '#0a0a0f' }}>
           {/* Error/Success Messages */}
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div className="mb-4 p-3 font-mono text-sm" style={{ backgroundColor: 'rgba(255, 51, 102, 0.1)', border: '1px solid rgba(255, 51, 102, 0.4)', color: '#ff3366' }}>
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+            <div className="mb-4 p-3 font-mono text-sm" style={{ backgroundColor: 'rgba(0, 255, 136, 0.1)', border: '1px solid rgba(0, 255, 136, 0.4)', color: '#00ff88' }}>
               {success}
             </div>
           )}
@@ -268,28 +280,34 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
           {mode === 'save' && (
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium mb-1" style={{ color: '#c0c0d0', fontFamily: "'Space Grotesk', sans-serif" }}>
                   Diagram Name *
                 </label>
                 <input
                   type="text"
                   value={diagramName}
                   onChange={(e) => setDiagramName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 font-mono text-sm transition-all focus:outline-none"
+                  style={{ backgroundColor: '#121218', border: '1px solid #2a2a3a', color: '#f0f0ff' }}
                   placeholder="Enter diagram name"
                   required
+                  onFocus={(e) => { e.target.style.borderColor = '#00ffff'; e.target.style.boxShadow = '0 0 10px rgba(0,255,255,0.3)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#2a2a3a'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium mb-1" style={{ color: '#c0c0d0', fontFamily: "'Space Grotesk', sans-serif" }}>
                   Description (Optional)
                 </label>
                 <textarea
                   value={diagramDescription}
                   onChange={(e) => setDiagramDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 font-mono text-sm transition-all focus:outline-none"
+                  style={{ backgroundColor: '#121218', border: '1px solid #2a2a3a', color: '#f0f0ff' }}
                   placeholder="Enter description"
                   rows={3}
+                  onFocus={(e) => { e.target.style.borderColor = '#00ffff'; e.target.style.boxShadow = '0 0 10px rgba(0,255,255,0.3)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#2a2a3a'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
               <div className="flex gap-3">
@@ -301,16 +319,22 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                     setDiagramName('');
                     setDiagramDescription('');
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 font-mono text-sm transition-all"
+                  style={{ backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', color: '#8a8a9a' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#00ffff'; e.currentTarget.style.color = '#00ffff'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.color = '#8a8a9a'; }}
                 >
-                  Cancel
+                  CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 font-mono text-sm font-medium transition-all disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, #00ffff, #0088ff)', color: '#0a0a0f' }}
+                  onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,255,0.5)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                 >
-                  {isLoading ? 'Saving...' : editingId ? 'Update' : 'Save'}
+                  {isLoading ? 'SAVING...' : editingId ? 'UPDATE' : 'SAVE'}
                 </button>
               </div>
             </form>
@@ -321,41 +345,53 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
             <>
               {isLoading ? (
                 <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
-                  <p className="mt-2 text-gray-600">Loading diagrams...</p>
+                  <div className="relative inline-block w-8 h-8">
+                    <div className="absolute inset-0 animate-spin" style={{ border: '3px solid transparent', borderTopColor: '#00ffff', borderRightColor: '#ff00ff' }} />
+                    <div className="absolute inset-1 animate-spin" style={{ border: '2px solid transparent', borderBottomColor: '#00ff88', animationDirection: 'reverse' }} />
+                  </div>
+                  <p className="mt-2 font-mono text-sm" style={{ color: '#8a8a9a' }}>Loading diagrams...</p>
                 </div>
               ) : diagrams.length === 0 ? (
                 <div className="text-center py-8">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="mx-auto h-12 w-12" style={{ color: '#2a2a3a' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No diagrams</h3>
-                  <p className="mt-1 text-sm text-gray-500">Get started by saving your first diagram.</p>
+                  <h3 className="mt-2 text-sm font-medium" style={{ color: '#c0c0d0', fontFamily: "'Space Grotesk', sans-serif" }}>No diagrams</h3>
+                  <p className="mt-1 text-sm font-mono" style={{ color: '#4a4a5a' }}>Get started by saving your first diagram.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {diagrams.map((diagram) => (
                     <div
                       key={diagram._id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-sm transition-all"
+                      className="p-4 transition-all"
+                      style={{ backgroundColor: '#0d0d14', border: '1px solid #2a2a3a' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#00ffff'; e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,255,0.2)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.boxShadow = 'none'; }}
                     >
                       {deleteConfirmId === diagram._id ? (
                         <div className="text-center">
-                          <p className="text-sm text-gray-700 mb-3">
-                            Are you sure you want to delete "{diagram.name}"?
+                          <p className="text-sm font-mono mb-3" style={{ color: '#c0c0d0' }}>
+                            Delete "<span style={{ color: '#ff3366' }}>{diagram.name}</span>"?
                           </p>
                           <div className="flex gap-2 justify-center">
                             <button
                               onClick={() => setDeleteConfirmId(null)}
-                              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
+                              className="px-3 py-1 text-sm font-mono transition-all"
+                              style={{ backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', color: '#8a8a9a' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#00ffff'; e.currentTarget.style.color = '#00ffff'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.color = '#8a8a9a'; }}
                             >
-                              Cancel
+                              CANCEL
                             </button>
                             <button
                               onClick={() => handleDelete(diagram._id)}
-                              className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                              className="px-3 py-1 text-sm font-mono font-medium transition-all"
+                              style={{ background: 'linear-gradient(135deg, #ff3366, #ff0055)', color: '#fff' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 15px rgba(255,51,102,0.5)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                             >
-                              Delete
+                              DELETE
                             </button>
                           </div>
                         </div>
@@ -363,15 +399,15 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                         <>
                           <div className="flex justify-between items-start">
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-lg font-medium text-gray-900 truncate">
+                              <h3 className="text-lg font-medium truncate" style={{ color: '#f0f0ff', fontFamily: "'Space Grotesk', sans-serif" }}>
                                 {diagram.name}
                               </h3>
                               {diagram.description && (
-                                <p className="text-sm text-gray-500 truncate mt-1">
+                                <p className="text-sm truncate mt-1 font-mono" style={{ color: '#8a8a9a' }}>
                                   {diagram.description}
                                 </p>
                               )}
-                              <p className="text-xs text-gray-400 mt-2">
+                              <p className="text-xs mt-2 font-mono" style={{ color: '#4a4a5a' }}>
                                 Updated: {formatDate(diagram.updatedAt)}
                               </p>
                             </div>
@@ -379,14 +415,20 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                           <div className="flex gap-2 mt-3">
                             <button
                               onClick={() => handleLoad(diagram._id)}
-                              className="flex-1 bg-indigo-600 text-white px-3 py-1.5 rounded text-sm hover:bg-indigo-700 transition-colors"
+                              className="flex-1 px-3 py-1.5 text-sm font-mono font-medium transition-all"
+                              style={{ background: 'linear-gradient(135deg, #00ffff, #0088ff)', color: '#0a0a0f' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,255,0.5)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                             >
-                              Load
+                              LOAD
                             </button>
                             <button
                               onClick={() => handleEdit(diagram)}
-                              className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors"
+                              className="px-3 py-1.5 transition-all"
                               title="Edit"
+                              style={{ backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', color: '#8a8a9a' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#ff8800'; e.currentTarget.style.color = '#ff8800'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.color = '#8a8a9a'; }}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -394,8 +436,11 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                             </button>
                             <button
                               onClick={() => handleDuplicate(diagram._id)}
-                              className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors"
+                              className="px-3 py-1.5 transition-all"
                               title="Duplicate"
+                              style={{ backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', color: '#8a8a9a' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#8855ff'; e.currentTarget.style.color = '#8855ff'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.color = '#8a8a9a'; }}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -403,8 +448,11 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                             </button>
                             <button
                               onClick={() => setDeleteConfirmId(diagram._id)}
-                              className="px-3 py-1.5 border border-red-300 text-red-600 rounded text-sm hover:bg-red-50 transition-colors"
+                              className="px-3 py-1.5 transition-all"
                               title="Delete"
+                              style={{ backgroundColor: '#1a1a24', border: '1px solid rgba(255, 51, 102, 0.4)', color: '#ff3366' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 51, 102, 0.1)'; e.currentTarget.style.boxShadow = '0 0 10px rgba(255,51,102,0.3)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#1a1a24'; e.currentTarget.style.boxShadow = 'none'; }}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

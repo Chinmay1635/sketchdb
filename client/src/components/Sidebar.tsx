@@ -147,16 +147,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose,
 }) => {
   return (
-    <div className="w-full sm:w-72 lg:w-80 xl:w-96 bg-slate-900 border-r border-slate-700/50 shadow-lg p-4 sm:p-5 overflow-y-auto max-h-screen">
-      <div className="flex items-center justify-between mb-0 border-b border-slate-700/50 pb-3">
-        <h3 className="text-lg sm:text-xl font-bold text-slate-100">
-          Table Attributes
+    <div 
+      className="w-full sm:w-72 lg:w-80 xl:w-96 p-4 sm:p-5 overflow-y-auto max-h-screen"
+      style={{
+        backgroundColor: 'rgba(10, 10, 15, 0.98)',
+        borderRight: '1px solid rgba(42, 42, 58, 0.5)',
+        boxShadow: '4px 0 30px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 255, 255, 0.02)'
+      }}
+    >
+      <div className="flex items-center justify-between mb-0 pb-3" style={{ borderBottom: '1px solid rgba(42, 42, 58, 0.5)' }}>
+        <h3 
+          className="text-sm sm:text-base font-bold text-neon-cyan uppercase tracking-widest"
+          style={{ fontFamily: "'Orbitron', sans-serif" }}
+        >
+          // Attributes
         </h3>
         {/* Close button - visible on mobile */}
         {onClose && (
           <button
             onClick={onClose}
-            className="sm:hidden mt-25 p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded-md transition-colors"
+            className="sm:hidden mt-25 p-2 text-chrome hover:text-neon-cyan rounded transition-all duration-200"
+            style={{ backgroundColor: 'rgba(42, 42, 58, 0.3)' }}
             title="Close sidebar"
             aria-label="Close sidebar"
           >
@@ -175,7 +186,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isEditingTableName
                 ? "block"
                 : "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"
-            } mb-5 bg-slate-800/50 p-3 sm:p-4 rounded-lg border border-slate-700/50`}
+            } mb-5 p-3 sm:p-4 rounded`}
+            style={{
+              backgroundColor: 'rgba(26, 26, 36, 0.5)',
+              border: '1px solid rgba(42, 42, 58, 0.5)'
+            }}
           >
             {isEditingTableName ? (
               <div className="flex flex-col flex-1 mr-2 gap-2">
@@ -186,7 +201,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     if (e.key === "Enter") onSaveTableName?.();
                     if (e.key === "Escape") onCancelEditTableName?.();
                   }}
-                  className="flex-1 px-3 py-2 border border-slate-600 rounded-md bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                  className="flex-1 px-3 py-2 rounded text-ghost text-sm transition-all duration-200"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    backgroundColor: 'rgba(18, 18, 24, 0.8)',
+                    border: '1px solid rgba(42, 42, 58, 0.8)',
+                    outline: 'none'
+                  }}
                   placeholder="Enter table name"
                   title="Edit table name"
                   autoFocus
@@ -194,13 +215,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="flex gap-2">
                   <button
                     onClick={onSaveTableName}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-md w-1/2 px-3 py-2 transition-colors duration-200 shadow-sm text-sm"
+                    className="text-void rounded w-1/2 px-3 py-2 transition-all duration-200 text-sm font-bold"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #00ff88, #00cc6a)',
+                      fontFamily: "'JetBrains Mono', monospace"
+                    }}
                   >
                     ✓
                   </button>
                   <button
                     onClick={onCancelEditTableName}
-                    className="bg-slate-600 hover:bg-slate-500 text-white rounded-md w-1/2 px-3 py-2 transition-colors duration-200 shadow-sm text-sm"
+                    className="text-ghost rounded w-1/2 px-3 py-2 transition-all duration-200 text-sm"
+                    style={{ 
+                      backgroundColor: 'rgba(42, 42, 58, 0.8)',
+                      fontFamily: "'JetBrains Mono', monospace"
+                    }}
                   >
                     ✕
                   </button>
@@ -208,9 +237,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             ) : (
               <h4
-                className="m-0 cursor-pointer flex-1 text-base sm:text-lg font-semibold text-slate-100 hover:text-indigo-400 transition-colors duration-200"
+                className="m-0 cursor-pointer flex-1 text-base sm:text-lg font-semibold text-pure hover:text-neon-cyan transition-all duration-200"
                 onClick={onStartEditTableName}
                 title="Click to edit table name"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
               >
                 {(selectedTable?.data as any)?.label ||
                   `Table ${selectedTable?.id}`}
@@ -219,9 +249,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <button
               onClick={onDeleteTable}
-              className={`bg-rose-600/80 hover:bg-rose-500 text-white rounded-md ${
+              className={`text-white rounded ${
                 isEditingTableName ? "w-full mt-4" : "w-fit mt-0"
-              } cursor-pointer px-3 py-1.5 sm:px-4 sm:py-2 transition-colors duration-200 shadow-sm font-medium text-sm`}
+              } cursor-pointer px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-200 font-bold text-xs uppercase tracking-wider`}
+              style={{ 
+                background: 'linear-gradient(135deg, #ff3366, #cc2952)',
+                fontFamily: "'JetBrains Mono', monospace",
+                boxShadow: '0 0 15px rgba(255, 51, 102, 0.3)'
+              }}
               title="Delete Table"
             >
               Delete
@@ -230,13 +265,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Color Picker Section */}
           <ColorPicker
-            currentColor={(selectedTable?.data as any)?.color || '#0074D9'}
+            currentColor={(selectedTable?.data as any)?.color || '#00ffff'}
             onColorChange={(color) => onChangeTableColor?.(color)}
           />
 
           {/* Current Attributes */}
-          <div className="mb-5 bg-slate-800/50 p-3 sm:p-4 rounded-lg border border-slate-700/50">
-            <h5 className="text-xs sm:text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wide">
+          <div 
+            className="mb-5 p-3 sm:p-4 rounded"
+            style={{
+              backgroundColor: 'rgba(26, 26, 36, 0.5)',
+              border: '1px solid rgba(42, 42, 58, 0.5)'
+            }}
+          >
+            <h5 
+              className="text-[10px] sm:text-xs font-semibold text-neon-cyan mb-3 uppercase tracking-widest"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
               Current Attributes
             </h5>
 
@@ -246,7 +290,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {attributes.map((attr, idx) => (
                     <li
                       key={idx}
-                      className="bg-slate-700/50 p-2.5 sm:p-3 rounded-md border border-slate-600/50 shadow-sm"
+                      className="p-2.5 sm:p-3 rounded"
+                      style={{
+                        backgroundColor: 'rgba(42, 42, 58, 0.3)',
+                        border: '1px solid rgba(42, 42, 58, 0.5)'
+                      }}
                     >
                       <div className="flex items-center justify-between">
                         {/* Attribute Name */}

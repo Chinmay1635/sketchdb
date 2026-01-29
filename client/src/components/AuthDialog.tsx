@@ -205,26 +205,50 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: 'rgba(10, 10, 15, 0.9)', backdropFilter: 'blur(8px)' }}
+    >
+      <div 
+        className="w-full max-w-md mx-4 overflow-hidden rounded-lg"
+        style={{
+          backgroundColor: 'rgba(13, 13, 20, 0.98)',
+          border: '1px solid rgba(0, 255, 255, 0.3)',
+          boxShadow: '0 0 60px rgba(0, 255, 255, 0.1), 0 20px 60px rgba(0, 0, 0, 0.5)'
+        }}
+      >
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+        <div 
+          className="px-6 py-4 relative"
+          style={{ background: 'linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(136, 85, 255, 0.15))' }}
+        >
+          <div 
+            className="absolute top-0 left-0 right-0 h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, #00ffff, #8855ff, transparent)' }}
+          />
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-white">
-              {mode === 'login' && 'Login to SketchDB'}
-              {mode === 'signup' && 'Create Account'}
-              {mode === 'verify-otp' && 'Verify Email'}
-              {mode === 'forgot-password' && 'Forgot Password'}
-              {mode === 'reset-password' && 'Reset Password'}
+            <h2 
+              className="text-lg font-bold uppercase tracking-wider"
+              style={{ 
+                color: '#f0f0ff',
+                fontFamily: "'Orbitron', sans-serif",
+                textShadow: '0 0 10px rgba(0, 255, 255, 0.3)'
+              }}
+            >
+              {mode === 'login' && '// Login'}
+              {mode === 'signup' && '// Create Account'}
+              {mode === 'verify-otp' && '// Verify Email'}
+              {mode === 'forgot-password' && '// Forgot Password'}
+              {mode === 'reset-password' && '// Reset Password'}
             </h2>
             <button
               onClick={() => {
                 onClose();
                 resetForm();
               }}
-              className="text-white hover:text-gray-200 transition-colors"
+              className="text-ghost hover:text-neon-cyan transition-all duration-200 p-1"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -235,12 +259,28 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
         <div className="p-6">
           {/* Error/Success Messages */}
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div 
+              className="mb-4 p-3 rounded text-sm"
+              style={{ 
+                backgroundColor: 'rgba(255, 51, 102, 0.1)',
+                border: '1px solid rgba(255, 51, 102, 0.3)',
+                color: '#ff3366',
+                fontFamily: "'JetBrains Mono', monospace"
+              }}
+            >
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+            <div 
+              className="mb-4 p-3 rounded text-sm"
+              style={{ 
+                backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                border: '1px solid rgba(0, 255, 136, 0.3)',
+                color: '#00ff88',
+                fontFamily: "'JetBrains Mono', monospace"
+              }}
+            >
               {success}
             </div>
           )}
@@ -249,23 +289,45 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
           {mode === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Email
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="your.email@walchandsangli.ac.in"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Password
+                </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="Enter your password"
                   required
                 />
@@ -278,28 +340,38 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                 onVerify={(token) => setTurnstileToken(token)}
                 onExpire={() => setTurnstileToken(null)}
                 onError={() => setTurnstileToken(null)}
-                theme="light"
+                theme="dark"
               />
               
               <button
                 type="submit"
                 disabled={isLoading || !turnstileToken}
-                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                style={{ 
+                  background: isLoading || !turnstileToken 
+                    ? 'rgba(42, 42, 58, 0.8)' 
+                    : 'linear-gradient(135deg, #00ffff, #0088ff)',
+                  color: isLoading || !turnstileToken ? '#8a8a9a' : '#0a0a0f',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  boxShadow: isLoading || !turnstileToken ? 'none' : '0 0 20px rgba(0, 255, 255, 0.3)'
+                }}
               >
                 {isLoading ? 'Logging in...' : 'Login'}
               </button>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                 <button
                   type="button"
                   onClick={() => handleModeChange('forgot-password')}
-                  className="text-indigo-600 hover:text-indigo-800"
+                  className="transition-colors"
+                  style={{ color: '#00ffff' }}
                 >
                   Forgot Password?
                 </button>
                 <button
                   type="button"
                   onClick={() => handleModeChange('signup')}
-                  className="text-indigo-600 hover:text-indigo-800"
+                  className="transition-colors"
+                  style={{ color: '#8855ff' }}
                 >
                   Create Account
                 </button>
@@ -311,59 +383,119 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
           {mode === 'signup' && (
             <form onSubmit={handleSignup} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Username
+                </label>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="Choose a username"
                   required
                   minLength={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Email
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="your.email@walchandsangli.ac.in"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Only @walchandsangli.ac.in emails are allowed</p>
+                <p 
+                  className="text-xs mt-1"
+                  style={{ color: '#4a4a5a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  Only @walchandsangli.ac.in emails are allowed
+                </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">PRN (Registration Number)</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // PRN (Registration Number)
+                </label>
                 <input
                   type="text"
                   value={prn}
                   onChange={(e) => setPrn(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="Enter your PRN"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Password
+                </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="Create a password"
                   required
                   minLength={6}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Confirm Password
+                </label>
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="Confirm your password"
                   required
                 />
@@ -376,22 +508,31 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                 onVerify={(token) => setTurnstileToken(token)}
                 onExpire={() => setTurnstileToken(null)}
                 onError={() => setTurnstileToken(null)}
-                theme="light"
+                theme="dark"
               />
               
               <button
                 type="submit"
                 disabled={isLoading || !turnstileToken}
-                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                style={{ 
+                  background: isLoading || !turnstileToken 
+                    ? 'rgba(42, 42, 58, 0.8)' 
+                    : 'linear-gradient(135deg, #8855ff, #00ffff)',
+                  color: isLoading || !turnstileToken ? '#8a8a9a' : '#0a0a0f',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  boxShadow: isLoading || !turnstileToken ? 'none' : '0 0 20px rgba(136, 85, 255, 0.3)'
+                }}
               >
                 {isLoading ? 'Creating Account...' : 'Sign Up'}
               </button>
-              <div className="text-center text-sm">
-                <span className="text-gray-600">Already have an account? </span>
+              <div className="text-center text-xs" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                <span style={{ color: '#8a8a9a' }}>Already have an account? </span>
                 <button
                   type="button"
                   onClick={() => handleModeChange('login')}
-                  className="text-indigo-600 hover:text-indigo-800"
+                  className="transition-colors"
+                  style={{ color: '#00ffff' }}
                 >
                   Login
                 </button>
@@ -403,23 +544,45 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
           {mode === 'verify-otp' && (
             <form onSubmit={handleVerifyOTP} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Email
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.5)',
+                    border: '1px solid #2a2a3a',
+                    color: '#8a8a9a',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="your.email@walchandsangli.ac.in"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Verification Code
+                </label>
                 <input
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-2xl tracking-widest"
+                  className="w-full px-3 py-3 text-center text-2xl tracking-widest focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#00ffff',
+                    fontFamily: "'Orbitron', sans-serif"
+                  }}
                   placeholder="000000"
                   maxLength={6}
                   required
@@ -428,17 +591,26 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                style={{ 
+                  background: isLoading 
+                    ? 'rgba(42, 42, 58, 0.8)' 
+                    : 'linear-gradient(135deg, #00ffff, #0088ff)',
+                  color: isLoading ? '#8a8a9a' : '#0a0a0f',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  boxShadow: isLoading ? 'none' : '0 0 20px rgba(0, 255, 255, 0.3)'
+                }}
               >
                 {isLoading ? 'Verifying...' : 'Verify Email'}
               </button>
-              <div className="text-center text-sm">
-                <span className="text-gray-600">Didn't receive the code? </span>
+              <div className="text-center text-xs" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                <span style={{ color: '#8a8a9a' }}>Didn't receive the code? </span>
                 <button
                   type="button"
                   onClick={handleResendOTP}
                   disabled={isLoading}
-                  className="text-indigo-600 hover:text-indigo-800"
+                  className="transition-colors"
+                  style={{ color: '#00ffff' }}
                 >
                   Resend OTP
                 </button>
@@ -447,7 +619,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                 <button
                   type="button"
                   onClick={() => handleModeChange('login')}
-                  className="text-sm text-gray-600 hover:text-gray-800"
+                  className="text-xs transition-colors"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
                 >
                   Back to Login
                 </button>
@@ -458,16 +631,30 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
           {/* Forgot Password Form */}
           {mode === 'forgot-password' && (
             <form onSubmit={handleForgotPassword} className="space-y-4">
-              <p className="text-sm text-gray-600 mb-4">
-                Enter your email address and we'll send you a code to reset your password.
+              <p 
+                className="text-sm mb-4"
+                style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                // Enter your email address and we'll send you a code to reset your password.
               </p>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Email
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="your.email@walchandsangli.ac.in"
                   required
                 />
@@ -475,7 +662,15 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                style={{ 
+                  background: isLoading 
+                    ? 'rgba(42, 42, 58, 0.8)' 
+                    : 'linear-gradient(135deg, #ff8800, #ff00ff)',
+                  color: isLoading ? '#8a8a9a' : '#0a0a0f',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  boxShadow: isLoading ? 'none' : '0 0 20px rgba(255, 136, 0, 0.3)'
+                }}
               >
                 {isLoading ? 'Sending...' : 'Send Reset Code'}
               </button>
@@ -483,7 +678,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                 <button
                   type="button"
                   onClick={() => handleModeChange('login')}
-                  className="text-sm text-gray-600 hover:text-gray-800"
+                  className="text-xs transition-colors"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
                 >
                   Back to Login
                 </button>
@@ -495,34 +691,67 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
           {mode === 'reset-password' && (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Email
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.5)',
+                    border: '1px solid #2a2a3a',
+                    color: '#8a8a9a',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reset Code</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // Reset Code
+                </label>
                 <input
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-2xl tracking-widest"
+                  className="w-full px-3 py-3 text-center text-2xl tracking-widest focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#00ffff',
+                    fontFamily: "'Orbitron', sans-serif"
+                  }}
                   placeholder="000000"
                   maxLength={6}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <label 
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  // New Password
+                </label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    color: '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                   placeholder="Enter new password"
                   required
                   minLength={6}
@@ -531,7 +760,15 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                style={{ 
+                  background: isLoading 
+                    ? 'rgba(42, 42, 58, 0.8)' 
+                    : 'linear-gradient(135deg, #00ff88, #00ffff)',
+                  color: isLoading ? '#8a8a9a' : '#0a0a0f',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  boxShadow: isLoading ? 'none' : '0 0 20px rgba(0, 255, 136, 0.3)'
+                }}
               >
                 {isLoading ? 'Resetting...' : 'Reset Password'}
               </button>
@@ -539,7 +776,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                 <button
                   type="button"
                   onClick={() => handleModeChange('login')}
-                  className="text-sm text-gray-600 hover:text-gray-800"
+                  className="text-xs transition-colors"
+                  style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
                 >
                   Back to Login
                 </button>

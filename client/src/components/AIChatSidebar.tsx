@@ -209,25 +209,61 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-700 shadow-xl z-50 flex flex-col">
+    <div 
+      className="fixed right-0 top-0 h-full w-96 shadow-xl z-50 flex flex-col"
+      style={{
+        backgroundColor: 'rgba(10, 10, 15, 0.98)',
+        borderLeft: '1px solid #2a2a3a',
+        backdropFilter: 'blur(10px)'
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 flex-shrink-0">
+      <div 
+        className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+        style={{ 
+          background: 'linear-gradient(135deg, rgba(136, 85, 255, 0.3), rgba(0, 255, 255, 0.2))',
+          borderBottom: '1px solid #2a2a3a'
+        }}
+      >
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div 
+            className="w-8 h-8 flex items-center justify-center"
+            style={{ 
+              background: 'linear-gradient(135deg, #8855ff, #00ffff)',
+              boxShadow: '0 0 15px rgba(136, 85, 255, 0.3)'
+            }}
+          >
+            <svg className="w-5 h-5" style={{ color: '#0a0a0f' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
           <div>
-            <h3 className="font-semibold text-white">AI Assistant</h3>
-            <p className="text-xs text-purple-200">Schema Generator</p>
+            <h3 
+              className="font-bold text-sm uppercase tracking-wider"
+              style={{ 
+                color: '#f0f0ff',
+                fontFamily: "'Orbitron', sans-serif"
+              }}
+            >
+              AI Assistant
+            </h3>
+            <p 
+              className="text-xs"
+              style={{ 
+                color: '#8855ff',
+                fontFamily: "'JetBrains Mono', monospace"
+              }}
+            >
+              // Schema Generator
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
             <button
               onClick={handleClearChat}
-              className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 transition-colors"
+              style={{ color: '#8a8a9a' }}
               title="Clear chat"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,7 +273,8 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
           )}
           <button
             onClick={onClose}
-            className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 transition-colors"
+            style={{ color: '#8a8a9a' }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -250,10 +287,12 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       {!diagramId && (
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
-            <svg className="w-12 h-12 text-gray-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-12 h-12 mx-auto mb-3" style={{ color: '#4a4a5a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <p className="text-gray-400">Save your diagram first to use AI assistant</p>
+            <p style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace", fontSize: '13px' }}>
+              Save your diagram first to use AI assistant
+            </p>
           </div>
         </div>
       )}
@@ -262,10 +301,12 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       {diagramId && isReadOnly && (
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
-            <svg className="w-12 h-12 text-gray-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-12 h-12 mx-auto mb-3" style={{ color: '#4a4a5a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <p className="text-gray-400">Edit access required to use AI assistant</p>
+            <p style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace", fontSize: '13px' }}>
+              Edit access required to use AI assistant
+            </p>
           </div>
         </div>
       )}
@@ -278,19 +319,45 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             {/* Empty state with suggestions */}
             {messages.length === 0 && (
               <div className="space-y-4">
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <p className="text-gray-300 text-sm mb-3">
+                <div 
+                  className="p-4"
+                  style={{ 
+                    backgroundColor: 'rgba(26, 26, 36, 0.8)',
+                    border: '1px solid #2a2a3a'
+                  }}
+                >
+                  <p 
+                    className="text-sm mb-3"
+                    style={{ color: '#c0c0d0', fontFamily: "'JetBrains Mono', monospace" }}
+                  >
                     👋 Hi! I'm your AI database architect. Describe what you're building and I'll generate a schema for you.
                   </p>
-                  <p className="text-gray-400 text-xs">
-                    Try one of these:
+                  <p 
+                    className="text-xs"
+                    style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    // Try one of these:
                   </p>
                 </div>
                 {suggestedPrompts.map((prompt, index) => (
                   <button
                     key={index}
                     onClick={() => setInput(prompt)}
-                    className="w-full text-left p-3 bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-purple-500 rounded-lg text-sm text-gray-300 transition-colors"
+                    className="w-full text-left p-3 text-sm transition-all duration-300"
+                    style={{ 
+                      backgroundColor: 'rgba(26, 26, 36, 0.6)',
+                      border: '1px solid #2a2a3a',
+                      color: '#c0c0d0',
+                      fontFamily: "'JetBrains Mono', monospace"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#8855ff';
+                      e.currentTarget.style.boxShadow = '0 0 15px rgba(136, 85, 255, 0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#2a2a3a';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
                     {prompt}
                   </button>
@@ -305,17 +372,23 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-lg p-3 ${
-                    message.role === 'user'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-800 text-gray-200'
-                  }`}
+                  className="max-w-[85%] p-3"
+                  style={{
+                    background: message.role === 'user' 
+                      ? 'linear-gradient(135deg, #8855ff, #0088ff)' 
+                      : 'rgba(26, 26, 36, 0.8)',
+                    border: message.role === 'user' ? 'none' : '1px solid #2a2a3a',
+                    color: message.role === 'user' ? '#f0f0ff' : '#c0c0d0',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '13px',
+                    boxShadow: message.role === 'user' ? '0 0 20px rgba(136, 85, 255, 0.3)' : 'none'
+                  }}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="whitespace-pre-wrap">{message.content}</p>
                   
                   {/* Schema indicator */}
                   {message.generatedSchema && (
-                    <div className="mt-2 pt-2 border-t border-gray-700">
+                    <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                       <div className="flex items-center gap-2 text-xs">
                         {message.schemaApplied ? (
                           <span className="flex items-center gap-1 text-green-400">
@@ -344,14 +417,25 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             {/* Loading indicator */}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-800 rounded-lg p-3">
+                <div 
+                  className="p-3"
+                  style={{ 
+                    backgroundColor: 'rgba(26, 26, 36, 0.8)',
+                    border: '1px solid #2a2a3a'
+                  }}
+                >
                   <div className="flex items-center gap-2">
-                    <div className="animate-pulse flex space-x-1">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 animate-bounce" style={{ backgroundColor: '#8855ff', animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 animate-bounce" style={{ backgroundColor: '#8855ff', animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 animate-bounce" style={{ backgroundColor: '#8855ff', animationDelay: '300ms' }}></div>
                     </div>
-                    <span className="text-sm text-gray-400">Generating schema...</span>
+                    <span 
+                      className="text-sm"
+                      style={{ color: '#8a8a9a', fontFamily: "'JetBrains Mono', monospace" }}
+                    >
+                      Generating schema...
+                    </span>
                   </div>
                 </div>
               </div>
@@ -362,45 +446,62 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
 
           {/* Pending schema preview */}
           {pendingSchema && (
-            <div className="px-4 py-3 bg-gray-800 border-t border-gray-700 flex-shrink-0">
+            <div 
+              className="px-4 py-3 flex-shrink-0"
+              style={{ 
+                backgroundColor: 'rgba(26, 26, 36, 0.9)',
+                borderTop: '1px solid #2a2a3a'
+              }}
+            >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-200">
+                <span 
+                  className="text-sm font-medium"
+                  style={{ color: '#c0c0d0', fontFamily: "'JetBrains Mono', monospace" }}
+                >
                   Generated: {pendingSchema.nodes.length} tables, {pendingSchema.edges.length} relationships
                 </span>
                 {explanation && (
                   <button
                     onClick={() => setShowExplanation(!showExplanation)}
-                    className="text-xs text-purple-400 hover:text-purple-300"
+                    className="text-xs transition-colors"
+                    style={{ color: '#8855ff', fontFamily: "'JetBrains Mono', monospace" }}
                   >
-                    {showExplanation ? 'Hide' : 'Show'} explanation
+                    {showExplanation ? '// Hide' : '// Show'} explanation
                   </button>
                 )}
               </div>
               
               {/* Explanation panel */}
               {showExplanation && explanation && (
-                <div className="mb-3 p-3 bg-gray-900 rounded-lg text-xs space-y-2 max-h-40 overflow-y-auto">
+                <div 
+                  className="mb-3 p-3 text-xs space-y-2 max-h-40 overflow-y-auto"
+                  style={{ 
+                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                    border: '1px solid #2a2a3a',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
+                >
                   {explanation.tables && (
                     <div>
-                      <p className="font-medium text-gray-300 mb-1">Tables:</p>
+                      <p className="font-medium mb-1" style={{ color: '#c0c0d0' }}>Tables:</p>
                       {explanation.tables.map((t, i) => (
-                        <p key={i} className="text-gray-400">• <span className="text-purple-400">{t.name}</span>: {t.purpose}</p>
+                        <p key={i} style={{ color: '#8a8a9a' }}>• <span style={{ color: '#8855ff' }}>{t.name}</span>: {t.purpose}</p>
                       ))}
                     </div>
                   )}
                   {explanation.relationships && explanation.relationships.length > 0 && (
                     <div>
-                      <p className="font-medium text-gray-300 mb-1">Relationships:</p>
+                      <p className="font-medium mb-1" style={{ color: '#c0c0d0' }}>Relationships:</p>
                       {explanation.relationships.map((r, i) => (
-                        <p key={i} className="text-gray-400">• {r.from} → {r.to} ({r.type})</p>
+                        <p key={i} style={{ color: '#8a8a9a' }}>{r.from} → {r.to} ({r.type})</p>
                       ))}
                     </div>
                   )}
                   {explanation.bestPractices && explanation.bestPractices.length > 0 && (
                     <div>
-                      <p className="font-medium text-gray-300 mb-1">Best Practices Applied:</p>
+                      <p className="font-medium mb-1" style={{ color: '#c0c0d0' }}>Best Practices Applied:</p>
                       {explanation.bestPractices.map((bp, i) => (
-                        <p key={i} className="text-gray-400">✓ {bp}</p>
+                        <p key={i} style={{ color: '#8a8a9a' }}>✓ {bp}</p>
                       ))}
                     </div>
                   )}
@@ -410,7 +511,13 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
               <div className="flex gap-2">
                 <button
                   onClick={handleApplySchema}
-                  className="flex-1 py-2 px-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 py-2 px-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2"
+                  style={{ 
+                    background: 'linear-gradient(135deg, #00ff88, #00cc6a)',
+                    color: '#0a0a0f',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    boxShadow: '0 0 20px rgba(0, 255, 136, 0.3)'
+                  }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -419,7 +526,13 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                 </button>
                 <button
                   onClick={handleRejectSchema}
-                  className="py-2 px-3 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm transition-colors"
+                  className="py-2 px-3 text-xs font-bold uppercase tracking-wider transition-all duration-300"
+                  style={{ 
+                    backgroundColor: 'rgba(42, 42, 58, 0.8)',
+                    color: '#c0c0d0',
+                    border: '1px solid #2a2a3a',
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}
                 >
                   Dismiss
                 </button>
@@ -429,21 +542,41 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
 
           {/* Error message */}
           {error && (
-            <div className="px-4 py-2 bg-red-900/50 border-t border-red-700 flex-shrink-0">
-              <p className="text-sm text-red-300">{error}</p>
+            <div 
+              className="px-4 py-2 flex-shrink-0"
+              style={{ 
+                backgroundColor: 'rgba(255, 51, 102, 0.1)',
+                borderTop: '1px solid rgba(255, 51, 102, 0.3)'
+              }}
+            >
+              <p 
+                className="text-sm"
+                style={{ color: '#ff3366', fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                {error}
+              </p>
             </div>
           )}
 
           {/* Input area */}
-          <div className="p-4 border-t border-gray-700 flex-shrink-0">
+          <div 
+            className="p-4 flex-shrink-0"
+            style={{ borderTop: '1px solid #2a2a3a' }}
+          >
             <div className="flex gap-2">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Describe your database schema..."
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
+                placeholder="// Describe your database schema..."
+                className="flex-1 px-3 py-2 text-sm resize-none focus:outline-none"
+                style={{ 
+                  backgroundColor: 'rgba(10, 10, 15, 0.8)',
+                  border: '1px solid #2a2a3a',
+                  color: '#c0c0d0',
+                  fontFamily: "'JetBrains Mono', monospace"
+                }}
                 rows={2}
                 maxLength={2000}
                 disabled={isLoading}
@@ -451,14 +584,25 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
               <button
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}
-                className="px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                className="px-4 transition-all duration-300"
+                style={{ 
+                  background: !input.trim() || isLoading 
+                    ? 'rgba(42, 42, 58, 0.8)' 
+                    : 'linear-gradient(135deg, #8855ff, #00ffff)',
+                  color: !input.trim() || isLoading ? '#4a4a5a' : '#0a0a0f',
+                  cursor: !input.trim() || isLoading ? 'not-allowed' : 'pointer',
+                  boxShadow: !input.trim() || isLoading ? 'none' : '0 0 15px rgba(136, 85, 255, 0.3)'
+                }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p 
+              className="text-xs mt-2"
+              style={{ color: '#4a4a5a', fontFamily: "'JetBrains Mono', monospace" }}
+            >
               Press Enter to send, Shift+Enter for new line
             </p>
           </div>

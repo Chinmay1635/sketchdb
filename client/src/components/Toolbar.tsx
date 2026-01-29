@@ -23,7 +23,7 @@ interface ToolbarProps {
   isReadOnly?: boolean;
 }
 
-// Dropdown Menu Component
+// Dropdown Menu Component with cyberpunk styling
 interface DropdownMenuProps {
   label: string;
   icon?: React.ReactNode;
@@ -51,12 +51,13 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ label, icon, children, clas
     <div ref={dropdownRef} className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700/50 rounded-md transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-ghost hover:text-neon-cyan hover:bg-steel/30 rounded transition-all duration-200"
+        style={{ fontFamily: "'JetBrains Mono', monospace" }}
       >
         {icon}
-        <span className="hidden sm:inline">{label}</span>
+        <span className="hidden sm:inline uppercase tracking-wider text-xs">{label}</span>
         <svg
-          className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -66,25 +67,34 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ label, icon, children, clas
       </button>
 
       {isOpen && (
-        <div className={`absolute top-full mt-1 min-w-[180px] bg-slate-800 border border-slate-600 rounded-lg shadow-xl py-1 z-50 ${align === 'right' ? 'right-0' : 'left-0'}`}>
-          {React.Children.map(children, child => {
-            if (React.isValidElement(child)) {
-              return React.cloneElement(child as React.ReactElement<any>, {
-                onClick: () => {
-                  (child as React.ReactElement<any>).props.onClick?.();
-                  setIsOpen(false);
-                }
-              });
-            }
-            return child;
-          })}
+        <div 
+          className={`absolute top-full mt-2 min-w-[200px] bg-abyss border border-steel rounded overflow-hidden z-50 ${align === 'right' ? 'right-0' : 'left-0'}`}
+          style={{ 
+            boxShadow: '0 0 20px rgba(0, 255, 255, 0.1), 0 4px 20px rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          {/* Top accent line */}
+          <div className="h-px bg-gradient-to-r from-transparent via-neon-cyan to-transparent" />
+          <div className="py-1">
+            {React.Children.map(children, child => {
+              if (React.isValidElement(child)) {
+                return React.cloneElement(child as React.ReactElement<any>, {
+                  onClick: () => {
+                    (child as React.ReactElement<any>).props.onClick?.();
+                    setIsOpen(false);
+                  }
+                });
+              }
+              return child;
+            })}
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-// Dropdown Item Component
+// Dropdown Item Component with cyberpunk styling
 interface DropdownItemProps {
   onClick: () => void;
   icon?: React.ReactNode;
@@ -95,14 +105,15 @@ interface DropdownItemProps {
 const DropdownItem: React.FC<DropdownItemProps> = ({ onClick, icon, children, className = '' }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700/70 transition-colors ${className}`}
+    className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs text-ghost hover:text-neon-cyan hover:bg-steel/30 transition-all duration-200 ${className}`}
+    style={{ fontFamily: "'JetBrains Mono', monospace" }}
   >
     {icon}
     {children}
   </button>
 );
 
-const DropdownDivider = () => <div className="border-t border-slate-600/50 my-1" />;
+const DropdownDivider = () => <div className="border-t border-steel/50 my-1" />;
 
 export const Toolbar: React.FC<ToolbarProps> = ({ 
   onAddTable, 
@@ -170,35 +181,68 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     <>
       {/* Read-only banner for public viewers */}
       {isReadOnly && (
-        <div className="fixed top-0 left-0 right-0 h-8 bg-amber-500/90 text-slate-900 text-xs sm:text-sm font-medium flex items-center justify-center z-[60] px-2">
+        <div 
+          className="fixed top-0 left-0 right-0 h-8 text-xs sm:text-sm font-medium flex items-center justify-center z-[60] px-2"
+          style={{ 
+            backgroundColor: 'rgba(255, 136, 0, 0.9)',
+            color: '#0a0a0f',
+            fontFamily: "'JetBrains Mono', monospace",
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            boxShadow: '0 0 20px rgba(255, 136, 0, 0.3)'
+          }}
+        >
           <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
           <span className="truncate">
-            View-only — {isAuthenticated ? 'You have view-only access' : 'Sign in to create your own'}
+            View Only — {isAuthenticated ? 'You have view-only access' : 'Sign in to create your own'}
           </span>
         </div>
       )}
       
       {/* Navbar */}
-      <nav className={`fixed left-0 right-0 h-14 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 shadow-lg z-50 ${isReadOnly ? 'top-8' : 'top-0'}`}>
+      <nav 
+        className={`fixed left-0 right-0 h-14 z-50 ${isReadOnly ? 'top-8' : 'top-0'}`}
+        style={{
+          backgroundColor: 'rgba(10, 10, 15, 0.95)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid rgba(42, 42, 58, 0.5)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 255, 255, 0.03)'
+        }}
+      >
         <div className="h-full px-3 sm:px-4 flex items-center justify-between gap-2">
           {/* Left section - Logo and brand */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Logo/Brand */}
-            <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg flex items-center justify-center shadow-md overflow-hidden">
+            <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity group">
+              <div 
+                className="relative w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, #00ffff, #0088ff)',
+                  boxShadow: '0 0 15px rgba(0, 255, 255, 0.3)'
+                }}
+              >
                 <img className='w-full h-full' src="/logo.png" alt="SketchDB" />
               </div>
-              <span className="text-base sm:text-lg font-bold text-slate-100 hidden xs:inline">SketchDB</span>
+              <span 
+                className="text-base sm:text-lg font-bold text-pure hidden xs:inline"
+                style={{ fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.05em' }}
+              >
+                SKETCH<span className="text-neon-cyan">DB</span>
+              </span>
             </a>
 
             {/* Current diagram name - desktop */}
             {currentDiagramName && (
               <>
-                <div className="w-px h-5 bg-slate-600 hidden md:block" />
-                <span className="text-sm text-slate-400 max-w-[120px] lg:max-w-[200px] truncate hidden md:block" title={currentDiagramName}>
+                <div className="w-px h-5 bg-steel hidden md:block" />
+                <span 
+                  className="text-xs text-chrome max-w-[120px] lg:max-w-[200px] truncate hidden md:block"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  title={currentDiagramName}
+                >
                   {currentDiagramName}
                 </span>
               </>
@@ -212,20 +256,29 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               {isAuthenticated && onMyDiagramsClick && (
                 <button
                   onClick={onMyDiagramsClick}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-700/50 rounded-md transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-ghost hover:text-neon-cyan hover:bg-steel/30 rounded transition-all duration-200"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", textTransform: 'uppercase', letterSpacing: '0.05em' }}
                   title="View all your diagrams"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <span className="hidden lg:inline">My Diagrams</span>
+                  <span className="hidden lg:inline">Diagrams</span>
                 </button>
               )}
 
               {/* Add Table Button */}
               <button
                 onClick={onAddTable}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-900 bg-emerald-500 hover:bg-emerald-400 rounded-md transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded transition-all duration-200"
+                style={{ 
+                  fontFamily: "'JetBrains Mono', monospace", 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em',
+                  background: 'linear-gradient(135deg, #00ff88, #00cc6a)',
+                  color: '#0a0a0f',
+                  boxShadow: '0 0 15px rgba(0, 255, 136, 0.3)'
+                }}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -237,7 +290,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               {isAuthenticated && currentDiagramId && onAIAssistantClick && (
                 <button
                   onClick={onAIAssistantClick}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-500 rounded-md transition-colors shadow-sm"
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded transition-all duration-200"
+                  style={{ 
+                    fontFamily: "'JetBrains Mono', monospace", 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.1em',
+                    background: 'linear-gradient(135deg, #8855ff, #6633cc)',
+                    color: '#ffffff',
+                    boxShadow: '0 0 15px rgba(136, 85, 255, 0.3)'
+                  }}
                   title="AI Assistant"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
