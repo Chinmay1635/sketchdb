@@ -16,12 +16,12 @@ const UserMenu: React.FC<UserMenuProps> = ({ onLoginClick, onSavedDiagramsClick,
     return (
       <button
         onClick={onLoginClick}
-        className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-300"
+        className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg"
         style={{ 
-          background: 'linear-gradient(135deg, #00ffff, #0088ff)',
-          color: '#0a0a0f',
+          background: '#14b8a6',
+          color: '#09090b',
           fontFamily: "'JetBrains Mono', monospace",
-          boxShadow: '0 0 15px rgba(0, 255, 255, 0.3)'
+          boxShadow: '0 4px 12px rgba(20, 184, 166, 0.25)'
         }}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,18 +36,18 @@ const UserMenu: React.FC<UserMenuProps> = ({ onLoginClick, onSavedDiagramsClick,
     <div className="relative">
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="flex items-center gap-1 px-2 py-1 transition-all duration-300"
+        className="flex items-center gap-1 px-2 py-1 transition-all duration-300 rounded-lg"
         style={{ 
-          backgroundColor: 'rgba(26, 26, 36, 0.8)',
-          border: '1px solid #2a2a3a'
+          backgroundColor: 'rgba(17, 17, 20, 0.8)',
+          border: '1px solid rgba(255, 255, 255, 0.06)'
         }}
       >
         <div 
-          className="w-6 h-6 flex items-center justify-center font-bold text-xs"
+          className="w-6 h-6 flex items-center justify-center font-bold text-xs rounded"
           style={{ 
-            background: 'linear-gradient(135deg, #00ffff, #ff00ff)',
-            color: '#0a0a0f',
-            fontFamily: "'Orbitron', sans-serif"
+            background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
+            color: '#09090b',
+            fontFamily: "'Space Grotesk', sans-serif"
           }}
         >
           {user?.username?.charAt(0).toUpperCase()}
@@ -70,28 +70,28 @@ const UserMenu: React.FC<UserMenuProps> = ({ onLoginClick, onSavedDiagramsClick,
             onClick={() => setIsMenuOpen(false)}
           />
           <div 
-            className="absolute right-0 mt-2 w-56 z-20 overflow-hidden"
+            className="absolute right-0 mt-2 w-56 z-20 overflow-hidden rounded-xl"
             style={{
-              backgroundColor: 'rgba(13, 13, 20, 0.95)',
-              border: '1px solid #2a2a3a',
-              boxShadow: '0 0 30px rgba(0, 0, 0, 0.5)',
-              backdropFilter: 'blur(10px)'
+              backgroundColor: 'rgba(17, 17, 20, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              backdropFilter: 'blur(12px)'
             }}
           >
             {/* Top accent line */}
             <div 
               className="h-[2px] w-full"
-              style={{ background: 'linear-gradient(90deg, #00ffff, #ff00ff)' }}
+              style={{ background: 'linear-gradient(90deg, #14b8a6, #0d9488)' }}
             />
             <div 
               className="px-4 py-3"
-              style={{ borderBottom: '1px solid #2a2a3a' }}
+              style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}
             >
               <p 
                 className="text-sm font-bold"
                 style={{ 
-                  color: '#f0f0ff',
-                  fontFamily: "'Orbitron', sans-serif"
+                  color: '#fafafa',
+                  fontFamily: "'Space Grotesk', sans-serif"
                 }}
               >
                 {user?.username}
@@ -129,8 +129,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ onLoginClick, onSavedDiagramsClick,
                     fontFamily: "'JetBrains Mono', monospace"
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.1)';
-                    e.currentTarget.style.color = '#00ffff';
+                    e.currentTarget.style.backgroundColor = 'rgba(20, 184, 166, 0.1)';
+                    e.currentTarget.style.color = '#14b8a6';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
@@ -155,8 +155,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ onLoginClick, onSavedDiagramsClick,
                   fontFamily: "'JetBrains Mono', monospace"
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.1)';
-                  e.currentTarget.style.color = '#00ffff';
+                  e.currentTarget.style.backgroundColor = 'rgba(20, 184, 166, 0.1)';
+                  e.currentTarget.style.color = '#14b8a6';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
@@ -168,7 +168,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ onLoginClick, onSavedDiagramsClick,
                 </svg>
                 Save / Load
               </button>
-              <div style={{ borderTop: '1px solid #2a2a3a', margin: '4px 0' }} />
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)', margin: '4px 0' }} />
               <button
                 onClick={() => {
                   logout();

@@ -8,87 +8,163 @@ interface LoadingDialogProps {
 
 export const LoadingDialog: React.FC<LoadingDialogProps> = ({
   isOpen,
-  message = "Parsing to SQL...",
+  message = "Processing...",
   onCancel,
 }) => {
   if (!isOpen) return null;
 
   return (
     <div
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] p-6 sm:p-8 w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] lg:min-w-[500px] max-w-[90vw] text-center rounded-lg"
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] p-8 sm:p-10 w-[calc(100%-2rem)] sm:w-auto sm:min-w-[380px] max-w-[90vw] text-center"
       style={{
-        backgroundColor: 'rgba(13, 13, 20, 0.98)',
-        border: '1px solid rgba(0, 255, 255, 0.3)',
-        boxShadow: '0 0 40px rgba(0, 255, 255, 0.15), 0 20px 60px rgba(0, 0, 0, 0.5)'
+        backgroundColor: 'rgba(17, 17, 20, 0.95)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.06)',
+        borderRadius: '16px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03) inset'
       }}
     >
-      {/* Top accent line */}
-      <div 
-        className="absolute top-0 left-0 right-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, #00ffff, transparent)' }}
-      />
-      
-      {/* Cyberpunk Loading Spinner */}
-      <div className="relative w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-5 sm:mb-6">
+      {/* Futuristic Orbital Loader */}
+      <div className="relative w-20 h-20 mx-auto mb-8">
+        {/* Outer ring - slow rotation */}
         <div 
-          className="absolute inset-0 rounded-lg"
-          style={{
-            border: '2px solid rgba(0, 255, 255, 0.2)',
-            animation: 'spin 1.5s linear infinite'
-          }}
-        />
-        <div 
-          className="absolute inset-0 rounded-lg"
+          className="absolute inset-0 rounded-full"
           style={{
             border: '2px solid transparent',
-            borderTopColor: '#00ffff',
-            animation: 'spin 1s linear infinite reverse',
-            boxShadow: '0 0 15px rgba(0, 255, 255, 0.4)'
+            borderTopColor: '#14b8a6',
+            borderRightColor: 'rgba(20, 184, 166, 0.3)',
+            animation: 'spin 2s linear infinite',
           }}
         />
+        
+        {/* Middle ring - reverse rotation */}
         <div 
-          className="absolute inset-2 rounded"
+          className="absolute rounded-full"
           style={{
+            inset: '8px',
             border: '2px solid transparent',
-            borderTopColor: '#ff00ff',
-            animation: 'spin 0.8s linear infinite',
-            boxShadow: '0 0 10px rgba(255, 0, 255, 0.4)'
+            borderBottomColor: '#14b8a6',
+            borderLeftColor: 'rgba(20, 184, 166, 0.2)',
+            animation: 'spin 1.5s linear infinite reverse',
           }}
         />
+        
+        {/* Inner ring - fast rotation */}
+        <div 
+          className="absolute rounded-full"
+          style={{
+            inset: '16px',
+            border: '2px solid transparent',
+            borderTopColor: 'rgba(20, 184, 166, 0.8)',
+            animation: 'spin 1s linear infinite',
+          }}
+        />
+        
+        {/* Center glow dot */}
+        <div 
+          className="absolute rounded-full"
+          style={{
+            inset: '50%',
+            width: '8px',
+            height: '8px',
+            marginTop: '-4px',
+            marginLeft: '-4px',
+            backgroundColor: '#14b8a6',
+            boxShadow: '0 0 20px rgba(20, 184, 166, 0.6), 0 0 40px rgba(20, 184, 166, 0.3)',
+            animation: 'pulse 1.5s ease-in-out infinite',
+          }}
+        />
+        
+        {/* Orbiting dots */}
+        <div 
+          className="absolute inset-0"
+          style={{ animation: 'spin 3s linear infinite' }}
+        >
+          <div 
+            className="absolute w-2 h-2 rounded-full"
+            style={{
+              top: '0',
+              left: '50%',
+              marginLeft: '-4px',
+              backgroundColor: '#14b8a6',
+              boxShadow: '0 0 8px rgba(20, 184, 166, 0.8)',
+            }}
+          />
+        </div>
+        
+        <div 
+          className="absolute inset-0"
+          style={{ animation: 'spin 3s linear infinite reverse' }}
+        >
+          <div 
+            className="absolute w-1.5 h-1.5 rounded-full"
+            style={{
+              bottom: '4px',
+              left: '50%',
+              marginLeft: '-3px',
+              backgroundColor: 'rgba(20, 184, 166, 0.6)',
+              boxShadow: '0 0 6px rgba(20, 184, 166, 0.6)',
+            }}
+          />
+        </div>
       </div>
 
       {/* Loading Message */}
       <h3 
-        className="mt-0 mb-3 text-sm sm:text-base font-bold uppercase tracking-widest"
+        className="mt-0 mb-2 text-base font-medium tracking-wide"
         style={{
-          color: '#00ffff',
-          fontFamily: "'Orbitron', sans-serif",
-          textShadow: '0 0 10px rgba(0, 255, 255, 0.5)'
+          color: '#fafafa',
+          fontFamily: "'Space Grotesk', sans-serif",
         }}
       >
         {message}
       </h3>
 
       <p
-        className={`text-xs sm:text-sm ${onCancel ? "mb-5" : "mb-0"}`}
+        className="text-sm mb-0"
         style={{
-          color: '#8a8a9a',
-          fontFamily: "'JetBrains Mono', monospace"
+          color: '#71717a',
+          fontFamily: "'Space Grotesk', sans-serif"
         }}
       >
-        Processing your schema...
+        This may take a moment
       </p>
+
+      {/* Progress bar animation */}
+      <div 
+        className="mt-6 h-1 rounded-full overflow-hidden"
+        style={{ backgroundColor: 'rgba(39, 39, 42, 0.5)' }}
+      >
+        <div 
+          className="h-full rounded-full"
+          style={{
+            width: '40%',
+            background: 'linear-gradient(90deg, transparent, #14b8a6, transparent)',
+            animation: 'progressSlide 1.5s ease-in-out infinite',
+          }}
+        />
+      </div>
 
       {/* Cancel Button */}
       {onCancel && (
         <button
           onClick={onCancel}
-          className="cursor-pointer px-6 py-2.5 rounded font-bold text-xs uppercase tracking-widest transition-all duration-300"
+          className="mt-6 cursor-pointer px-5 py-2 rounded-md font-medium text-sm transition-all duration-200"
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            backgroundColor: 'rgba(42, 42, 58, 0.8)',
-            color: '#c0c0d0',
-            border: '1px solid rgba(42, 42, 58, 0.8)'
+            fontFamily: "'Space Grotesk', sans-serif",
+            backgroundColor: 'transparent',
+            color: '#71717a',
+            border: '1px solid #27272a'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#18181b';
+            e.currentTarget.style.color = '#a1a1aa';
+            e.currentTarget.style.borderColor = '#3f3f46';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#71717a';
+            e.currentTarget.style.borderColor = '#27272a';
           }}
         >
           Cancel
@@ -99,7 +175,22 @@ export const LoadingDialog: React.FC<LoadingDialogProps> = ({
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        @keyframes progressSlide {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(350%); }
+        }
       `}</style>
     </div>
   );
 };
+
+export default LoadingDialog;
+//         }
+//       `}</style>
+//     </div>
+//   );
+// };

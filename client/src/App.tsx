@@ -184,6 +184,14 @@ function CanvasPlayground() {
     onAttrEditTypeChange,
     onAttrEditRefTableChange,
     onAttrEditRefAttrChange,
+    onAttrEditCardinalityChange,
+    onAttrEditOnDeleteChange,
+    onAttrEditOnUpdateChange,
+    onAttrEditIsOptionalChange,
+    onAttrEditCheckConstraintChange,
+    onAttrEditDefaultValueChange,
+    onAttrEditIsNotNullChange,
+    onAttrEditIsUniqueChange,
     onSaveAttrName,
     onCancelAttrEdit,
     onDeleteAttribute,
@@ -1045,7 +1053,7 @@ function CanvasPlayground() {
   const isReadOnly = !canEdit;
 
   return (
-    <div className="w-screen h-screen flex flex-col md:flex-row bg-slate-900 overflow-hidden">
+    <div className="w-screen h-screen flex flex-col md:flex-row overflow-hidden" style={{ backgroundColor: '#0d0d18' }}>
       {/* Navbar - Fixed at top */}
       <Toolbar 
         onAddTable={handleAddTable} 
@@ -1071,7 +1079,7 @@ function CanvasPlayground() {
 
       {/* Collaboration Status Bar - Shows when collaborators are present */}
       {collaboration.state.isConnected && collaboration.state.collaborators.length > 0 && (
-        <div className="fixed top-14 right-2 sm:right-4 z-40 bg-slate-800 border border-slate-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-lg">
+        <div className="fixed top-12 right-2 sm:right-4 z-40 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-lg" style={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(255,255,255,0.08)' }}>
           <CollaboratorAvatars
             collaborators={collaboration.state.collaborators}
             ownerUsername={collaboration.state.ownerUsername}
@@ -1180,12 +1188,10 @@ function CanvasPlayground() {
         attrDataType={attrDataType}
         refTable={refTable}
         refAttr={refAttr}
-        // Enhanced FK options
         cardinality={cardinality}
         onDelete={onDeleteAction}
         onUpdate={onUpdateAction}
         isOptional={isOptional}
-        // Column constraints
         checkConstraint={checkConstraint}
         defaultValue={defaultValue}
         isNotNull={isNotNull}
@@ -1201,12 +1207,10 @@ function CanvasPlayground() {
         onAttrTypeChange={setAttrType}
         onRefTableChange={setRefTable}
         onRefAttrChange={setRefAttr}
-        // Enhanced FK option handlers
         onCardinalityChange={setCardinality}
         onOnDeleteChange={setOnDeleteAction}
         onOnUpdateChange={setOnUpdateAction}
         onIsOptionalChange={setIsOptional}
-        // Column constraint handlers
         onCheckConstraintChange={setCheckConstraint}
         onDefaultValueChange={setDefaultValue}
         onIsNotNullChange={setIsNotNull}
@@ -1218,6 +1222,14 @@ function CanvasPlayground() {
         onAttrEditTypeChange={onAttrEditTypeChange}
         onAttrEditRefTableChange={onAttrEditRefTableChange}
         onAttrEditRefAttrChange={onAttrEditRefAttrChange}
+        onAttrEditCardinalityChange={onAttrEditCardinalityChange}
+        onAttrEditOnDeleteChange={onAttrEditOnDeleteChange}
+        onAttrEditOnUpdateChange={onAttrEditOnUpdateChange}
+        onAttrEditIsOptionalChange={onAttrEditIsOptionalChange}
+        onAttrEditCheckConstraintChange={onAttrEditCheckConstraintChange}
+        onAttrEditDefaultValueChange={onAttrEditDefaultValueChange}
+        onAttrEditIsNotNullChange={onAttrEditIsNotNullChange}
+        onAttrEditIsUniqueChange={onAttrEditIsUniqueChange}
         onSaveAttrName={onSaveAttrName}
         onCancelAttrEdit={onCancelAttrEdit}
         onDeleteAttribute={onDeleteAttribute}
@@ -1225,11 +1237,14 @@ function CanvasPlayground() {
         getAttributesForTable={getAttributesForTable}
         validateFKReference={validateFKReference}
         onClose={() => setSelectedTableId(null)}
+        allNodes={nodes}
+        onSelectTable={(nodeId) => setSelectedTableId(nodeId)}
+        onAddTable={handleAddTable}
       />
       )}
 
       {/* Main Canvas Area */}
-      <div className={`flex-1 relative bg-slate-950 ${isReadOnly ? 'pt-[86px] md:pt-[86px]' : 'pt-14'}`}>
+      <div className={`flex-1 relative ${isReadOnly ? 'pt-[86px] md:pt-[86px]' : 'pt-12'}`} style={{ backgroundColor: '#0d0d18' }}>
         {/* Loading Dialog */}
         <LoadingDialog
           isOpen={loadingDialogOpen}
@@ -1298,9 +1313,9 @@ function CanvasPlayground() {
               labelStyle: { fill: "#818cf8", fontWeight: "bold" },
             }}
           >
-            <MiniMap style={{ backgroundColor: '#1e293b' }} />
+            <MiniMap style={{ backgroundColor: '#141420' }} />
             <Controls />
-            <Background color="#475569" />
+            <Background color="#1e1e2e" />
             
             {/* Collaborator Cursors */}
             {collaboration.state.collaborators.length > 0 && (

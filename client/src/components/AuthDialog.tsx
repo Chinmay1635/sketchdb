@@ -220,19 +220,18 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
         {/* Header */}
         <div 
           className="px-6 py-4 relative"
-          style={{ background: 'linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(136, 85, 255, 0.15))' }}
+          style={{ background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(13, 148, 136, 0.1))' }}
         >
           <div 
             className="absolute top-0 left-0 right-0 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, #00ffff, #8855ff, transparent)' }}
+            style={{ background: 'linear-gradient(90deg, transparent, #14b8a6, transparent)' }}
           />
           <div className="flex justify-between items-center">
             <h2 
               className="text-lg font-bold uppercase tracking-wider"
               style={{ 
-                color: '#f0f0ff',
-                fontFamily: "'Orbitron', sans-serif",
-                textShadow: '0 0 10px rgba(0, 255, 255, 0.3)'
+                color: '#fafafa',
+                fontFamily: "'Space Grotesk', sans-serif"
               }}
             >
               {mode === 'login' && '// Login'}
@@ -246,7 +245,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                 onClose();
                 resetForm();
               }}
-              className="text-ghost hover:text-neon-cyan transition-all duration-200 p-1"
+              className="text-ghost hover:text-teal-400 transition-all duration-200 p-1"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -260,11 +259,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
           {/* Error/Success Messages */}
           {error && (
             <div 
-              className="mb-4 p-3 rounded text-sm"
+              className="mb-4 p-3 rounded-lg text-sm"
               style={{ 
-                backgroundColor: 'rgba(255, 51, 102, 0.1)',
-                border: '1px solid rgba(255, 51, 102, 0.3)',
-                color: '#ff3366',
+                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                border: '1px solid rgba(220, 38, 38, 0.3)',
+                color: '#dc2626',
                 fontFamily: "'JetBrains Mono', monospace"
               }}
             >
@@ -273,11 +272,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
           )}
           {success && (
             <div 
-              className="mb-4 p-3 rounded text-sm"
+              className="mb-4 p-3 rounded-lg text-sm"
               style={{ 
-                backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                border: '1px solid rgba(0, 255, 136, 0.3)',
-                color: '#00ff88',
+                backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                border: '1px solid rgba(20, 184, 166, 0.3)',
+                color: '#14b8a6',
                 fontFamily: "'JetBrains Mono', monospace"
               }}
             >
@@ -346,14 +345,14 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               <button
                 type="submit"
                 disabled={isLoading || !turnstileToken}
-                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50 rounded-lg"
                 style={{ 
                   background: isLoading || !turnstileToken 
-                    ? 'rgba(42, 42, 58, 0.8)' 
-                    : 'linear-gradient(135deg, #00ffff, #0088ff)',
-                  color: isLoading || !turnstileToken ? '#8a8a9a' : '#0a0a0f',
+                    ? 'rgba(255, 255, 255, 0.05)' 
+                    : '#14b8a6',
+                  color: isLoading || !turnstileToken ? '#71717a' : '#09090b',
                   fontFamily: "'JetBrains Mono', monospace",
-                  boxShadow: isLoading || !turnstileToken ? 'none' : '0 0 20px rgba(0, 255, 255, 0.3)'
+                  boxShadow: isLoading || !turnstileToken ? 'none' : '0 4px 12px rgba(20, 184, 166, 0.25)'
                 }}
               >
                 {isLoading ? 'Logging in...' : 'Login'}
@@ -363,7 +362,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                   type="button"
                   onClick={() => handleModeChange('forgot-password')}
                   className="transition-colors"
-                  style={{ color: '#00ffff' }}
+                  style={{ color: '#14b8a6' }}
                 >
                   Forgot Password?
                 </button>
@@ -371,7 +370,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                   type="button"
                   onClick={() => handleModeChange('signup')}
                   className="transition-colors"
-                  style={{ color: '#8855ff' }}
+                  style={{ color: '#a1a1aa' }}
                 >
                   Create Account
                 </button>
@@ -514,25 +513,25 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               <button
                 type="submit"
                 disabled={isLoading || !turnstileToken}
-                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50 rounded-lg"
                 style={{ 
                   background: isLoading || !turnstileToken 
-                    ? 'rgba(42, 42, 58, 0.8)' 
-                    : 'linear-gradient(135deg, #8855ff, #00ffff)',
-                  color: isLoading || !turnstileToken ? '#8a8a9a' : '#0a0a0f',
+                    ? 'rgba(255, 255, 255, 0.05)' 
+                    : 'linear-gradient(135deg, #14b8a6, #0d9488)',
+                  color: isLoading || !turnstileToken ? '#71717a' : '#09090b',
                   fontFamily: "'JetBrains Mono', monospace",
-                  boxShadow: isLoading || !turnstileToken ? 'none' : '0 0 20px rgba(136, 85, 255, 0.3)'
+                  boxShadow: isLoading || !turnstileToken ? 'none' : '0 4px 12px rgba(20, 184, 166, 0.25)'
                 }}
               >
                 {isLoading ? 'Creating Account...' : 'Sign Up'}
               </button>
               <div className="text-center text-xs" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                <span style={{ color: '#8a8a9a' }}>Already have an account? </span>
+                <span style={{ color: '#71717a' }}>Already have an account? </span>
                 <button
                   type="button"
                   onClick={() => handleModeChange('login')}
                   className="transition-colors"
-                  style={{ color: '#00ffff' }}
+                  style={{ color: '#14b8a6' }}
                 >
                   Login
                 </button>
@@ -578,10 +577,10 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                   onChange={(e) => setOtp(e.target.value)}
                   className="w-full px-3 py-3 text-center text-2xl tracking-widest focus:outline-none"
                   style={{
-                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
-                    border: '1px solid #2a2a3a',
-                    color: '#00ffff',
-                    fontFamily: "'Orbitron', sans-serif"
+                    backgroundColor: 'rgba(17, 17, 20, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    color: '#14b8a6',
+                    fontFamily: "'Space Grotesk', sans-serif"
                   }}
                   placeholder="000000"
                   maxLength={6}
@@ -594,11 +593,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                 className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
                 style={{ 
                   background: isLoading 
-                    ? 'rgba(42, 42, 58, 0.8)' 
-                    : 'linear-gradient(135deg, #00ffff, #0088ff)',
-                  color: isLoading ? '#8a8a9a' : '#0a0a0f',
+                    ? 'rgba(39, 39, 42, 0.8)' 
+                    : '#14b8a6',
+                  color: isLoading ? '#71717a' : '#09090b',
                   fontFamily: "'JetBrains Mono', monospace",
-                  boxShadow: isLoading ? 'none' : '0 0 20px rgba(0, 255, 255, 0.3)'
+                  boxShadow: 'none'
                 }}
               >
                 {isLoading ? 'Verifying...' : 'Verify Email'}
@@ -610,7 +609,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                   onClick={handleResendOTP}
                   disabled={isLoading}
                   className="transition-colors"
-                  style={{ color: '#00ffff' }}
+                  style={{ color: '#14b8a6' }}
                 >
                   Resend OTP
                 </button>
@@ -662,14 +661,14 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50 rounded-lg"
                 style={{ 
                   background: isLoading 
-                    ? 'rgba(42, 42, 58, 0.8)' 
-                    : 'linear-gradient(135deg, #ff8800, #ff00ff)',
-                  color: isLoading ? '#8a8a9a' : '#0a0a0f',
+                    ? 'rgba(255, 255, 255, 0.05)' 
+                    : '#14b8a6',
+                  color: isLoading ? '#71717a' : '#09090b',
                   fontFamily: "'JetBrains Mono', monospace",
-                  boxShadow: isLoading ? 'none' : '0 0 20px rgba(255, 136, 0, 0.3)'
+                  boxShadow: isLoading ? 'none' : '0 4px 12px rgba(20, 184, 166, 0.25)'
                 }}
               >
                 {isLoading ? 'Sending...' : 'Send Reset Code'}
@@ -722,12 +721,12 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  className="w-full px-3 py-3 text-center text-2xl tracking-widest focus:outline-none"
+                  className="w-full px-3 py-3 text-center text-2xl tracking-widest focus:outline-none rounded-lg"
                   style={{
-                    backgroundColor: 'rgba(10, 10, 15, 0.8)',
-                    border: '1px solid #2a2a3a',
-                    color: '#00ffff',
-                    fontFamily: "'Orbitron', sans-serif"
+                    backgroundColor: 'rgba(17, 17, 20, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    color: '#14b8a6',
+                    fontFamily: "'Space Grotesk', sans-serif"
                   }}
                   placeholder="000000"
                   maxLength={6}
@@ -760,14 +759,14 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50 rounded-lg"
                 style={{ 
                   background: isLoading 
-                    ? 'rgba(42, 42, 58, 0.8)' 
-                    : 'linear-gradient(135deg, #00ff88, #00ffff)',
-                  color: isLoading ? '#8a8a9a' : '#0a0a0f',
+                    ? 'rgba(255, 255, 255, 0.05)' 
+                    : '#14b8a6',
+                  color: isLoading ? '#71717a' : '#09090b',
                   fontFamily: "'JetBrains Mono', monospace",
-                  boxShadow: isLoading ? 'none' : '0 0 20px rgba(0, 255, 136, 0.3)'
+                  boxShadow: isLoading ? 'none' : '0 4px 12px rgba(20, 184, 166, 0.25)'
                 }}
               >
                 {isLoading ? 'Resetting...' : 'Reset Password'}

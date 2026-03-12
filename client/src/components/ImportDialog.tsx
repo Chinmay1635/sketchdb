@@ -47,16 +47,16 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
       <div
         className="w-full max-w-[95vw] sm:max-w-[600px] max-h-[90vh] flex flex-col"
         style={{
-          backgroundColor: 'rgba(13, 13, 20, 0.95)',
-          border: '1px solid #2a2a3a',
-          boxShadow: '0 0 40px rgba(0, 255, 255, 0.1), 0 0 80px rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(10px)'
+          backgroundColor: 'rgba(17, 17, 20, 0.95)',
+          border: '1px solid rgba(255, 255, 255, 0.06)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(12px)'
         }}
       >
         {/* Top accent line */}
         <div 
           className="h-[2px] w-full"
-          style={{ background: 'linear-gradient(90deg, transparent, #00ffff, #ff00ff, transparent)' }}
+          style={{ background: 'linear-gradient(90deg, transparent, #14b8a6, transparent)' }}
         />
         
         <div className="p-4 sm:p-6 flex flex-col flex-1 min-h-0">
@@ -64,9 +64,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({
             <h2 
               className="m-0 text-base sm:text-lg font-bold uppercase tracking-wider"
               style={{ 
-                color: '#00ffff',
-                fontFamily: "'Orbitron', sans-serif",
-                textShadow: '0 0 10px rgba(0, 255, 255, 0.5)'
+                color: '#14b8a6',
+                fontFamily: "'Space Grotesk', sans-serif"
               }}
             >
               Import SQL Schema
@@ -105,11 +104,11 @@ CREATE TABLE posts (
   user_id INT,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );"
-              className="w-full h-48 sm:h-[300px] p-3 text-xs sm:text-sm resize-y focus:outline-none"
+              className="w-full h-48 sm:h-[300px] p-3 text-xs sm:text-sm resize-y focus:outline-none rounded-lg"
               style={{
-                backgroundColor: 'rgba(10, 10, 15, 0.8)',
-                border: '1px solid #2a2a3a',
-                color: '#c0c0d0',
+                backgroundColor: 'rgba(17, 17, 20, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                color: '#a1a1aa',
                 fontFamily: "'JetBrains Mono', monospace"
               }}
             />
@@ -119,13 +118,13 @@ CREATE TABLE posts (
             <button
               onClick={handleClose}
               disabled={isLoading}
-              className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+              className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg ${
                 isLoading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
               }`}
               style={{ 
-                backgroundColor: 'rgba(42, 42, 58, 0.8)',
-                color: '#c0c0d0',
-                border: '1px solid rgba(42, 42, 58, 0.8)',
+                backgroundColor: 'transparent',
+                color: '#a1a1aa',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
                 fontFamily: "'JetBrains Mono', monospace"
               }}
             >
@@ -140,10 +139,10 @@ CREATE TABLE posts (
               style={{ 
                 background: !sqlText.trim() || isLoading 
                   ? 'rgba(42, 42, 58, 0.8)' 
-                  : 'linear-gradient(135deg, #00ffff, #0088ff)',
+                  : 'linear-gradient(135deg, #14b8a6, #0d9488)',
                 color: !sqlText.trim() || isLoading ? '#8a8a9a' : '#0a0a0f',
                 fontFamily: "'JetBrains Mono', monospace",
-                boxShadow: !sqlText.trim() || isLoading ? 'none' : '0 0 20px rgba(0, 255, 255, 0.3)'
+                boxShadow: !sqlText.trim() || isLoading ? 'none' : '0 0 20px rgba(20, 184, 166, 0.3)'
               }}
             >
               {isLoading ? 'Importing...' : 'Import Schema'}

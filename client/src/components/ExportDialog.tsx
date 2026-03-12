@@ -52,27 +52,26 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ isOpen, onClose, onE
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div 
-        className="max-w-md w-full"
+        className="max-w-md w-full rounded-xl overflow-hidden"
         style={{
-          backgroundColor: 'rgba(13, 13, 20, 0.95)',
-          border: '1px solid #2a2a3a',
-          boxShadow: '0 0 40px rgba(0, 255, 255, 0.1), 0 0 80px rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(10px)'
+          backgroundColor: 'rgba(17, 17, 20, 0.95)',
+          border: '1px solid rgba(255, 255, 255, 0.06)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(12px)'
         }}
       >
         {/* Top accent line */}
         <div 
           className="h-[2px] w-full"
-          style={{ background: 'linear-gradient(90deg, transparent, #00ffff, #ff00ff, transparent)' }}
+          style={{ background: 'linear-gradient(90deg, transparent, #14b8a6, transparent)' }}
         />
         
         <div className="p-6">
           <h2 
             className="text-lg font-bold mb-6 uppercase tracking-wider"
             style={{ 
-              color: '#00ffff',
-              fontFamily: "'Orbitron', sans-serif",
-              textShadow: '0 0 10px rgba(0, 255, 255, 0.5)'
+              color: '#14b8a6',
+              fontFamily: "'Space Grotesk', sans-serif"
             }}
           >
             Export Options
@@ -146,7 +145,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ isOpen, onClose, onE
                 checked={options.includeTitle}
                 onChange={(e) => setOptions({...options, includeTitle: e.target.checked})}
                 className="w-4 h-4"
-                style={{ accentColor: '#00ffff' }}
+                style={{ accentColor: '#14b8a6' }}
               />
               Include title in export
             </label>
@@ -187,10 +186,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ isOpen, onClose, onE
               onClick={handleExport}
               className="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all duration-300"
               style={{ 
-                background: 'linear-gradient(135deg, #00ffff, #0088ff)',
+                background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
                 color: '#0a0a0f',
                 fontFamily: "'JetBrains Mono', monospace",
-                boxShadow: '0 0 20px rgba(0, 255, 255, 0.3)'
+                boxShadow: '0 0 20px rgba(20, 184, 166, 0.3)'
               }}
             >
               Export {format.toUpperCase()}

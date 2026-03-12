@@ -148,7 +148,7 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
     
     if (permission === 'edit') {
       return (
-        <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium font-mono" style={{ backgroundColor: 'rgba(0, 255, 136, 0.2)', color: '#00ff88', border: '1px solid rgba(0, 255, 136, 0.4)' }}>
+        <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium font-mono" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.4)' }}>
           <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
@@ -172,22 +172,22 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(4px)' }}>
-      <div className="w-full max-w-4xl mx-4 overflow-hidden max-h-[85vh] flex flex-col" style={{ backgroundColor: '#0a0a0f', border: '1px solid #2a2a3a', boxShadow: '0 0 40px rgba(0, 255, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+      <div className="w-full max-w-4xl mx-4 overflow-hidden max-h-[85vh] flex flex-col" style={{ backgroundColor: '#0a0a0f', border: '1px solid #2a2a3a', boxShadow: '0 0 40px rgba(20, 184, 166, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
         {/* Gradient accent line */}
-        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #00ffff, #ff00ff, #00ff88)' }} />
+        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.5), transparent)' }} />
         
         {/* Header */}
         <div className="px-6 py-5 flex-shrink-0" style={{ backgroundColor: '#0d0d14', borderBottom: '1px solid #2a2a3a' }}>
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#00ffff', fontFamily: "'Orbitron', monospace", textTransform: 'uppercase', letterSpacing: '0.1em', textShadow: '0 0 20px rgba(0,255,255,0.5)' }}>
+              <h2 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#14b8a6', fontFamily: "'Space Grotesk', sans-serif", textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
                 My Diagrams
               </h2>
               <p className="text-sm mt-1 font-mono" style={{ color: '#8a8a9a' }}>
-                <span style={{ color: '#8855ff' }}>{ownedCount}</span> owned · <span style={{ color: '#00ff88' }}>{collaboratedCount}</span> shared with you
+                <span style={{ color: '#8855ff' }}>{ownedCount}</span> owned · <span style={{ color: '#22c55e' }}>{collaboratedCount}</span> shared with you
               </p>
             </div>
             <button
@@ -211,7 +211,7 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
             <div className="flex-1 relative">
               <svg
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
-                style={{ color: '#00ffff' }}
+                style={{ color: '#14b8a6' }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -225,7 +225,7 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 font-mono text-sm transition-all focus:outline-none"
                 style={{ backgroundColor: '#121218', border: '1px solid #2a2a3a', color: '#f0f0ff' }}
-                onFocus={(e) => { e.target.style.borderColor = '#00ffff'; e.target.style.boxShadow = '0 0 10px rgba(0,255,255,0.3)'; }}
+                onFocus={(e) => { e.target.style.borderColor = '#14b8a6'; e.target.style.boxShadow = '0 0 10px rgba(20,184,166,0.3)'; }}
                 onBlur={(e) => { e.target.style.borderColor = '#2a2a3a'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
@@ -236,7 +236,7 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
                 onClick={() => setFilter('all')}
                 className="px-4 py-2 text-sm font-mono transition-all"
                 style={{ 
-                  backgroundColor: filter === 'all' ? '#00ffff' : '#121218',
+                  backgroundColor: filter === 'all' ? '#14b8a6' : '#121218',
                   color: filter === 'all' ? '#0a0a0f' : '#8a8a9a',
                   fontWeight: filter === 'all' ? '600' : '400'
                 }}
@@ -259,7 +259,7 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
                 onClick={() => setFilter('collaborated')}
                 className="px-4 py-2 text-sm font-mono transition-all"
                 style={{ 
-                  backgroundColor: filter === 'collaborated' ? '#00ff88' : '#121218',
+                  backgroundColor: filter === 'collaborated' ? '#22c55e' : '#121218',
                   color: filter === 'collaborated' ? '#0a0a0f' : '#8a8a9a',
                   borderLeft: '1px solid #2a2a3a',
                   fontWeight: filter === 'collaborated' ? '600' : '400'
@@ -297,8 +297,8 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="relative w-12 h-12">
-                <div className="absolute inset-0 animate-spin" style={{ border: '2px solid transparent', borderTopColor: '#00ffff', borderRightColor: '#ff00ff' }} />
-                <div className="absolute inset-2 animate-spin" style={{ border: '2px solid transparent', borderBottomColor: '#00ff88', animationDirection: 'reverse', animationDuration: '0.8s' }} />
+                <div className="absolute inset-0 animate-spin" style={{ border: '2px solid transparent', borderTopColor: '#14b8a6', borderRightColor: '#a855f7' }} />
+                <div className="absolute inset-2 animate-spin" style={{ border: '2px solid transparent', borderBottomColor: '#22c55e', animationDirection: 'reverse', animationDuration: '0.8s' }} />
               </div>
               <p className="mt-4 font-mono text-sm" style={{ color: '#8a8a9a' }}>Loading diagrams...</p>
             </div>
@@ -323,8 +323,8 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
                   <button
                     onClick={onClose}
                     className="px-4 py-2 font-mono text-sm transition-all"
-                    style={{ background: 'linear-gradient(135deg, #00ffff, #0088ff)', color: '#0a0a0f', fontWeight: '600' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 20px rgba(0,255,255,0.5)'; }}
+                    style={{ background: 'linear-gradient(135deg, #14b8a6, #0d9488)', color: '#0a0a0f', fontWeight: '600' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 20px rgba(20,184,166,0.5)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                   >
                     CREATE DIAGRAM
@@ -340,11 +340,11 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
                   onClick={() => handleOpenDiagram(diagram)}
                   className="group p-4 transition-all cursor-pointer"
                   style={{ backgroundColor: '#0d0d14', border: '1px solid #2a2a3a' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#00ffff'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0,255,255,0.2)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.boxShadow = '0 0 20px rgba(20,184,166,0.2)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   {/* Diagram Preview/Icon */}
-                  <div className="p-4 mb-3 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(0,255,255,0.1), rgba(136,85,255,0.1))', border: '1px solid #2a2a3a' }}>
+                  <div className="p-4 mb-3 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(20,184,166,0.1), rgba(136,85,255,0.1))', border: '1px solid #2a2a3a' }}>
                     <svg className="w-12 h-12 transition-colors" style={{ color: '#4a4a5a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
                     </svg>
@@ -358,7 +358,7 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
                       </h3>
                       {diagram.isPublic && (
                         <span className="flex-shrink-0" title="Public diagram">
-                          <svg className="w-4 h-4" style={{ color: '#00ff88' }} fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="w-4 h-4" style={{ color: '#22c55e' }} fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd" />
                           </svg>
                         </span>
@@ -401,14 +401,14 @@ const MyDiagramsDialog: React.FC<MyDiagramsDialogProps> = ({
         <div className="px-6 py-4 flex-shrink-0" style={{ backgroundColor: '#0d0d14', borderTop: '1px solid #2a2a3a' }}>
           <div className="flex justify-between items-center">
             <p className="text-sm font-mono" style={{ color: '#4a4a5a' }}>
-              <span style={{ color: '#00ffff' }}>{filteredDiagrams.length}</span> diagram{filteredDiagrams.length !== 1 ? 's' : ''} 
+              <span style={{ color: '#14b8a6' }}>{filteredDiagrams.length}</span> diagram{filteredDiagrams.length !== 1 ? 's' : ''} 
               {filter !== 'all' && <span style={{ color: '#8a8a9a' }}> (filtered from {diagrams.length})</span>}
             </p>
             <button
               onClick={onClose}
               className="px-4 py-2 font-mono text-sm transition-all"
               style={{ backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', color: '#8a8a9a' }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#00ffff'; e.currentTarget.style.color = '#00ffff'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.color = '#14b8a6'; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.color = '#8a8a9a'; }}
             >
               CLOSE

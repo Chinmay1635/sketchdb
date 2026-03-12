@@ -202,14 +202,14 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(4px)' }}>
-      <div className="w-full max-w-2xl mx-4 overflow-hidden max-h-[80vh] flex flex-col" style={{ backgroundColor: '#0a0a0f', border: '1px solid #2a2a3a', boxShadow: '0 0 40px rgba(0, 255, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+      <div className="w-full max-w-2xl mx-4 overflow-hidden max-h-[80vh] flex flex-col" style={{ backgroundColor: '#0a0a0f', border: '1px solid #2a2a3a', boxShadow: '0 0 40px rgba(20, 184, 166, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
         {/* Gradient accent line */}
-        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #00ffff, #00ff88)' }} />
+        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.5), transparent)' }} />
         
         {/* Header */}
         <div className="px-6 py-4 flex-shrink-0" style={{ backgroundColor: '#0d0d14', borderBottom: '1px solid #2a2a3a' }}>
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold" style={{ color: '#00ffff', fontFamily: "'Orbitron', monospace", textTransform: 'uppercase', letterSpacing: '0.1em', textShadow: '0 0 20px rgba(0,255,255,0.5)' }}>
+            <h2 className="text-xl font-bold" style={{ color: '#14b8a6', fontFamily: "'Space Grotesk', sans-serif", textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               {mode === 'list' ? 'MY DIAGRAMS' : editingId ? 'UPDATE DIAGRAM' : 'SAVE DIAGRAM'}
             </h2>
             <div className="flex items-center gap-2">
@@ -224,8 +224,8 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                         setDiagramDescription(currentDiagram.description || '');
                       }}
                       className="px-3 py-1 text-sm font-mono transition-all"
-                      style={{ background: 'linear-gradient(135deg, #00ff88, #00ffff)', color: '#0a0a0f', fontWeight: '600' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,136,0.5)'; }}
+                    style={{ background: 'linear-gradient(135deg, #22c55e, #14b8a6)', color: '#0a0a0f', fontWeight: '600' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 15px rgba(34,197,94,0.5)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                     >
                       UPDATE "{currentDiagram.name}"
@@ -239,9 +239,9 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                       setDiagramDescription('');
                     }}
                     className="px-3 py-1 text-sm font-mono transition-all"
-                    style={{ backgroundColor: 'rgba(0, 255, 255, 0.1)', border: '1px solid rgba(0, 255, 255, 0.3)', color: '#00ffff' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.1)'; }}
+                    style={{ backgroundColor: 'rgba(20, 184, 166, 0.1)', border: '1px solid rgba(20, 184, 166, 0.3)', color: '#14b8a6' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(20, 184, 166, 0.2)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(20, 184, 166, 0.1)'; }}
                   >
                     SAVE AS NEW
                   </button>
@@ -271,7 +271,7 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
             </div>
           )}
           {success && (
-            <div className="mb-4 p-3 font-mono text-sm" style={{ backgroundColor: 'rgba(0, 255, 136, 0.1)', border: '1px solid rgba(0, 255, 136, 0.4)', color: '#00ff88' }}>
+            <div className="mb-4 p-3 font-mono text-sm" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.4)', color: '#22c55e' }}>
               {success}
             </div>
           )}
@@ -291,7 +291,7 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                   style={{ backgroundColor: '#121218', border: '1px solid #2a2a3a', color: '#f0f0ff' }}
                   placeholder="Enter diagram name"
                   required
-                  onFocus={(e) => { e.target.style.borderColor = '#00ffff'; e.target.style.boxShadow = '0 0 10px rgba(0,255,255,0.3)'; }}
+                  onFocus={(e) => { e.target.style.borderColor = '#14b8a6'; e.target.style.boxShadow = '0 0 10px rgba(20,184,166,0.3)'; }}
                   onBlur={(e) => { e.target.style.borderColor = '#2a2a3a'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
@@ -306,7 +306,7 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                   style={{ backgroundColor: '#121218', border: '1px solid #2a2a3a', color: '#f0f0ff' }}
                   placeholder="Enter description"
                   rows={3}
-                  onFocus={(e) => { e.target.style.borderColor = '#00ffff'; e.target.style.boxShadow = '0 0 10px rgba(0,255,255,0.3)'; }}
+                  onFocus={(e) => { e.target.style.borderColor = '#14b8a6'; e.target.style.boxShadow = '0 0 10px rgba(20,184,166,0.3)'; }}
                   onBlur={(e) => { e.target.style.borderColor = '#2a2a3a'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
@@ -321,7 +321,7 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                   }}
                   className="flex-1 px-4 py-2 font-mono text-sm transition-all"
                   style={{ backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', color: '#8a8a9a' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#00ffff'; e.currentTarget.style.color = '#00ffff'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.color = '#14b8a6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.color = '#8a8a9a'; }}
                 >
                   CANCEL
@@ -330,8 +330,8 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                   type="submit"
                   disabled={isLoading}
                   className="flex-1 px-4 py-2 font-mono text-sm font-medium transition-all disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #00ffff, #0088ff)', color: '#0a0a0f' }}
-                  onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,255,0.5)'; }}
+                  style={{ background: 'linear-gradient(135deg, #14b8a6, #0d9488)', color: '#0a0a0f' }}
+                  onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.boxShadow = '0 0 15px rgba(20,184,166,0.5)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   {isLoading ? 'SAVING...' : editingId ? 'UPDATE' : 'SAVE'}
@@ -346,8 +346,8 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
               {isLoading ? (
                 <div className="text-center py-8">
                   <div className="relative inline-block w-8 h-8">
-                    <div className="absolute inset-0 animate-spin" style={{ border: '3px solid transparent', borderTopColor: '#00ffff', borderRightColor: '#ff00ff' }} />
-                    <div className="absolute inset-1 animate-spin" style={{ border: '2px solid transparent', borderBottomColor: '#00ff88', animationDirection: 'reverse' }} />
+                    <div className="absolute inset-0 animate-spin" style={{ border: '3px solid transparent', borderTopColor: '#14b8a6', borderRightColor: '#a855f7' }} />
+                    <div className="absolute inset-1 animate-spin" style={{ border: '2px solid transparent', borderBottomColor: '#22c55e', animationDirection: 'reverse' }} />
                   </div>
                   <p className="mt-2 font-mono text-sm" style={{ color: '#8a8a9a' }}>Loading diagrams...</p>
                 </div>
@@ -366,7 +366,7 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                       key={diagram._id}
                       className="p-4 transition-all"
                       style={{ backgroundColor: '#0d0d14', border: '1px solid #2a2a3a' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#00ffff'; e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,255,0.2)'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.boxShadow = '0 0 15px rgba(20,184,166,0.2)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.boxShadow = 'none'; }}
                     >
                       {deleteConfirmId === diagram._id ? (
@@ -379,7 +379,7 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                               onClick={() => setDeleteConfirmId(null)}
                               className="px-3 py-1 text-sm font-mono transition-all"
                               style={{ backgroundColor: '#1a1a24', border: '1px solid #2a2a3a', color: '#8a8a9a' }}
-                              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#00ffff'; e.currentTarget.style.color = '#00ffff'; }}
+                              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.color = '#14b8a6'; }}
                               onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a3a'; e.currentTarget.style.color = '#8a8a9a'; }}
                             >
                               CANCEL
@@ -416,8 +416,8 @@ const SavedDiagramsDialog: React.FC<SavedDiagramsDialogProps> = ({
                             <button
                               onClick={() => handleLoad(diagram._id)}
                               className="flex-1 px-3 py-1.5 text-sm font-mono font-medium transition-all"
-                              style={{ background: 'linear-gradient(135deg, #00ffff, #0088ff)', color: '#0a0a0f' }}
-                              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,255,0.5)'; }}
+                              style={{ background: 'linear-gradient(135deg, #14b8a6, #0d9488)', color: '#0a0a0f' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 15px rgba(20,184,166,0.5)'; }}
                               onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                             >
                               LOAD

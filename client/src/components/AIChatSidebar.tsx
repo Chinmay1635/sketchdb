@@ -227,10 +227,10 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       >
         <div className="flex items-center gap-2">
           <div 
-            className="w-8 h-8 flex items-center justify-center"
+            className="w-8 h-8 flex items-center justify-center rounded-lg"
             style={{ 
-              background: 'linear-gradient(135deg, #8855ff, #00ffff)',
-              boxShadow: '0 0 15px rgba(136, 85, 255, 0.3)'
+              background: '#14b8a6',
+              boxShadow: 'none'
             }}
           >
             <svg className="w-5 h-5" style={{ color: '#0a0a0f' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,8 +241,8 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             <h3 
               className="font-bold text-sm uppercase tracking-wider"
               style={{ 
-                color: '#f0f0ff',
-                fontFamily: "'Orbitron', sans-serif"
+                color: '#fafafa',
+                fontFamily: "'Space Grotesk', sans-serif"
               }}
             >
               AI Assistant
@@ -250,7 +250,7 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             <p 
               className="text-xs"
               style={{ 
-                color: '#8855ff',
+                color: '#14b8a6',
                 fontFamily: "'JetBrains Mono', monospace"
               }}
             >
@@ -587,11 +587,11 @@ const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                 className="px-4 transition-all duration-300"
                 style={{ 
                   background: !input.trim() || isLoading 
-                    ? 'rgba(42, 42, 58, 0.8)' 
-                    : 'linear-gradient(135deg, #8855ff, #00ffff)',
-                  color: !input.trim() || isLoading ? '#4a4a5a' : '#0a0a0f',
+                    ? 'rgba(39, 39, 42, 0.8)' 
+                    : '#14b8a6',
+                  color: !input.trim() || isLoading ? '#71717a' : '#09090b',
                   cursor: !input.trim() || isLoading ? 'not-allowed' : 'pointer',
-                  boxShadow: !input.trim() || isLoading ? 'none' : '0 0 15px rgba(136, 85, 255, 0.3)'
+                  boxShadow: 'none'
                 }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

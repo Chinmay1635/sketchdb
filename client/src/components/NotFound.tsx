@@ -8,22 +8,21 @@ export const NotFound: React.FC = () => {
     <div 
       className="fixed inset-0 flex items-center justify-center"
       style={{ 
-        backgroundColor: '#0a0a0f',
-        backgroundImage: 'linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px)',
+        backgroundColor: '#09090b',
+        backgroundImage: 'linear-gradient(rgba(20, 184, 166, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(20, 184, 166, 0.03) 1px, transparent 1px)',
         backgroundSize: '40px 40px'
       }}
     >
       <div className="text-center max-w-md mx-auto px-4">
-        {/* Glitchy 404 */}
+        {/* 404 */}
         <div 
           className="text-7xl sm:text-8xl mb-6 font-bold"
           style={{ 
-            fontFamily: "'Orbitron', sans-serif",
-            background: 'linear-gradient(135deg, #00ffff, #ff00ff)',
+            fontFamily: "'Space Grotesk', sans-serif",
+            background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            textShadow: '0 0 40px rgba(0, 255, 255, 0.3)',
-            filter: 'drop-shadow(0 0 20px rgba(0, 255, 255, 0.3))'
+            filter: 'drop-shadow(0 4px 12px rgba(20, 184, 166, 0.3))'
           }}
         >
           404
@@ -31,8 +30,8 @@ export const NotFound: React.FC = () => {
         <h1 
           className="text-xl sm:text-2xl font-bold mb-3 uppercase tracking-widest"
           style={{ 
-            color: '#f0f0ff',
-            fontFamily: "'Orbitron', sans-serif"
+            color: '#fafafa',
+            fontFamily: "'Space Grotesk', sans-serif"
           }}
         >
           Page Not Found
@@ -49,23 +48,23 @@ export const NotFound: React.FC = () => {
         <div className="flex gap-4 justify-center flex-wrap">
           <button
             onClick={() => navigate('/playground')}
-            className="px-8 py-3 font-bold text-xs uppercase tracking-widest transition-all duration-300"
+            className="px-8 py-3 font-bold text-xs uppercase tracking-widest transition-all duration-300 rounded-lg"
             style={{ 
-              background: 'linear-gradient(135deg, #00ffff, #0088ff)',
-              color: '#0a0a0f',
+              background: '#14b8a6',
+              color: '#09090b',
               fontFamily: "'JetBrains Mono', monospace",
-              boxShadow: '0 0 20px rgba(0, 255, 255, 0.3)'
+              boxShadow: '0 4px 12px rgba(20, 184, 166, 0.25)'
             }}
           >
             Go Home
           </button>
           <button
             onClick={() => navigate(-1)}
-            className="px-8 py-3 font-bold text-xs uppercase tracking-widest transition-all duration-300"
+            className="px-8 py-3 font-bold text-xs uppercase tracking-widest transition-all duration-300 rounded-lg"
             style={{ 
-              backgroundColor: 'rgba(42, 42, 58, 0.8)',
-              color: '#c0c0d0',
-              border: '1px solid rgba(42, 42, 58, 0.8)',
+              backgroundColor: 'transparent',
+              color: '#a1a1aa',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
               fontFamily: "'JetBrains Mono', monospace"
             }}
           >
