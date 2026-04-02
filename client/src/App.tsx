@@ -45,6 +45,9 @@ import AuthDialog from "./components/AuthDialog";
 import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
 import UserMenu from "./components/UserMenu";
 import LandingPage from "./components/LandingPage";
+import { ConnectDatabaseModal } from "./components/DbSync/ConnectDatabaseModal";
+import { MigrationReviewPanel } from "./components/DbSync/MigrationReviewPanel";
+import { useDatabaseSync } from "./components/DbSync/useDatabaseSync";
 
 // Context
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -60,6 +63,7 @@ import { parseSQLSchema } from "./utils/sqlParser";
 import { exportCanvasAsPNG, exportCanvasAsPDF } from "./utils/canvasExport";
 import { useErrorHandler } from "./utils/errorHandler";
 import { diagramsAPI } from "./services/api";
+import { diagramToSchema } from "./utils/diagramToSchema";
 import { 
   Toaster, 
   toastConfig,
@@ -127,12 +131,28 @@ function CanvasPlayground() {
   // Error handling
   const { error, showError, clearError, retryOperation, hasError } = useErrorHandler();
 
+  const {
+    connectionId,
+    currentPlan,
+    history: migrationHistory,
+    isLoading: isDbSyncLoading,
+    error: dbSyncError,
+    connectDatabase,
+    testConnection,
+    generateMigration,
+    approvePlan,
+    applyPlan,
+    fetchHistory,
+  } = useDatabaseSync();
+
   // Dialog states
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [loadingDialogOpen, setLoadingDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [dbConnectOpen, setDbConnectOpen] = useState(false);
+  const [migrationPanelOpen, setMigrationPanelOpen] = useState(false);
   const [sqlText, setSqlText] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [lastOperation, setLastOperation] = useState<(() => void) | null>(null);
@@ -914,6 +934,79 @@ function CanvasPlayground() {
     }
   }, [nodes, showError]);
 
+  const handleConnectDatabase = useCallback(async (data: {
+    diagramId: string;
+    name: string;
+    host: string;
+    port: number;
+    database: string;
+    username: string;
+    password: string;
+    ssl: boolean;
+  }) => {
+    try {
+      if (!currentDiagramId) {
+        throw new Error('Please save your diagram before connecting a database.');
+      }
+      await connectDatabase({ ...data, diagramId: currentDiagramId });
+      generalToasts.success('Database connection saved');
+      setDbConnectOpen(false);
+    } catch (error) {
+      showError(error, 'validation');
+    }
+  }, [connectDatabase, currentDiagramId, showError]);
+
+  const handleTestDatabaseConnection = useCallback(async () => {
+    try {
+      await testConnection();
+      generalToasts.success('Connection successful');
+    } catch (error) {
+      showError(error, 'validation');
+    }
+  }, [testConnection, showError]);
+
+  const handleSyncToDatabase = useCallback(async () => {
+    try {
+      if (!currentDiagramId) {
+        throw new Error('Please save your diagram before syncing to a database.');
+      }
+
+      if (!connectionId) {
+        setDbConnectOpen(true);
+        return;
+      }
+
+      const schema = diagramToSchema(nodes);
+      const plan = await generateMigration(currentDiagramId, schema);
+      if (plan) {
+        await fetchHistory(currentDiagramId);
+        setMigrationPanelOpen(true);
+      }
+    } catch (error) {
+      showError(error, 'export');
+    }
+  }, [connectionId, currentDiagramId, nodes, generateMigration, fetchHistory, showError]);
+
+  const handleApproveMigration = useCallback(async () => {
+    if (!currentPlan) return;
+    try {
+      await approvePlan(currentPlan._id);
+      generalToasts.success('Migration approved');
+    } catch (error) {
+      showError(error, 'export');
+    }
+  }, [approvePlan, currentPlan, showError]);
+
+  const handleApplyMigration = useCallback(async () => {
+    if (!currentPlan) return;
+    try {
+      await applyPlan(currentPlan._id);
+      generalToasts.success('Migration applied');
+    } catch (error) {
+      showError(error, 'export');
+    }
+  }, [applyPlan, currentPlan, showError]);
+
   const handleCancelLoading = useCallback(() => {
     setLoadingDialogOpen(false);
   }, []);
@@ -1058,6 +1151,7 @@ function CanvasPlayground() {
       <Toolbar 
         onAddTable={handleAddTable} 
         onExportSQL={exportToSQL}
+        onSyncDatabase={handleSyncToDatabase}
         onImportSchema={handleImportSchema}
         onExportPNG={handleExportPNG}
         onExportPDF={handleExportPDF}
@@ -1266,6 +1360,27 @@ function CanvasPlayground() {
           sqlText={sqlText}
           onClose={() => setSqlDialogOpen(false)}
           onCopy={handleCopySQL}
+        />
+
+        <ConnectDatabaseModal
+          isOpen={dbConnectOpen}
+          isLoading={isDbSyncLoading}
+          error={dbSyncError}
+          connectionId={connectionId}
+          diagramId={currentDiagramId || ''}
+          onClose={() => setDbConnectOpen(false)}
+          onConnect={handleConnectDatabase}
+          onTestConnection={handleTestDatabaseConnection}
+        />
+
+        <MigrationReviewPanel
+          plan={migrationPanelOpen ? currentPlan : null}
+          isLoading={isDbSyncLoading}
+          error={dbSyncError}
+          history={migrationHistory}
+          onApprove={handleApproveMigration}
+          onApply={handleApplyMigration}
+          onClose={() => setMigrationPanelOpen(false)}
         />
 
         {/* Delete Confirmation Dialog */}

@@ -4,6 +4,7 @@ import UserMenu from "./UserMenu";
 interface ToolbarProps {
   onAddTable: () => void;
   onExportSQL: () => void;
+  onSyncDatabase?: () => void;
   onImportSchema: () => void;
   onExportPNG: () => void;
   onExportPDF: () => void;
@@ -103,6 +104,7 @@ const DropdownDivider = () => <div className="border-t border-white/5 my-1" />;
 export const Toolbar: React.FC<ToolbarProps> = ({ 
   onAddTable, 
   onExportSQL, 
+  onSyncDatabase,
   onImportSchema,
   onExportPNG,
   onExportPDF,
@@ -213,6 +215,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 {/* View menu */}
                 <DropdownMenu label="View">
                   <DropdownItem onClick={onExportSQL}>View SQL</DropdownItem>
+                  {onSyncDatabase && (
+                    <DropdownItem onClick={onSyncDatabase}>Sync to Database</DropdownItem>
+                  )}
                 </DropdownMenu>
 
                 {/* Export menu */}
@@ -355,6 +360,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <button onClick={() => { fileInputRef.current?.click(); setMobileMenuOpen(false); }} className="w-full px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5 rounded text-left transition-colors">Import SQL File</button>
             <div className="border-t border-white/5 my-1" />
             <button onClick={() => { onExportSQL(); setMobileMenuOpen(false); }} className="w-full px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5 rounded text-left transition-colors">View SQL</button>
+            {onSyncDatabase && (
+              <button onClick={() => { onSyncDatabase(); setMobileMenuOpen(false); }} className="w-full px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5 rounded text-left transition-colors">Sync to Database</button>
+            )}
             <button onClick={() => { onExportSQLFile(); setMobileMenuOpen(false); }} className="w-full px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5 rounded text-left transition-colors">Download SQL</button>
             <button onClick={() => { onExportPNG(); setMobileMenuOpen(false); }} className="w-full px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5 rounded text-left transition-colors">Export PNG</button>
             <button onClick={() => { onExportPDF(); setMobileMenuOpen(false); }} className="w-full px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5 rounded text-left transition-colors">Export PDF</button>

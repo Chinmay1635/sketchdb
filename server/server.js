@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const http = require('http');
 const connectDB = require('./config/db');
 const { initializeSocket, getRoomStats, getServerStats } = require('./socket');
+const { protect } = require('./middleware/auth');
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +33,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/diagrams', require('./routes/diagrams'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/db-sync', protect, require('./modules/database-sync/routes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
