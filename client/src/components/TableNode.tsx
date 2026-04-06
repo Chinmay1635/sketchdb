@@ -10,12 +10,20 @@ export interface CollaboratorSelection {
   color: string;
 }
 
+export interface TableLockInfo {
+  odUserId: string;
+  username: string;
+  color: string;
+  isMine?: boolean;
+}
+
 // Custom data type for TableNode
 interface TableNodeData {
   label: string;
   attributes: TableAttribute[];
   color?: string;
   selectedBy?: CollaboratorSelection[]; // Collaborators who have selected this node
+  lockedBy?: TableLockInfo;
 }
 
 export const TableNode: React.FC<NodeProps> = ({ data, id, selected }) => {
@@ -26,6 +34,9 @@ export const TableNode: React.FC<NodeProps> = ({ data, id, selected }) => {
   const selectedBy = nodeData.selectedBy || [];
   const hasCollaboratorSelection = selectedBy.length > 0;
   const selectionBorderColor = hasCollaboratorSelection ? selectedBy[0].color : tableColor;
+  const lockInfo = nodeData.lockedBy;
+  const isLocked = Boolean(lockInfo);
+  const lockedByOther = isLocked && !lockInfo?.isMine;
 
   return (
     <div 
@@ -65,6 +76,23 @@ export const TableNode: React.FC<NodeProps> = ({ data, id, selected }) => {
           {selectedBy.length === 1 ? `${selectedBy[0].username} viewing` : `${selectedBy.length} users`}
         </div>
       )}
+
+      {/* Lock indicator */}
+      {isLocked && lockInfo && (
+        <div
+          className="absolute -top-14 left-1/2 transform -translate-x-1/2 px-2 py-0.5 rounded text-[9px] whitespace-nowrap z-30 flex items-center gap-1"
+          style={{
+            backgroundColor: lockInfo.color,
+            color: isLightColor(lockInfo.color) ? '#0a0a0f' : '#ffffff',
+          }}
+          title={lockInfo.isMine ? 'You are editing this table' : `${lockInfo.username} is editing this table`}
+        >
+          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M17 8h-1V6a4 4 0 00-8 0v2H7a2 2 0 00-2 2v9a2 2 0 002 2h10a2 2 0 002-2v-9a2 2 0 00-2-2zm-6 8.73V18a1 1 0 102 0v-1.27a2 2 0 10-2 0zM10 8V6a2 2 0 114 0v2h-4z"/>
+          </svg>
+          <span>{lockInfo.isMine ? 'Locked by you' : `Locked by ${lockInfo.username}`}</span>
+        </div>
+      )}
       
       {/* Main card */}
       <div 
@@ -73,6 +101,8 @@ export const TableNode: React.FC<NodeProps> = ({ data, id, selected }) => {
           backgroundColor: '#1a1a2e',
           border: selected 
             ? `1.5px solid ${tableColor}` 
+            : lockedByOther
+              ? `1.5px solid ${lockInfo?.color || '#f59e0b'}`
             : hasCollaboratorSelection 
               ? `1.5px solid ${selectionBorderColor}` 
               : '1px solid rgba(255, 255, 255, 0.08)',

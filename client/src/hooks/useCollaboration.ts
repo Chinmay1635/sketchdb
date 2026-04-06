@@ -18,6 +18,7 @@ import {
   CollaboratorInfo,
   CursorUpdateEvent,
   DiagramJoinedEvent,
+  TableLockInfo,
   UserJoinedEvent,
   UserLeftEvent,
   getCollaboratorColor
@@ -61,6 +62,9 @@ interface UseCollaborationReturn {
   broadcastEdgeAdd: (edge: GenericEdge) => void;
   broadcastEdgeDelete: (edgeId: string) => void;
   broadcastSelection: (nodeIds: string[], edgeIds: string[]) => void;
+  requestTableLock: (nodeId: string) => Promise<{ success: boolean; lock?: TableLockInfo; error?: string }>;
+  releaseTableLock: (nodeId: string) => Promise<{ success: boolean; error?: string }>;
+  touchTableLock: (nodeId: string) => void;
   provideState: (state: { nodes: GenericNode[]; edges: GenericEdge[] }) => void;
 }
 
@@ -106,9 +110,11 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
   const [state, setState] = useState<CollaborationState>({
     isConnected: false,
     isConnecting: false,
+    socketId: null,
     diagramId: null,
     permission: null,
     collaborators: [],
+    tableLocks: {},
     error: null,
     ownerUsername: null,
     diagramName: null
@@ -191,6 +197,7 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
         ...prev,
         isConnected: true,
         isConnecting: false,
+        socketId: socket.id || null,
         error: null
       }));
     });
@@ -214,8 +221,10 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
       setState(prev => ({
         ...prev,
         isConnected: false,
+        socketId: null,
         diagramId: null,
         collaborators: [],
+        tableLocks: {},
         permission: null
       }));
     });
@@ -234,8 +243,16 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
         diagramId: data.diagramId,
         permission: data.permission,
         collaborators: usersWithColors,
+        tableLocks: data.tableLocks || {},
         ownerUsername: data.ownerUsername,
         diagramName: data.diagramName
+      }));
+    });
+
+    socket.on('table-locks-update', (data: { locks: Record<string, TableLockInfo> }) => {
+      setState(prev => ({
+        ...prev,
+        tableLocks: data.locks || {}
       }));
     });
 
@@ -330,9 +347,11 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
       setState({
         isConnected: false,
         isConnecting: false,
+        socketId: null,
         diagramId: null,
         permission: null,
         collaborators: [],
+        tableLocks: {},
         error: null,
         ownerUsername: null,
         diagramName: null
@@ -362,6 +381,7 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
       diagramId: null,
       permission: null,
       collaborators: [],
+      tableLocks: {},
       ownerUsername: null,
       diagramName: null
     }));
@@ -436,6 +456,56 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     });
   }, [state.diagramId]);
 
+  const requestTableLock = useCallback((nodeId: string): Promise<{ success: boolean; lock?: TableLockInfo; error?: string }> => {
+    return new Promise((resolve) => {
+      if (!socketRef.current?.connected || !state.diagramId) {
+        resolve({ success: false, error: 'Not connected to server' });
+        return;
+      }
+
+      if (state.permission !== 'edit') {
+        resolve({ success: false, error: 'Edit permission required' });
+        return;
+      }
+
+      socketRef.current.emit(
+        'table-lock-request',
+        { diagramId: state.diagramId, nodeId },
+        (response: { success: boolean; lock?: TableLockInfo; error?: string }) => {
+          resolve(response || { success: false, error: 'Failed to acquire lock' });
+        }
+      );
+    });
+  }, [state.diagramId, state.permission]);
+
+  const releaseTableLock = useCallback((nodeId: string): Promise<{ success: boolean; error?: string }> => {
+    return new Promise((resolve) => {
+      if (!socketRef.current?.connected || !state.diagramId) {
+        resolve({ success: false, error: 'Not connected to server' });
+        return;
+      }
+
+      socketRef.current.emit(
+        'table-lock-release',
+        { diagramId: state.diagramId, nodeId },
+        (response: { success: boolean; error?: string }) => {
+          resolve(response || { success: false, error: 'Failed to release lock' });
+        }
+      );
+    });
+  }, [state.diagramId]);
+
+  const touchTableLock = useCallback((nodeId: string) => {
+    if (!socketRef.current?.connected || !state.diagramId || !nodeId) {
+      return;
+    }
+
+    socketRef.current.emit('table-lock-touch', {
+      diagramId: state.diagramId,
+      nodeId
+    });
+  }, [state.diagramId]);
+
   // Provide state to a late joiner
   const provideState = useCallback((stateData: { nodes: GenericNode[]; edges: GenericEdge[] }) => {
     if (!socketRef.current?.connected || !stateProviderRequesterId.current) {
@@ -482,6 +552,9 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     broadcastEdgeAdd,
     broadcastEdgeDelete,
     broadcastSelection,
+    requestTableLock,
+    releaseTableLock,
+    touchTableLock,
     provideState
   };
 }

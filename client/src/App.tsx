@@ -80,6 +80,13 @@ import {
 import { AttributeType, DataType } from "./types";
 import { CollaboratorSelection } from "./components/TableNode";
 
+interface TableLockVisual {
+  odUserId: string;
+  username: string;
+  color: string;
+  isMine: boolean;
+}
+
 // Safe SQL generator that doesn't throw
 const safeGenerateSQL = (nodes: Node[]): string => {
   try {
@@ -289,6 +296,111 @@ function CanvasPlayground() {
     onEdgeAdd: handleCollabEdgeAdd,
     onEdgeDelete: handleCollabEdgeDelete,
   });
+
+  const getLockForNode = useCallback((nodeId: string) => {
+    return collaboration.state.tableLocks[nodeId];
+  }, [collaboration.state.tableLocks]);
+
+  const isNodeLockedByOther = useCallback((nodeId?: string | null) => {
+    if (!nodeId) return false;
+    const lock = getLockForNode(nodeId);
+    if (!lock) return false;
+    return lock.socketId !== collaboration.state.socketId;
+  }, [getLockForNode, collaboration.state.socketId]);
+
+  const selectedTableLock = useMemo(() => {
+    if (!selectedTableId) return null;
+    return getLockForNode(selectedTableId) || null;
+  }, [selectedTableId, getLockForNode]);
+
+  const isSelectedTableLockedByOther = useMemo(() => {
+    if (!selectedTableLock) return false;
+    return selectedTableLock.socketId !== collaboration.state.socketId;
+  }, [selectedTableLock, collaboration.state.socketId]);
+
+  const ensureSelectedTableEditable = useCallback((action: string): boolean => {
+    if (!selectedTableId) {
+      generalToasts.error('Please select a table first.');
+      return false;
+    }
+
+    if (isNodeLockedByOther(selectedTableId)) {
+      const lock = getLockForNode(selectedTableId);
+      generalToasts.error(lock ? `${lock.username} is editing this table. You cannot ${action} right now.` : `This table is locked. You cannot ${action} right now.`);
+      return false;
+    }
+
+    collaboration.touchTableLock(selectedTableId);
+    return true;
+  }, [selectedTableId, isNodeLockedByOther, getLockForNode, collaboration]);
+
+  const handleSelectTable = useCallback(async (nodeId: string, showLockedToast = true) => {
+    try {
+      if (!collaboration.state.isConnected || collaboration.state.permission !== 'edit') {
+        setSelectedTableId(nodeId);
+        return;
+      }
+
+      const lock = getLockForNode(nodeId);
+      if (lock && lock.socketId === collaboration.state.socketId) {
+        setSelectedTableId(nodeId);
+        collaboration.broadcastSelection([nodeId], []);
+        collaboration.touchTableLock(nodeId);
+        return;
+      }
+
+      const response = await collaboration.requestTableLock(nodeId);
+      if (!response.success) {
+        if (showLockedToast) {
+          generalToasts.error(response.error || 'This table is currently locked by another collaborator.');
+        }
+        return;
+      }
+
+      setSelectedTableId(nodeId);
+      collaboration.broadcastSelection([nodeId], []);
+    } catch (error) {
+      console.error('Failed to lock and select table:', error);
+      showError(new Error('Unable to lock this table for editing. Please try again.'), 'validation');
+    }
+  }, [collaboration, getLockForNode, setSelectedTableId, showError]);
+
+  const handleClearTableSelection = useCallback(async () => {
+    try {
+      const currentSelectedId = selectedTableId;
+
+      setSelectedTableId(null);
+      collaboration.broadcastSelection([], []);
+
+      if (currentSelectedId && collaboration.state.isConnected) {
+        await collaboration.releaseTableLock(currentSelectedId);
+      }
+    } catch (error) {
+      console.error('Failed to clear table selection:', error);
+    }
+  }, [selectedTableId, setSelectedTableId, collaboration]);
+
+  useEffect(() => {
+    if (!selectedTableId) return;
+
+    const lock = getLockForNode(selectedTableId);
+    if (!lock) {
+      return;
+    }
+
+    if (lock.socketId !== collaboration.state.socketId) {
+      setSelectedTableId(null);
+      generalToasts.error(`${lock.username} is editing this table now.`);
+    }
+  }, [selectedTableId, getLockForNode, collaboration.state.socketId]);
+
+  useEffect(() => {
+    if (!selectedTableId || !collaboration.state.isConnected) return;
+    const lock = getLockForNode(selectedTableId);
+    if (!lock) {
+      setSelectedTableId(null);
+    }
+  }, [selectedTableId, collaboration.state.tableLocks, collaboration.state.isConnected, getLockForNode]);
 
   // Track previous nodes for detecting changes to broadcast
   const prevNodesRef = useRef<string>('');
@@ -737,6 +849,17 @@ function CanvasPlayground() {
   const onConnect = useCallback(
     async (params: Edge | Connection) => {
       try {
+        if (isNodeLockedByOther(params.source) || isNodeLockedByOther(params.target)) {
+          const sourceLock = params.source ? getLockForNode(params.source) : null;
+          const targetLock = params.target ? getLockForNode(params.target) : null;
+          const owner = sourceLock?.username || targetLock?.username;
+          generalToasts.error(owner ? `${owner} is editing one of these tables. Try again after lock release.` : 'One of these tables is locked by another collaborator.');
+          return;
+        }
+
+        if (params.source) collaboration.touchTableLock(params.source);
+        if (params.target) collaboration.touchTableLock(params.target);
+
         const connectionInfo = parseConnectionHandles(
           params.sourceHandle || null,
           params.targetHandle || null
@@ -758,7 +881,7 @@ function CanvasPlayground() {
         showError(new Error('Failed to create connection between tables. Please try again.'), 'validation');
       }
     },
-    [setEdges, updateNodeAttributes, showError, nodes, collaboration]
+    [setEdges, updateNodeAttributes, showError, nodes, collaboration, isNodeLockedByOther, getLockForNode]
   );
 
   // Custom edges change handler with collaboration broadcast
@@ -785,11 +908,23 @@ function CanvasPlayground() {
   const nodePositionThrottleRef = useRef<Map<string, number>>(new Map());
   
   const handleNodesChange = useCallback((changes: any[]) => {
-    onNodesChange(changes);
+    const filteredChanges = changes.filter((change: any) => {
+      if (!change?.id) return true;
+      if (change.type !== 'position' && change.type !== 'remove') return true;
+      return !isNodeLockedByOther(change.id);
+    });
+
+    if (filteredChanges.length !== changes.length) {
+      generalToasts.error('This table is locked by another collaborator.');
+    }
+
+    if (filteredChanges.length > 0) {
+      onNodesChange(filteredChanges);
+    }
     
     // Broadcast position changes to collaborators
     if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
-      changes.forEach((change: any) => {
+      filteredChanges.forEach((change: any) => {
         if (change.type === 'position' && change.position && !change.dragging) {
           // Node drag ended - broadcast final position
           const nodeId = change.id;
@@ -799,45 +934,27 @@ function CanvasPlayground() {
           const now = Date.now();
           const lastBroadcast = nodePositionThrottleRef.current.get(nodeId) || 0;
           if (now - lastBroadcast > 100) {
+            collaboration.touchTableLock(nodeId);
             collaboration.broadcastNodeMove(nodeId, position);
             nodePositionThrottleRef.current.set(nodeId, now);
           }
         }
       });
     }
-  }, [onNodesChange, collaboration]);
+  }, [onNodesChange, collaboration, isNodeLockedByOther]);
 
   // Node selection - also broadcasts to collaborators
   const onNodeClick = useCallback(
     (_: any, node: Node) => {
-      try {
-        setSelectedTableId(node.id);
-        
-        // Broadcast selection to collaborators
-        if (collaboration.state.isConnected) {
-          collaboration.broadcastSelection([node.id], []);
-        }
-      } catch (error) {
-        console.error('Failed to select node:', error);
-        showError(new Error('Failed to select table. Please try again.'), 'validation');
-      }
+      handleSelectTable(node.id);
     },
-    [setSelectedTableId, showError, collaboration]
+    [handleSelectTable]
   );
 
   // Handle click on empty canvas to deselect
   const onPaneClick = useCallback(() => {
-    try {
-      setSelectedTableId(null);
-      
-      // Broadcast empty selection to collaborators
-      if (collaboration.state.isConnected) {
-        collaboration.broadcastSelection([], []);
-      }
-    } catch (error) {
-      console.error('Failed to deselect:', error);
-    }
-  }, [setSelectedTableId, collaboration]);
+    handleClearTableSelection();
+  }, [handleClearTableSelection]);
 
   // Compute nodes with collaborator selection data injected
   const nodesWithSelections = useMemo(() => {
@@ -870,18 +987,37 @@ function CanvasPlayground() {
     // Inject selectedBy into node data
     return nodes.map(node => {
       const selectedBy = selectionMap.get(node.id);
+      const lock = collaboration.state.tableLocks[node.id];
+      const lockBy: TableLockVisual | undefined = lock
+        ? {
+            odUserId: lock.userId,
+            username: lock.username,
+            color: '#f59e0b',
+            isMine: lock.socketId === collaboration.state.socketId,
+          }
+        : undefined;
       if (selectedBy && selectedBy.length > 0) {
         return {
           ...node,
           data: {
             ...node.data,
-            selectedBy
+            selectedBy,
+            lockedBy: lockBy,
+          }
+        };
+      }
+      if (lockBy) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            lockedBy: lockBy,
           }
         };
       }
       return node;
     });
-  }, [nodes, collaboration.state.collaborators]);
+  }, [nodes, collaboration.state.collaborators, collaboration.state.tableLocks, collaboration.state.socketId, getLockForNode]);
 
   // SQL Export with loading animation and error handling
   const exportToSQL = useCallback(() => {
@@ -1024,12 +1160,43 @@ function CanvasPlayground() {
   // Wrapped functions with error handling and collaboration broadcast
   const handleAddAttribute = useCallback(() => {
     try {
+      if (!ensureSelectedTableEditable('add a field')) return;
       addAttribute();
     } catch (error) {
       console.error('Failed to add attribute:', error);
       showError(error, 'validation');
     }
-  }, [addAttribute, showError]);
+  }, [addAttribute, showError, ensureSelectedTableEditable]);
+
+  const handleStartEditTableName = useCallback(() => {
+    if (!ensureSelectedTableEditable('rename this table')) return;
+    startEditTableName();
+  }, [ensureSelectedTableEditable, startEditTableName]);
+
+  const handleSaveTableName = useCallback(() => {
+    if (!ensureSelectedTableEditable('rename this table')) return;
+    saveTableName();
+  }, [ensureSelectedTableEditable, saveTableName]);
+
+  const handleChangeTableColor = useCallback((color: string) => {
+    if (!ensureSelectedTableEditable('change table color')) return;
+    changeTableColor(color);
+  }, [ensureSelectedTableEditable, changeTableColor]);
+
+  const handleStartAttrEditLocked = useCallback((idx: number) => {
+    if (!ensureSelectedTableEditable('edit this field')) return;
+    onStartAttrEdit(idx);
+  }, [ensureSelectedTableEditable, onStartAttrEdit]);
+
+  const handleSaveAttrNameLocked = useCallback((idx: number) => {
+    if (!ensureSelectedTableEditable('save field changes')) return;
+    onSaveAttrName(idx);
+  }, [ensureSelectedTableEditable, onSaveAttrName]);
+
+  const handleDeleteAttributeLocked = useCallback((idx: number) => {
+    if (!ensureSelectedTableEditable('delete this field')) return;
+    onDeleteAttribute(idx);
+  }, [ensureSelectedTableEditable, onDeleteAttribute]);
 
   const handleAddTable = useCallback(() => {
     try {
@@ -1058,6 +1225,7 @@ function CanvasPlayground() {
   // Delete handlers
   const handleDeleteTable = useCallback(() => {
     try {
+      if (!ensureSelectedTableEditable('delete this table')) return;
       const deletedId = selectedTableId;
       deleteTable();
       setDeleteConfirmOpen(false);
@@ -1070,7 +1238,7 @@ function CanvasPlayground() {
       console.error('Failed to delete table:', error);
       showError(error, 'validation');
     }
-  }, [deleteTable, showError, selectedTableId, collaboration]);
+  }, [deleteTable, showError, selectedTableId, collaboration, ensureSelectedTableEditable]);
 
   const handleDeleteConfirm = useCallback(() => {
     setDeleteConfirmOpen(true);
@@ -1290,12 +1458,12 @@ function CanvasPlayground() {
         defaultValue={defaultValue}
         isNotNull={isNotNull}
         isUnique={isUnique}
-        onStartEditTableName={startEditTableName}
-        onSaveTableName={saveTableName}
+        onStartEditTableName={handleStartEditTableName}
+        onSaveTableName={handleSaveTableName}
         onCancelEditTableName={cancelEditTableName}
         onEditTableNameChange={setEditTableName}
-        onDeleteTable={deleteTable}
-        onChangeTableColor={changeTableColor}
+        onDeleteTable={handleDeleteConfirm}
+        onChangeTableColor={handleChangeTableColor}
         onAttrNameChange={setAttrName}
         onAttrDataTypeChange={setAttrDataType}
         onAttrTypeChange={setAttrType}
@@ -1310,7 +1478,7 @@ function CanvasPlayground() {
         onIsNotNullChange={setIsNotNull}
         onIsUniqueChange={setIsUnique}
         onAddAttribute={handleAddAttribute}
-        onStartAttrEdit={onStartAttrEdit}
+        onStartAttrEdit={handleStartAttrEditLocked}
         onAttrEditNameChange={onAttrEditNameChange}
         onAttrEditDataTypeChange={onAttrEditDataTypeChange}
         onAttrEditTypeChange={onAttrEditTypeChange}
@@ -1324,15 +1492,15 @@ function CanvasPlayground() {
         onAttrEditDefaultValueChange={onAttrEditDefaultValueChange}
         onAttrEditIsNotNullChange={onAttrEditIsNotNullChange}
         onAttrEditIsUniqueChange={onAttrEditIsUniqueChange}
-        onSaveAttrName={onSaveAttrName}
+        onSaveAttrName={handleSaveAttrNameLocked}
         onCancelAttrEdit={onCancelAttrEdit}
-        onDeleteAttribute={onDeleteAttribute}
+        onDeleteAttribute={handleDeleteAttributeLocked}
         getAvailableTables={getAvailableTables}
         getAttributesForTable={getAttributesForTable}
         validateFKReference={validateFKReference}
-        onClose={() => setSelectedTableId(null)}
+        onClose={handleClearTableSelection}
         allNodes={nodes}
-        onSelectTable={(nodeId) => setSelectedTableId(nodeId)}
+        onSelectTable={(nodeId) => { void handleSelectTable(nodeId, false); }}
         onAddTable={handleAddTable}
       />
       )}

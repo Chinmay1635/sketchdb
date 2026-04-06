@@ -20,6 +20,7 @@ const { createClient } = require('ioredis');
 // Store for active connections and rooms
 const activeConnections = new Map(); // socketId -> { userId, diagramId, username }
 const diagramRooms = new Map(); // diagramId -> Map of { socketId -> userData }
+const tableLocks = new Map(); // diagramId -> Map of { nodeId -> lockData }
 
 // ============ FREE TIER OPTIMIZATIONS ============
 // Rate limiting and throttling stores
@@ -34,7 +35,103 @@ const FREE_TIER_LIMITS = {
   EVENT_RATE_LIMIT: 30,           // 30 operations/sec per user (450 total at capacity)
   EVENT_RATE_WINDOW_MS: 1000,     // Rate limit window
   STALE_CONNECTION_MS: 300000,    // 5 min - cleanup inactive connections
+  TABLE_LOCK_TIMEOUT_MS: 60000,   // Auto-release lock after 1 minute of inactivity
 };
+
+function getDiagramLockMap(diagramId) {
+  if (!tableLocks.has(diagramId)) {
+    tableLocks.set(diagramId, new Map());
+  }
+  return tableLocks.get(diagramId);
+}
+
+function getSerializableLocks(diagramId) {
+  const lockMap = tableLocks.get(diagramId);
+  if (!lockMap) return {};
+
+  const result = {};
+  for (const [nodeId, lock] of lockMap.entries()) {
+    result[nodeId] = {
+      nodeId,
+      userId: lock.userId,
+      username: lock.username,
+      socketId: lock.socketId,
+      acquiredAt: lock.acquiredAt,
+      lastActivityAt: lock.lastActivityAt,
+    };
+  }
+
+  return result;
+}
+
+function emitLocksUpdate(io, diagramId) {
+  io.to(`diagram:${diagramId}`).emit('table-locks-update', {
+    locks: getSerializableLocks(diagramId)
+  });
+}
+
+function clearUserSelections(roomUsers, socketId) {
+  const user = roomUsers?.get(socketId);
+  if (user) {
+    user.selectedNodes = [];
+    user.selectedEdges = [];
+  }
+}
+
+function clearUserLocks(io, diagramId, socketId, reason = 'release') {
+  const lockMap = tableLocks.get(diagramId);
+  if (!lockMap) return;
+
+  let changed = false;
+  for (const [nodeId, lock] of lockMap.entries()) {
+    if (lock.socketId === socketId) {
+      lockMap.delete(nodeId);
+      io.to(`diagram:${diagramId}`).emit('table-lock-released', {
+        diagramId,
+        nodeId,
+        userId: lock.userId,
+        username: lock.username,
+        reason,
+      });
+      changed = true;
+    }
+  }
+
+  if (lockMap.size === 0) {
+    tableLocks.delete(diagramId);
+  }
+
+  if (changed) {
+    emitLocksUpdate(io, diagramId);
+  }
+}
+
+function isTableLockedByOther(diagramId, nodeId, socketId) {
+  if (!diagramId || !nodeId) return false;
+  const lockMap = tableLocks.get(diagramId);
+  if (!lockMap) return false;
+
+  const lock = lockMap.get(nodeId);
+  if (!lock) return false;
+
+  const now = Date.now();
+  if (now - lock.lastActivityAt > FREE_TIER_LIMITS.TABLE_LOCK_TIMEOUT_MS) {
+    return false;
+  }
+
+  return lock.socketId !== socketId;
+}
+
+function touchLockActivity(diagramId, nodeId, socketId) {
+  if (!diagramId || !nodeId) return;
+  const lockMap = tableLocks.get(diagramId);
+  if (!lockMap) return;
+
+  const lock = lockMap.get(nodeId);
+  if (lock && lock.socketId === socketId) {
+    lock.lastActivityAt = Date.now();
+  }
+}
 
 // Get current stats for monitoring
 function getServerStats() {
@@ -240,6 +337,22 @@ function initializeSocket(httpServer) {
       handleSelectionChange(io, socket, data);
     });
 
+    socket.on('table-lock-request', (data, ack) => {
+      updateActivity(socket.id);
+      handleTableLockRequest(io, socket, data, ack);
+    });
+
+    socket.on('table-lock-release', (data, ack) => {
+      updateActivity(socket.id);
+      handleTableLockRelease(io, socket, data, ack);
+    });
+
+    socket.on('table-lock-touch', (data) => {
+      if (!checkRateLimit(socket.id)) return;
+      updateActivity(socket.id);
+      handleTableLockTouch(io, socket, data);
+    });
+
     // Request current diagram state (for late joiners)
     socket.on('request-state', (data) => {
       handleRequestState(io, socket, data);
@@ -366,7 +479,8 @@ async function handleJoinDiagram(io, socket, data) {
     activeConnections.set(socket.id, {
       userId: socket.user.id,
       username: socket.user.username,
-      diagramId: diagramId
+      diagramId: diagramId,
+      lastActivity: Date.now()
     });
 
     // Add to diagram room tracking
@@ -402,6 +516,7 @@ async function handleJoinDiagram(io, socket, data) {
       diagramId,
       permission,
       users: currentUsers,
+      tableLocks: getSerializableLocks(diagramId),
       ownerUsername: diagram.user.username,
       diagramName: diagram.name
     });
@@ -433,9 +548,12 @@ function handleLeaveDiagram(io, socket, data) {
   const roomName = `diagram:${diagramId}`;
   socket.leave(roomName);
 
+  clearUserLocks(io, diagramId, socket.id, 'leave');
+
   // Remove from room tracking
   const roomUsers = diagramRooms.get(diagramId);
   if (roomUsers) {
+    clearUserSelections(roomUsers, socket.id);
     roomUsers.delete(socket.id);
     
     // Clean up empty rooms
@@ -555,6 +673,42 @@ function handleNodeOperation(io, socket, eventType, data) {
     return;
   }
 
+  const targetNodeId = nodeId || node?.id;
+  if ((eventType === 'node-update' || eventType === 'node-move' || eventType === 'node-delete') && targetNodeId) {
+    if (isTableLockedByOther(diagramId, targetNodeId, socket.id)) {
+      socket.emit('error', { message: 'This table is locked by another collaborator' });
+      return;
+    }
+    touchLockActivity(diagramId, targetNodeId, socket.id);
+  }
+
+  if (eventType === 'node-delete' && targetNodeId) {
+    const lockMap = tableLocks.get(diagramId);
+    const lock = lockMap?.get(targetNodeId);
+    if (lock && lock.socketId === socket.id) {
+      lockMap.delete(targetNodeId);
+      if (lockMap.size === 0) {
+        tableLocks.delete(diagramId);
+      }
+      clearUserSelections(roomUsers, socket.id);
+      socket.to(`diagram:${diagramId}`).emit('selection-change', {
+        userId: socket.user.id,
+        username: socket.user.username,
+        socketId: socket.id,
+        selectedNodes: [],
+        selectedEdges: []
+      });
+      io.to(`diagram:${diagramId}`).emit('table-lock-released', {
+        diagramId,
+        nodeId: targetNodeId,
+        userId: socket.user.id,
+        username: socket.user.username,
+        reason: 'delete',
+      });
+      emitLocksUpdate(io, diagramId);
+    }
+  }
+
   // Broadcast operation to others
   const roomName = `diagram:${diagramId}`;
   socket.to(roomName).emit(eventType, {
@@ -623,6 +777,151 @@ function handleSelectionChange(io, socket, data) {
   });
 }
 
+function handleTableLockRequest(io, socket, data, ack) {
+  const { diagramId, nodeId } = data || {};
+
+  if (!diagramId || !nodeId) {
+    ack?.({ success: false, error: 'diagramId and nodeId are required' });
+    return;
+  }
+
+  const roomUsers = diagramRooms.get(diagramId);
+  const user = roomUsers?.get(socket.id);
+  if (!user || user.permission !== 'edit') {
+    ack?.({ success: false, error: 'Edit permission required' });
+    return;
+  }
+
+  const lockMap = getDiagramLockMap(diagramId);
+  const now = Date.now();
+  const existing = lockMap.get(nodeId);
+
+  if (existing && now - existing.lastActivityAt > FREE_TIER_LIMITS.TABLE_LOCK_TIMEOUT_MS) {
+    lockMap.delete(nodeId);
+  }
+
+  const current = lockMap.get(nodeId);
+  if (current && current.socketId !== socket.id) {
+    ack?.({ success: false, error: `${current.username} is currently editing this table` });
+    return;
+  }
+
+  // Release all previous locks owned by this socket in this diagram before acquiring a new one
+  for (const [lockedNodeId, lock] of lockMap.entries()) {
+    if (lock.socketId === socket.id && lockedNodeId !== nodeId) {
+      lockMap.delete(lockedNodeId);
+      io.to(`diagram:${diagramId}`).emit('table-lock-released', {
+        diagramId,
+        nodeId: lockedNodeId,
+        userId: socket.user.id,
+        username: socket.user.username,
+        reason: 'switch',
+      });
+    }
+  }
+
+  const lock = {
+    nodeId,
+    userId: socket.user.id,
+    username: socket.user.username,
+    socketId: socket.id,
+    acquiredAt: now,
+    lastActivityAt: now,
+  };
+  lockMap.set(nodeId, lock);
+
+  if (roomUsers) {
+    const selectedUser = roomUsers.get(socket.id);
+    if (selectedUser) {
+      selectedUser.selectedNodes = [nodeId];
+      selectedUser.selectedEdges = [];
+    }
+  }
+
+  socket.to(`diagram:${diagramId}`).emit('selection-change', {
+    userId: socket.user.id,
+    username: socket.user.username,
+    socketId: socket.id,
+    selectedNodes: [nodeId],
+    selectedEdges: []
+  });
+
+  io.to(`diagram:${diagramId}`).emit('table-lock-acquired', {
+    diagramId,
+    nodeId,
+    userId: socket.user.id,
+    username: socket.user.username,
+  });
+
+  emitLocksUpdate(io, diagramId);
+  ack?.({ success: true, lock });
+}
+
+function handleTableLockRelease(io, socket, data, ack) {
+  const { diagramId, nodeId } = data || {};
+  if (!diagramId || !nodeId) {
+    ack?.({ success: false, error: 'diagramId and nodeId are required' });
+    return;
+  }
+
+  const roomUsers = diagramRooms.get(diagramId);
+  const lockMap = tableLocks.get(diagramId);
+  const lock = lockMap?.get(nodeId);
+
+  if (!lock) {
+    if (roomUsers?.get(socket.id)) {
+      clearUserSelections(roomUsers, socket.id);
+      socket.to(`diagram:${diagramId}`).emit('selection-change', {
+        userId: socket.user.id,
+        username: socket.user.username,
+        socketId: socket.id,
+        selectedNodes: [],
+        selectedEdges: []
+      });
+    }
+    ack?.({ success: true });
+    return;
+  }
+
+  if (lock.socketId !== socket.id) {
+    ack?.({ success: false, error: 'You do not own this lock' });
+    return;
+  }
+
+  lockMap.delete(nodeId);
+  if (lockMap.size === 0) {
+    tableLocks.delete(diagramId);
+  }
+
+  if (roomUsers?.get(socket.id)) {
+    clearUserSelections(roomUsers, socket.id);
+    socket.to(`diagram:${diagramId}`).emit('selection-change', {
+      userId: socket.user.id,
+      username: socket.user.username,
+      socketId: socket.id,
+      selectedNodes: [],
+      selectedEdges: []
+    });
+  }
+
+  io.to(`diagram:${diagramId}`).emit('table-lock-released', {
+    diagramId,
+    nodeId,
+    userId: socket.user.id,
+    username: socket.user.username,
+    reason: 'release',
+  });
+
+  emitLocksUpdate(io, diagramId);
+  ack?.({ success: true });
+}
+
+function handleTableLockTouch(io, socket, data) {
+  const { diagramId, nodeId } = data || {};
+  if (!diagramId || !nodeId) return;
+  touchLockActivity(diagramId, nodeId, socket.id);
+}
+
 /**
  * Handle state request from late joiners
  */
@@ -686,6 +985,48 @@ function cleanupStaleConnections(io) {
     // Clean up empty rooms
     if (roomUsers.size === 0) {
       diagramRooms.delete(diagramId);
+      tableLocks.delete(diagramId);
+    }
+
+    const lockMap = tableLocks.get(diagramId);
+    if (lockMap && lockMap.size > 0) {
+      let locksChanged = false;
+      for (const [nodeId, lock] of lockMap.entries()) {
+        if (now - lock.lastActivityAt > FREE_TIER_LIMITS.TABLE_LOCK_TIMEOUT_MS) {
+          lockMap.delete(nodeId);
+          const lockOwner = roomUsers.get(lock.socketId);
+          if (lockOwner) {
+            lockOwner.selectedNodes = [];
+            lockOwner.selectedEdges = [];
+          }
+
+          io.to(`diagram:${diagramId}`).emit('selection-change', {
+            userId: lock.userId,
+            username: lock.username,
+            socketId: lock.socketId,
+            selectedNodes: [],
+            selectedEdges: []
+          });
+
+          io.to(`diagram:${diagramId}`).emit('table-lock-released', {
+            diagramId,
+            nodeId,
+            userId: lock.userId,
+            username: lock.username,
+            reason: 'timeout',
+          });
+
+          locksChanged = true;
+        }
+      }
+
+      if (lockMap.size === 0) {
+        tableLocks.delete(diagramId);
+      }
+
+      if (locksChanged) {
+        emitLocksUpdate(io, diagramId);
+      }
     }
   }
 }

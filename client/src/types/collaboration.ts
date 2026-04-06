@@ -21,12 +21,23 @@ export interface CursorPosition {
 export interface CollaborationState {
   isConnected: boolean;
   isConnecting: boolean;
+  socketId: string | null;
   diagramId: string | null;
   permission: 'view' | 'edit' | null;
   collaborators: CollaboratorInfo[];
+  tableLocks: Record<string, TableLockInfo>;
   error: string | null;
   ownerUsername: string | null;
   diagramName: string | null;
+}
+
+export interface TableLockInfo {
+  nodeId: string;
+  userId: string;
+  username: string;
+  socketId: string;
+  acquiredAt: number;
+  lastActivityAt: number;
 }
 
 export interface NodeOperation {
@@ -58,6 +69,7 @@ export interface DiagramJoinedEvent {
   diagramId: string;
   permission: 'view' | 'edit';
   users: CollaboratorInfo[];
+  tableLocks?: Record<string, TableLockInfo>;
   ownerUsername: string;
   diagramName: string;
 }
