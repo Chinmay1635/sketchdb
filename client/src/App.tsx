@@ -1298,11 +1298,51 @@ function CanvasPlayground() {
   const handleDeleteAttributeLocked = useCallback((idx: number) => {
     if (!ensureSelectedTableEditable('delete this field')) return;
     if (selectedTableId && Array.isArray(attributes) && attributes[idx]) {
+      const attrToDelete = attributes[idx];
+      const currentNodes = nodesRef.current;
+      const currentEdges = edgesRef.current;
+      const sourceNode = currentNodes.find((n) => n.id === selectedTableId);
+      const sourceTableName = typeof sourceNode?.data?.label === 'string'
+        ? sourceNode.data.label.replace(/\s+/g, '_')
+        : `Table_${selectedTableId}`;
+
+      const relatedNodeSnapshots = currentNodes
+        .filter((node) => {
+          if (node.id === selectedTableId) return true;
+          const nodeData = node.data as TableData;
+          const nodeAttrs = Array.isArray(nodeData.attributes) ? nodeData.attributes : [];
+          return nodeAttrs.some((attr) =>
+            attr.type === 'FK' && attr.refTable === sourceTableName && attr.refAttr === attrToDelete.name
+          );
+        })
+        .map((node) => ({
+          ...node,
+          data: {
+            ...(node.data as TableData),
+            attributes: Array.isArray((node.data as TableData).attributes)
+              ? (node.data as TableData).attributes.map((attr) => ({ ...attr }))
+              : [],
+          },
+        }));
+
+      const sourceHandle = `${selectedTableId}-${attrToDelete.name}-source`;
+      const targetHandle = `${selectedTableId}-${attrToDelete.name}-target`;
+      const removedEdges = currentEdges
+        .filter((edge) => (
+          edge.sourceHandle === sourceHandle ||
+          edge.targetHandle === targetHandle ||
+          (edge.source === selectedTableId && edge.sourceHandle?.includes(`-${attrToDelete.name}-`)) ||
+          (edge.target === selectedTableId && edge.targetHandle?.includes(`-${attrToDelete.name}-`))
+        ))
+        .map((edge) => ({ ...edge }));
+
       pushUndoEntry({
         type: 'delete-attribute',
         tableId: selectedTableId,
-        attribute: { ...attributes[idx], isEditing: false },
+        attribute: { ...attrToDelete, isEditing: false },
         index: idx,
+        relatedNodeSnapshots,
+        removedEdges,
       });
     }
     onDeleteAttribute(idx);
@@ -1499,15 +1539,36 @@ function CanvasPlayground() {
 
         const index = Math.max(0, Math.min(entry.index, attrs.length));
         const nextAttrs = [...attrs.slice(0, index), entry.attribute, ...attrs.slice(index)];
-        const nextNodes = currentNodes.map((n) =>
-          n.id === entry.tableId ? { ...n, data: { ...tableData, attributes: nextAttrs } } : n
-        );
+        const snapshotById = new Map(entry.relatedNodeSnapshots.map((n) => [n.id, n]));
+
+        const nextNodes = currentNodes.map((n) => {
+          if (n.id === entry.tableId) {
+            return { ...n, data: { ...tableData, attributes: nextAttrs } };
+          }
+          const snap = snapshotById.get(n.id);
+          if (!snap) return n;
+          return {
+            ...n,
+            data: {
+              ...snap.data,
+              attributes: Array.isArray((snap.data as TableData).attributes)
+                ? (snap.data as TableData).attributes.map((attr) => ({ ...attr }))
+                : [],
+            },
+          };
+        });
+
+        const existingEdgeIds = new Set(currentEdges.map((e) => e.id));
+        const restoredEdges = entry.removedEdges.filter((edge) => !existingEdgeIds.has(edge.id));
+        const nextEdges = [...currentEdges, ...restoredEdges];
 
         setNodes(nextNodes);
+        setEdges(nextEdges);
         const updatedNode = nextNodes.find((n) => n.id === entry.tableId);
         if (updatedNode) {
           publishNodeUpdate(updatedNode);
         }
+        restoredEdges.forEach((edge) => publishEdgeAdd(edge));
 
         generalToasts.success('Undo: field deletion reverted');
         return;
