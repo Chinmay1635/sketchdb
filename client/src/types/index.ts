@@ -19,6 +19,7 @@ export const CARDINALITY_OPTIONS: { value: Cardinality; label: string; descripti
 ];
 
 export interface TableAttribute {
+  id?: string;
   name: string;
   type: 'PK' | 'FK' | 'normal';
   dataType: string;

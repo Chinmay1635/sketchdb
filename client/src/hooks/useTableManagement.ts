@@ -6,6 +6,20 @@ import { useErrorHandler } from '../utils/errorHandler';
 
 type TableNode = Node<TableData>;
 
+const createAttributeId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `attr-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const normalizeAttributes = (attributes: TableAttribute[] = []): TableAttribute[] => {
+  return attributes.map((attr) => ({
+    ...attr,
+    id: attr.id || createAttributeId(),
+  }));
+};
+
 export const useTableManagement = (
   initialNodes: Node[], 
   setEdges?: React.Dispatch<React.SetStateAction<Edge[]>>
@@ -232,7 +246,19 @@ export const useTableManagement = (
   }, []);
 
   const importNodes = useCallback((newNodes: Node[]) => {
-    setNodes(newNodes);
+    const normalizedNodes = newNodes.map((node) => {
+      const nodeData = node.data as TableData;
+      const attrs = Array.isArray(nodeData?.attributes) ? nodeData.attributes : [];
+      return {
+        ...node,
+        data: {
+          ...nodeData,
+          attributes: normalizeAttributes(attrs),
+        },
+      };
+    });
+
+    setNodes(normalizedNodes);
     setSelectedTableId(null);
   }, [setNodes, setSelectedTableId]);
 
@@ -275,7 +301,7 @@ export const useTableManagement = (
   }, [selectedTableId, setNodes, setEdges]);
 
   // Add Attribute
-  const addAttribute = useCallback(() => {
+  const addAttribute = useCallback((): { tableId: string; attribute: TableAttribute } | undefined => {
     if (!selectedTableId || !attrName) {
       throw new Error('Please select a table and provide an attribute name');
     }
@@ -320,11 +346,14 @@ export const useTableManagement = (
       }
     }
     
+    let addedAttribute: TableAttribute | undefined;
+
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id !== selectedTableId) return node;
         const oldAttrs = Array.isArray(node.data.attributes) ? node.data.attributes : [];
         const newAttr: TableAttribute = { 
+          id: createAttributeId(),
           name: attrName, 
           type: attrType, 
           dataType: attrDataType,
@@ -343,6 +372,8 @@ export const useTableManagement = (
           isEditing: false,   
           editName: ""        
         };
+
+        addedAttribute = newAttr;
         return {
           ...node,
           data: {
@@ -369,6 +400,15 @@ export const useTableManagement = (
     setDefaultValue("");
     setIsNotNull(false);
     setIsUnique(false);
+
+    if (addedAttribute) {
+      return {
+        tableId: selectedTableId,
+        attribute: addedAttribute,
+      };
+    }
+
+    return undefined;
   }, [selectedTableId, attrName, attrType, attrDataType, refTable, refAttr, cardinality, onDeleteAction, onUpdateAction, isOptional, checkConstraint, defaultValue, isNotNull, isUnique, setNodes, nodes, setEdges, createFKEdge, attributes]);
 
   // Start Editing Table Name

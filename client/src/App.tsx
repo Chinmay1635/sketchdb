@@ -77,7 +77,7 @@ import {
 } from "./utils/toast";
 
 // Types
-import { AttributeType, DataType } from "./types";
+import { AttributeType, DataType, TableAttribute, TableData } from "./types";
 import { CollaboratorSelection } from "./components/TableNode";
 
 interface TableLockVisual {
@@ -86,6 +86,15 @@ interface TableLockVisual {
   color: string;
   isMine: boolean;
 }
+
+type UndoEntry =
+  | { type: 'add-table'; nodeId: string }
+  | { type: 'delete-table'; node: Node; connectedEdges: Edge[] }
+  | { type: 'add-attribute'; tableId: string; attributeId: string }
+  | { type: 'delete-attribute'; tableId: string; attribute: TableAttribute; index: number; relatedNodeSnapshots: Node[]; removedEdges: Edge[] }
+  | { type: 'edit-attribute'; tableId: string; attributeBefore: TableAttribute }
+  | { type: 'rename-table'; tableId: string; previousLabel: string }
+  | { type: 'change-color'; tableId: string; previousColor?: string };
 
 // Safe SQL generator that doesn't throw
 const safeGenerateSQL = (nodes: Node[]): string => {
@@ -408,6 +417,47 @@ function CanvasPlayground() {
   // Auto-save and broadcast node changes
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const AUTO_SAVE_DELAY = 3000; // 3 seconds debounce
+
+  const undoStackRef = useRef<UndoEntry[]>([]);
+  const [undoAvailable, setUndoAvailable] = useState(false);
+
+  const pushUndoEntry = useCallback((entry: UndoEntry) => {
+    undoStackRef.current.push(entry);
+    if (undoStackRef.current.length > 100) {
+      undoStackRef.current.shift();
+    }
+    setUndoAvailable(undoStackRef.current.length > 0);
+  }, []);
+
+  const publishNodeUpdate = useCallback((node: Node) => {
+    if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+      collaboration.broadcastNodeUpdate(node.id, { data: node.data, position: node.position });
+    }
+  }, [collaboration]);
+
+  const publishNodeDelete = useCallback((nodeId: string) => {
+    if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+      collaboration.broadcastNodeDelete(nodeId);
+    }
+  }, [collaboration]);
+
+  const publishNodeAdd = useCallback((node: Node) => {
+    if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+      collaboration.broadcastNodeAdd(node);
+    }
+  }, [collaboration]);
+
+  const publishEdgeAdd = useCallback((edge: Edge) => {
+    if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+      collaboration.broadcastEdgeAdd(edge);
+    }
+  }, [collaboration]);
+
+  const publishEdgeDelete = useCallback((edgeId: string) => {
+    if (collaboration.state.isConnected && collaboration.state.permission === 'edit') {
+      collaboration.broadcastEdgeDelete(edgeId);
+    }
+  }, [collaboration]);
   
   // Refs for auto-save to avoid stale closures
   const nodesRef = useRef(nodes);
@@ -1161,12 +1211,19 @@ function CanvasPlayground() {
   const handleAddAttribute = useCallback(() => {
     try {
       if (!ensureSelectedTableEditable('add a field')) return;
-      addAttribute();
+      const result = addAttribute();
+      if (result?.attribute?.id) {
+        pushUndoEntry({
+          type: 'add-attribute',
+          tableId: result.tableId,
+          attributeId: result.attribute.id,
+        });
+      }
     } catch (error) {
       console.error('Failed to add attribute:', error);
       showError(error, 'validation');
     }
-  }, [addAttribute, showError, ensureSelectedTableEditable]);
+  }, [addAttribute, showError, ensureSelectedTableEditable, pushUndoEntry]);
 
   const handleStartEditTableName = useCallback(() => {
     if (!ensureSelectedTableEditable('rename this table')) return;
@@ -1175,13 +1232,34 @@ function CanvasPlayground() {
 
   const handleSaveTableName = useCallback(() => {
     if (!ensureSelectedTableEditable('rename this table')) return;
+    if (selectedTable) {
+      const currentLabel = typeof selectedTable.data?.label === 'string' ? selectedTable.data.label : '';
+      const nextLabel = editTableName.trim();
+      if (currentLabel && nextLabel && currentLabel !== nextLabel) {
+        pushUndoEntry({
+          type: 'rename-table',
+          tableId: selectedTable.id,
+          previousLabel: currentLabel,
+        });
+      }
+    }
     saveTableName();
-  }, [ensureSelectedTableEditable, saveTableName]);
+  }, [ensureSelectedTableEditable, saveTableName, selectedTable, editTableName, pushUndoEntry]);
 
   const handleChangeTableColor = useCallback((color: string) => {
     if (!ensureSelectedTableEditable('change table color')) return;
+    if (selectedTable && selectedTable.id) {
+      const prevColor = (selectedTable.data as TableData)?.color;
+      if (prevColor !== color) {
+        pushUndoEntry({
+          type: 'change-color',
+          tableId: selectedTable.id,
+          previousColor: prevColor,
+        });
+      }
+    }
     changeTableColor(color);
-  }, [ensureSelectedTableEditable, changeTableColor]);
+  }, [ensureSelectedTableEditable, changeTableColor, selectedTable, pushUndoEntry]);
 
   const handleStartAttrEditLocked = useCallback((idx: number) => {
     if (!ensureSelectedTableEditable('edit this field')) return;
@@ -1190,17 +1268,52 @@ function CanvasPlayground() {
 
   const handleSaveAttrNameLocked = useCallback((idx: number) => {
     if (!ensureSelectedTableEditable('save field changes')) return;
+    if (selectedTableId && Array.isArray(attributes) && attributes[idx]) {
+      const currentAttr = attributes[idx];
+      pushUndoEntry({
+        type: 'edit-attribute',
+        tableId: selectedTableId,
+        attributeBefore: {
+          ...currentAttr,
+          editName: undefined,
+          editDataType: undefined,
+          editType: undefined,
+          editRefTable: undefined,
+          editRefAttr: undefined,
+          editCardinality: undefined,
+          editOnDelete: undefined,
+          editOnUpdate: undefined,
+          editIsOptional: undefined,
+          editCheckConstraint: undefined,
+          editDefaultValue: undefined,
+          editIsNotNull: undefined,
+          editIsUnique: undefined,
+          isEditing: false,
+        },
+      });
+    }
     onSaveAttrName(idx);
-  }, [ensureSelectedTableEditable, onSaveAttrName]);
+  }, [ensureSelectedTableEditable, onSaveAttrName, selectedTableId, attributes, pushUndoEntry]);
 
   const handleDeleteAttributeLocked = useCallback((idx: number) => {
     if (!ensureSelectedTableEditable('delete this field')) return;
+    if (selectedTableId && Array.isArray(attributes) && attributes[idx]) {
+      pushUndoEntry({
+        type: 'delete-attribute',
+        tableId: selectedTableId,
+        attribute: { ...attributes[idx], isEditing: false },
+        index: idx,
+      });
+    }
     onDeleteAttribute(idx);
-  }, [ensureSelectedTableEditable, onDeleteAttribute]);
+  }, [ensureSelectedTableEditable, onDeleteAttribute, selectedTableId, attributes, pushUndoEntry]);
 
   const handleAddTable = useCallback(() => {
     try {
       const newNode = addTable();
+      if (newNode) {
+        pushUndoEntry({ type: 'add-table', nodeId: newNode.id });
+      }
       // Broadcast to collaborators
       if (newNode && collaboration.state.isConnected) {
         collaboration.broadcastNodeAdd(newNode);
@@ -1210,7 +1323,7 @@ function CanvasPlayground() {
       console.error('Failed to add table:', error);
       showError(error, 'validation');
     }
-  }, [addTable, showError, collaboration]);
+  }, [addTable, showError, collaboration, pushUndoEntry]);
 
   // Error handling
   const handleRetryOperation = useCallback(() => {
@@ -1227,6 +1340,13 @@ function CanvasPlayground() {
     try {
       if (!ensureSelectedTableEditable('delete this table')) return;
       const deletedId = selectedTableId;
+      const tableToDelete = deletedId ? nodesRef.current.find((n) => n.id === deletedId) : null;
+      const connectedEdges = deletedId ? edgesRef.current.filter((e) => e.source === deletedId || e.target === deletedId) : [];
+
+      if (tableToDelete) {
+        pushUndoEntry({ type: 'delete-table', node: tableToDelete, connectedEdges });
+      }
+
       deleteTable();
       setDeleteConfirmOpen(false);
       tableToasts.deleted();
@@ -1244,6 +1364,247 @@ function CanvasPlayground() {
     setDeleteConfirmOpen(true);
   }, []);
 
+  const handleUndo = useCallback(() => {
+    if (undoStackRef.current.length === 0) {
+      generalToasts.info('Nothing to undo');
+      return;
+    }
+
+    const entry = undoStackRef.current.pop();
+    setUndoAvailable(undoStackRef.current.length > 0);
+    if (!entry) return;
+
+    const targetTableId = entry.type === 'add-table'
+      ? entry.nodeId
+      : entry.type === 'delete-table'
+        ? entry.node.id
+        : entry.tableId;
+
+    if (isNodeLockedByOther(targetTableId)) {
+      const lock = getLockForNode(targetTableId);
+      generalToasts.warning(lock ? `Cannot undo while ${lock.username} is editing this table.` : 'Cannot undo while this table is locked.');
+      undoStackRef.current.push(entry);
+      setUndoAvailable(true);
+      return;
+    }
+
+    if (targetTableId) {
+      collaboration.touchTableLock(targetTableId);
+    }
+
+    try {
+      const currentNodes = nodesRef.current;
+      const currentEdges = edgesRef.current;
+
+      if (entry.type === 'add-table') {
+        const nodeExists = currentNodes.some((n) => n.id === entry.nodeId);
+        if (!nodeExists) {
+          generalToasts.warning('Cannot undo: table already removed.');
+          return;
+        }
+
+        const nextNodes = currentNodes.filter((n) => n.id !== entry.nodeId);
+        const removedEdges = currentEdges.filter((e) => e.source === entry.nodeId || e.target === entry.nodeId);
+        const nextEdges = currentEdges.filter((e) => e.source !== entry.nodeId && e.target !== entry.nodeId);
+
+        setNodes(nextNodes);
+        setEdges(nextEdges);
+        publishNodeDelete(entry.nodeId);
+        removedEdges.forEach((edge) => publishEdgeDelete(edge.id));
+
+        if (selectedTableId === entry.nodeId) {
+          setSelectedTableId(null);
+          collaboration.broadcastSelection([], []);
+        }
+
+        generalToasts.success('Undo: table creation reverted');
+        return;
+      }
+
+      if (entry.type === 'delete-table') {
+        const exists = currentNodes.some((n) => n.id === entry.node.id);
+        if (exists) {
+          generalToasts.warning('Cannot undo: table id already exists.');
+          return;
+        }
+
+        const nextNodes = [...currentNodes, entry.node];
+        const edgeIdSet = new Set(currentEdges.map((e) => e.id));
+        const restoredEdges = entry.connectedEdges.filter((e) => !edgeIdSet.has(e.id));
+        const nextEdges = [...currentEdges, ...restoredEdges];
+
+        setNodes(nextNodes);
+        setEdges(nextEdges);
+        publishNodeAdd(entry.node);
+        restoredEdges.forEach((edge) => publishEdgeAdd(edge));
+
+        generalToasts.success('Undo: table deletion reverted');
+        return;
+      }
+
+      if (entry.type === 'add-attribute') {
+        const table = currentNodes.find((n) => n.id === entry.tableId);
+        if (!table) {
+          generalToasts.warning('Cannot undo: table no longer exists.');
+          return;
+        }
+
+        const tableData = table.data as TableData;
+        const attrs = Array.isArray(tableData.attributes) ? tableData.attributes : [];
+        const targetAttr = attrs.find((a) => a.id === entry.attributeId);
+
+        if (!targetAttr) {
+          generalToasts.warning('Cannot undo: attribute already removed.');
+          return;
+        }
+
+        const nextAttrs = attrs.filter((a) => a.id !== entry.attributeId);
+        const nextNodes = currentNodes.map((n) =>
+          n.id === entry.tableId ? { ...n, data: { ...tableData, attributes: nextAttrs } } : n
+        );
+
+        const edgePrefix = `-${targetAttr.name}-`;
+        const removedEdges = currentEdges.filter((e) =>
+          (e.source === entry.tableId && e.sourceHandle?.includes(edgePrefix)) ||
+          (e.target === entry.tableId && e.targetHandle?.includes(edgePrefix))
+        );
+        const nextEdges = currentEdges.filter((e) => !removedEdges.some((re) => re.id === e.id));
+
+        setNodes(nextNodes);
+        setEdges(nextEdges);
+        const updatedNode = nextNodes.find((n) => n.id === entry.tableId);
+        if (updatedNode) {
+          publishNodeUpdate(updatedNode);
+        }
+        removedEdges.forEach((edge) => publishEdgeDelete(edge.id));
+
+        generalToasts.success('Undo: field creation reverted');
+        return;
+      }
+
+      if (entry.type === 'delete-attribute') {
+        const table = currentNodes.find((n) => n.id === entry.tableId);
+        if (!table) {
+          generalToasts.warning('Cannot undo: table no longer exists.');
+          return;
+        }
+
+        const tableData = table.data as TableData;
+        const attrs = Array.isArray(tableData.attributes) ? tableData.attributes : [];
+        const alreadyExists = attrs.some((a) => a.id === entry.attribute.id);
+        if (alreadyExists) {
+          generalToasts.warning('Cannot undo: field already exists.');
+          return;
+        }
+
+        const index = Math.max(0, Math.min(entry.index, attrs.length));
+        const nextAttrs = [...attrs.slice(0, index), entry.attribute, ...attrs.slice(index)];
+        const nextNodes = currentNodes.map((n) =>
+          n.id === entry.tableId ? { ...n, data: { ...tableData, attributes: nextAttrs } } : n
+        );
+
+        setNodes(nextNodes);
+        const updatedNode = nextNodes.find((n) => n.id === entry.tableId);
+        if (updatedNode) {
+          publishNodeUpdate(updatedNode);
+        }
+
+        generalToasts.success('Undo: field deletion reverted');
+        return;
+      }
+
+      if (entry.type === 'edit-attribute') {
+        const table = currentNodes.find((n) => n.id === entry.tableId);
+        if (!table) {
+          generalToasts.warning('Cannot undo: table no longer exists.');
+          return;
+        }
+
+        const tableData = table.data as TableData;
+        const attrs = Array.isArray(tableData.attributes) ? tableData.attributes : [];
+        const attrIndex = attrs.findIndex((a) => a.id === entry.attributeBefore.id);
+
+        if (attrIndex === -1) {
+          generalToasts.warning('Cannot undo: field was removed.');
+          return;
+        }
+
+        const nextAttrs = attrs.map((attr) => attr.id === entry.attributeBefore.id ? { ...entry.attributeBefore } : attr);
+        const nextNodes = currentNodes.map((n) =>
+          n.id === entry.tableId ? { ...n, data: { ...tableData, attributes: nextAttrs } } : n
+        );
+
+        setNodes(nextNodes);
+        const updatedNode = nextNodes.find((n) => n.id === entry.tableId);
+        if (updatedNode) {
+          publishNodeUpdate(updatedNode);
+        }
+
+        generalToasts.success('Undo: field edit reverted');
+        return;
+      }
+
+      if (entry.type === 'rename-table') {
+        const table = currentNodes.find((n) => n.id === entry.tableId);
+        if (!table) {
+          generalToasts.warning('Cannot undo: table no longer exists.');
+          return;
+        }
+
+        const tableData = table.data as TableData;
+        const nextNodes = currentNodes.map((n) =>
+          n.id === entry.tableId ? { ...n, data: { ...tableData, label: entry.previousLabel } } : n
+        );
+
+        setNodes(nextNodes);
+        const updatedNode = nextNodes.find((n) => n.id === entry.tableId);
+        if (updatedNode) {
+          publishNodeUpdate(updatedNode);
+        }
+
+        generalToasts.success('Undo: table rename reverted');
+        return;
+      }
+
+      if (entry.type === 'change-color') {
+        const table = currentNodes.find((n) => n.id === entry.tableId);
+        if (!table) {
+          generalToasts.warning('Cannot undo: table no longer exists.');
+          return;
+        }
+
+        const tableData = table.data as TableData;
+        const nextNodes = currentNodes.map((n) =>
+          n.id === entry.tableId ? { ...n, data: { ...tableData, color: entry.previousColor } } : n
+        );
+
+        setNodes(nextNodes);
+        const updatedNode = nextNodes.find((n) => n.id === entry.tableId);
+        if (updatedNode) {
+          publishNodeUpdate(updatedNode);
+        }
+
+        generalToasts.success('Undo: table color reverted');
+      }
+    } catch (error) {
+      console.error('Undo failed:', error);
+      generalToasts.error('Failed to undo last action');
+    }
+  }, [
+    collaboration,
+    getLockForNode,
+    isNodeLockedByOther,
+    publishNodeDelete,
+    publishNodeAdd,
+    publishNodeUpdate,
+    publishEdgeAdd,
+    publishEdgeDelete,
+    selectedTableId,
+    setNodes,
+    setEdges,
+    setSelectedTableId,
+  ]);
+
   // Handle "New Diagram" - clear everything and go to home
   const handleNewDiagram = useCallback(() => {
     importNodes([]);
@@ -1256,6 +1617,23 @@ function CanvasPlayground() {
     setLastSavedAt(null);
     navigate('/playground', { replace: true });
   }, [importNodes, setEdges, navigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isUndo = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z';
+      if (!isUndo || event.shiftKey) return;
+
+      const activeTag = (event.target as HTMLElement | null)?.tagName?.toLowerCase();
+      const isTyping = activeTag === 'input' || activeTag === 'textarea' || (event.target as HTMLElement | null)?.isContentEditable;
+      if (isTyping) return;
+
+      event.preventDefault();
+      handleUndo();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo]);
 
   // Show loading state when loading diagram from URL
   if (isLoadingDiagram) {
@@ -1318,6 +1696,8 @@ function CanvasPlayground() {
       {/* Navbar - Fixed at top */}
       <Toolbar 
         onAddTable={handleAddTable} 
+        onUndo={handleUndo}
+        canUndo={undoAvailable}
         onExportSQL={exportToSQL}
         onSyncDatabase={handleSyncToDatabase}
         onImportSchema={handleImportSchema}

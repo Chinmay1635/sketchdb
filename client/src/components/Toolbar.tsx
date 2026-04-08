@@ -3,6 +3,8 @@ import UserMenu from "./UserMenu";
 
 interface ToolbarProps {
   onAddTable: () => void;
+  onUndo?: () => void;
+  canUndo?: boolean;
   onExportSQL: () => void;
   onSyncDatabase?: () => void;
   onImportSchema: () => void;
@@ -103,6 +105,8 @@ const DropdownDivider = () => <div className="border-t border-white/5 my-1" />;
 
 export const Toolbar: React.FC<ToolbarProps> = ({ 
   onAddTable, 
+  onUndo,
+  canUndo = false,
   onExportSQL, 
   onSyncDatabase,
   onImportSchema,
@@ -192,6 +196,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 {/* Actions menu */}
                 <DropdownMenu label="Actions">
                   <DropdownItem onClick={onAddTable}>Add Table</DropdownItem>
+                  {onUndo && (
+                    <DropdownItem onClick={onUndo} shortcut="Ctrl+Z" className={!canUndo ? 'opacity-50 pointer-events-none' : ''}>
+                      Undo
+                    </DropdownItem>
+                  )}
                   {isAuthenticated && onSave && (
                     <DropdownItem onClick={onSave} shortcut="Ctrl+S">
                       {isSaving ? 'Saving...' : 'Save'}
@@ -267,6 +276,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 className="px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-white/5 rounded transition-colors"
               >
                 View SQL
+              </button>
+            )}
+
+            {onUndo && !isReadOnly && (
+              <button
+                onClick={onUndo}
+                disabled={!canUndo}
+                className="hidden sm:flex p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Undo (Ctrl+Z)"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a7 7 0 110 14h-1" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l4-4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l4 4" />
+                </svg>
               </button>
             )}
 
@@ -349,6 +373,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
               Add Table
             </button>
+            {onUndo && (
+              <button
+                onClick={() => { if (canUndo) onUndo(); setMobileMenuOpen(false); }}
+                disabled={!canUndo}
+                className="w-full px-3 py-2.5 text-sm text-slate-300 hover:bg-white/5 rounded text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Undo
+              </button>
+            )}
             {isAuthenticated && currentDiagramId && onAIAssistantClick && (
               <button onClick={() => { onAIAssistantClick(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-200 hover:bg-white/5 rounded transition-colors">AI Assistant</button>
             )}
