@@ -30,6 +30,12 @@ const allowedOrigins = parseAllowedOrigins();
 const allowDesktopClient = process.env.ALLOW_DESKTOP_CLIENT === 'true';
 
 const corsOrigin = (origin, callback) => {
+  const isDesktopOrigin = origin === 'null' || origin.startsWith('file://');
+
+  if (allowDesktopClient && isDesktopOrigin) {
+    return callback(null, true);
+  }
+
   if (!origin) {
     if (allowDesktopClient) {
       return callback(null, true);
