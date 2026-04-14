@@ -199,7 +199,8 @@ function initializeSocket(httpServer) {
   const allowDesktopClient = process.env.ALLOW_DESKTOP_CLIENT === 'true';
 
   const corsOrigin = (origin, callback) => {
-    const isDesktopOrigin = origin === 'null' || origin.startsWith('file://');
+    const normalizedOrigin = typeof origin === 'string' ? origin : '';
+    const isDesktopOrigin = normalizedOrigin === 'null' || normalizedOrigin.startsWith('file://');
 
     if (allowDesktopClient && isDesktopOrigin) {
       return callback(null, true);
