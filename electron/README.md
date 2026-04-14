@@ -39,6 +39,18 @@ npm run dist
 
 Artifacts are generated in electron/release.
 
+## Desktop Icon
+
+- Source icon image: ../client/public/logo.png
+- Generated Windows icon: ./build/icon.ico
+- Icon generation runs automatically before `npm start` and `npm run dist`.
+
+## Windows 10/11 Installer Output
+
+After `npm run dist`, look in `electron/release` for:
+- `SketchDB Setup <version>.exe` (NSIS installer)
+- `SketchDB <version>.exe` (portable executable)
+
 ## Public Release Checklist
 
 1. Backend (Render) env must include:

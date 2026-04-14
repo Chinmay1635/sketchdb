@@ -2,20 +2,25 @@
   "name": "sketchdb-desktop",
   "version": "1.0.0",
   "private": true,
+  "author": "SketchDB",
   "description": "SketchDB Windows desktop app",
   "main": "src/main.js",
   "scripts": {
+    "generate:icon": "node ./scripts/generate-icon.js",
     "build:client": "npm --prefix ../client run build:desktop",
-    "start": "npm run build:client && electron .",
-    "dist": "npm run build:client && electron-builder --win nsis portable"
+    "start": "npm run generate:icon && npm run build:client && electron .",
+    "dist": "npm run generate:icon && npm run build:client && electron-builder --win nsis portable"
   },
   "devDependencies": {
     "electron": "^31.7.7",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.33.5"
   },
   "build": {
     "appId": "com.sketchdb.desktop",
     "productName": "SketchDB",
+    "forceCodeSigning": false,
     "directories": {
       "output": "release"
     },
@@ -33,6 +38,9 @@
       }
     ],
     "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "verifyUpdateCodeSignature": false,
       "target": [
         "nsis",
         "portable"
@@ -41,7 +49,10 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "SketchDB"
     }
   }
 }
