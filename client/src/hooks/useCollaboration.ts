@@ -24,13 +24,14 @@ import {
   getCollaboratorColor
 } from '../types/collaboration';
 import { collaborationToasts } from '../utils/toast';
+import { SOCKET_BASE_URL } from '../config/runtime';
 
 // Use generic types for nodes/edges to avoid version conflicts
 type GenericNode = { id: string; position?: { x: number; y: number }; [key: string]: unknown };
 type GenericEdge = { id: string; source: string; target: string; [key: string]: unknown };
 
 // Socket server URL
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const SOCKET_URL = SOCKET_BASE_URL;
 
 // Get token from localStorage
 const getToken = (): string | null => {
@@ -203,13 +204,18 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
     });
 
     socket.on('connect_error', (error) => {
-      console.error('Connection error:', error.message);
-      collaborationToasts.connectionError(error.message);
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+      const errorMessage = isOffline
+        ? 'No internet connection. Please reconnect and try again.'
+        : error.message;
+
+      console.error('Connection error:', errorMessage);
+      collaborationToasts.connectionError(errorMessage);
       setState(prev => ({
         ...prev,
         isConnected: false,
         isConnecting: false,
-        error: error.message
+        error: errorMessage
       }));
     });
 

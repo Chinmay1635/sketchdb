@@ -188,9 +188,34 @@ function cleanupUserData(socketId) {
  * Initialize Socket.IO server with authentication and Redis adapter
  */
 function initializeSocket(httpServer) {
+  const allowedOrigins = [
+    ...(process.env.CLIENT_URLS || '').split(','),
+    process.env.CLIENT_URL || ''
+  ]
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  const uniqueAllowedOrigins = [...new Set(allowedOrigins)];
+  const allowDesktopClient = process.env.ALLOW_DESKTOP_CLIENT === 'true';
+
+  const corsOrigin = (origin, callback) => {
+    if (!origin) {
+      if (allowDesktopClient) {
+        return callback(null, true);
+      }
+      return callback(new Error('Socket CORS blocked: missing origin'));
+    }
+
+    if (uniqueAllowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Socket CORS blocked for origin: ${origin}`));
+  };
+
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: corsOrigin,
       methods: ['GET', 'POST'],
       credentials: true
     },

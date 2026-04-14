@@ -2068,6 +2068,24 @@ function AppRoutes() {
 
 // App component
 export default function App() {
+  useEffect(() => {
+    const handleOffline = () => {
+      generalToasts.error('Internet disconnected. Please reconnect to continue.');
+    };
+
+    const handleOnline = () => {
+      generalToasts.success('Internet reconnected. You can continue now.');
+    };
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <ReactFlowProvider>

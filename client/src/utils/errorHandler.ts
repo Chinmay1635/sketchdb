@@ -203,7 +203,10 @@ export class SQLErrorHandler {
     const networkPatterns = [
       /network.*error/i,
       /connection.*failed/i,
+      /internet.*connection/i,
+      /offline/i,
       /timeout/i,
+      /failed to fetch/i,
       /fetch.*failed/i,
       /cors.*error/i
     ];

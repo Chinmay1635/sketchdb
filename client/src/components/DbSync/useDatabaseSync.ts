@@ -1,29 +1,6 @@
 import { useCallback, useState } from 'react';
 import { NormalizedSchema } from '../../utils/diagramToSchema';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-const getToken = (): string | null => {
-  return localStorage.getItem('sketchdb_token');
-};
-
-const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
-  const token = getToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
-  };
-
-  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Request failed');
-  }
-
-  return data;
-};
+import { apiRequest } from '../../services/api';
 
 export interface MigrationPlan {
   _id: string;

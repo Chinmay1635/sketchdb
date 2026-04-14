@@ -1,0 +1,47 @@
+{
+  "name": "sketchdb-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SketchDB Windows desktop app",
+  "main": "src/main.js",
+  "scripts": {
+    "build:client": "npm --prefix ../client run build:desktop",
+    "start": "npm run build:client && electron .",
+    "dist": "npm run build:client && electron-builder --win nsis portable"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.sketchdb.desktop",
+    "productName": "SketchDB",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../client/dist",
+        "to": "client-dist",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

@@ -24,6 +24,9 @@ interface AuthDialogProps {
 
 const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
   const { login, signup, verifyOTP, resendOTP, forgotPassword, resetPassword } = useAuth();
+  const isDesktopApp = Boolean(window.electronAPI?.isDesktop);
+  const requiresTurnstile = !isDesktopApp;
+  const desktopBypassToken = isDesktopApp ? 'desktop-bypass' : undefined;
   
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,7 +65,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!turnstileToken) {
+    if (requiresTurnstile && !turnstileToken) {
       setError('Please complete the CAPTCHA verification');
       return;
     }
@@ -71,7 +74,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
     setError(null);
 
     try {
-      const result = await login(email, password, turnstileToken);
+      const result = await login(email, password, turnstileToken ?? desktopBypassToken);
       if (result.requiresVerification) {
         setMode('verify-otp');
         setSuccess('A verification code has been sent to your email.');
@@ -83,7 +86,9 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
     } catch (err: any) {
       authToasts.loginError(err.message);
       setError(err.message);
-      setTurnstileToken(null); // Reset token on error
+      if (requiresTurnstile) {
+        setTurnstileToken(null); // Reset token on error
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +97,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!turnstileToken) {
+    if (requiresTurnstile && !turnstileToken) {
       setError('Please complete the CAPTCHA verification');
       return;
     }
@@ -113,7 +118,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
     }
 
     try {
-      await signup({ username, email, prn, password, turnstileToken });
+      await signup({ username, email, prn, password, turnstileToken: turnstileToken ?? desktopBypassToken });
       authToasts.signupSuccess();
       // setMode('verify-otp');
       // setSuccess('Account created! Please check your email for the verification code.');
@@ -123,7 +128,9 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
     } catch (err: any) {
       authToasts.signupError(err.message);
       setError(err.message);
-      setTurnstileToken(null); // Reset token on error
+      if (requiresTurnstile) {
+        setTurnstileToken(null); // Reset token on error
+      }
     } finally {
       setIsLoading(false);
     }
@@ -333,26 +340,28 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               </div>
               
               {/* Turnstile CAPTCHA */}
-              <Turnstile
-                key="login-turnstile"
-                siteKey={getTurnstileSiteKey()}
-                onVerify={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken(null)}
-                onError={() => setTurnstileToken(null)}
-                theme="dark"
-              />
+              {requiresTurnstile && (
+                <Turnstile
+                  key="login-turnstile"
+                  siteKey={getTurnstileSiteKey()}
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                  theme="dark"
+                />
+              )}
               
               <button
                 type="submit"
-                disabled={isLoading || !turnstileToken}
+                disabled={isLoading || (requiresTurnstile && !turnstileToken)}
                 className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50 rounded-lg"
                 style={{ 
-                  background: isLoading || !turnstileToken 
+                  background: isLoading || (requiresTurnstile && !turnstileToken)
                     ? 'rgba(255, 255, 255, 0.05)' 
                     : '#14b8a6',
-                  color: isLoading || !turnstileToken ? '#71717a' : '#09090b',
+                  color: isLoading || (requiresTurnstile && !turnstileToken) ? '#71717a' : '#09090b',
                   fontFamily: "'JetBrains Mono', monospace",
-                  boxShadow: isLoading || !turnstileToken ? 'none' : '0 4px 12px rgba(20, 184, 166, 0.25)'
+                  boxShadow: isLoading || (requiresTurnstile && !turnstileToken) ? 'none' : '0 4px 12px rgba(20, 184, 166, 0.25)'
                 }}
               >
                 {isLoading ? 'Logging in...' : 'Login'}
@@ -501,26 +510,28 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose, initialMode = 
               </div>
               
               {/* Turnstile CAPTCHA */}
-              <Turnstile
-                key="signup-turnstile"
-                siteKey={getTurnstileSiteKey()}
-                onVerify={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken(null)}
-                onError={() => setTurnstileToken(null)}
-                theme="dark"
-              />
+              {requiresTurnstile && (
+                <Turnstile
+                  key="signup-turnstile"
+                  siteKey={getTurnstileSiteKey()}
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                  theme="dark"
+                />
+              )}
               
               <button
                 type="submit"
-                disabled={isLoading || !turnstileToken}
+                disabled={isLoading || (requiresTurnstile && !turnstileToken)}
                 className="w-full py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50 rounded-lg"
                 style={{ 
-                  background: isLoading || !turnstileToken 
+                  background: isLoading || (requiresTurnstile && !turnstileToken)
                     ? 'rgba(255, 255, 255, 0.05)' 
                     : 'linear-gradient(135deg, #14b8a6, #0d9488)',
-                  color: isLoading || !turnstileToken ? '#71717a' : '#09090b',
+                  color: isLoading || (requiresTurnstile && !turnstileToken) ? '#71717a' : '#09090b',
                   fontFamily: "'JetBrains Mono', monospace",
-                  boxShadow: isLoading || !turnstileToken ? 'none' : '0 4px 12px rgba(20, 184, 166, 0.25)'
+                  boxShadow: isLoading || (requiresTurnstile && !turnstileToken) ? 'none' : '0 4px 12px rgba(20, 184, 166, 0.25)'
                 }}
               >
                 {isLoading ? 'Creating Account...' : 'Sign Up'}

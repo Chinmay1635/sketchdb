@@ -14,7 +14,17 @@ const generateToken = (id) => {
 };
 
 // Verify Turnstile token
-const verifyTurnstileToken = async (token) => {
+const verifyTurnstileToken = async (token, req) => {
+  const allowDesktopBypass = process.env.ALLOW_DESKTOP_AUTH_WITHOUT_TURNSTILE === 'true';
+  const clientPlatform = req?.headers?.['x-client-platform'];
+  const isDesktopClient = typeof clientPlatform === 'string' && clientPlatform.toLowerCase() === 'desktop';
+  const isDesktopBypassToken = token === 'desktop-bypass';
+
+  if (allowDesktopBypass && (isDesktopClient || isDesktopBypassToken)) {
+    console.log('Desktop mode: skipping Turnstile verification due to ALLOW_DESKTOP_AUTH_WITHOUT_TURNSTILE=true');
+    return true;
+  }
+
   if (!token) return false;
   
   // Check if this is a development/test environment
@@ -104,7 +114,7 @@ router.post('/signup', signupValidation, async (req, res) => {
     const { username, email, prn, password, turnstileToken } = req.body;
 
     // Verify Turnstile token
-    const isTurnstileValid = await verifyTurnstileToken(turnstileToken);
+    const isTurnstileValid = await verifyTurnstileToken(turnstileToken, req);
     if (!isTurnstileValid) {
       return res.status(400).json({
         success: false,
@@ -323,7 +333,7 @@ router.post('/login', loginValidation, async (req, res) => {
     const { email, password, turnstileToken } = req.body;
 
     // Verify Turnstile token
-    const isTurnstileValid = await verifyTurnstileToken(turnstileToken);
+    const isTurnstileValid = await verifyTurnstileToken(turnstileToken, req);
     if (!isTurnstileValid) {
       return res.status(400).json({
         success: false,

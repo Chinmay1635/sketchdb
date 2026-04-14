@@ -15,9 +15,38 @@ connectDB();
 const app = express();
 const httpServer = http.createServer(app);
 
+const parseAllowedOrigins = () => {
+  const configured = [
+    ...(process.env.CLIENT_URLS || '').split(','),
+    process.env.CLIENT_URL || ''
+  ]
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return [...new Set(configured)];
+};
+
+const allowedOrigins = parseAllowedOrigins();
+const allowDesktopClient = process.env.ALLOW_DESKTOP_CLIENT === 'true';
+
+const corsOrigin = (origin, callback) => {
+  if (!origin) {
+    if (allowDesktopClient) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS blocked: missing origin'));
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return callback(null, true);
+  }
+
+  return callback(new Error(`CORS blocked for origin: ${origin}`));
+};
+
 // CORS configuration
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: corsOrigin,
   credentials: true
 }));
 

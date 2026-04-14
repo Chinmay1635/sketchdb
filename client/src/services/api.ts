@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/runtime';
 
 // Get stored token
 const getToken = (): string | null => {
@@ -16,27 +16,58 @@ const removeToken = (): void => {
 };
 
 // API request helper
-const apiRequest = async (
+export const apiRequest = async (
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> => {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    throw new Error('No internet connection. Please reconnect and try again.');
+  }
+
   const token = getToken();
+  const isDesktopClient = typeof window !== 'undefined' && Boolean(window.electronAPI?.isDesktop);
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    ...(isDesktopClient && { 'X-Client-Platform': 'desktop' }),
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
 
-  const data = await response.json();
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      throw new Error('No internet connection. Please reconnect and try again.');
+    }
+
+    if (error instanceof TypeError || (error as any)?.name === 'AbortError') {
+      throw new Error('Network error: unable to reach server. Check your internet connection and try again.');
+    }
+
+    throw error;
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  let data: any = null;
+
+  if (response.status !== 204) {
+    if (contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = text ? { message: text } : null;
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong');
+    const message = data?.message || `Request failed (${response.status})`;
+    throw new Error(message);
   }
 
   return data;
