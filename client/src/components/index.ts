@@ -21,3 +21,4 @@ export { default as ShareDialog } from './ShareDialog';
 export { default as LandingPage } from './LandingPage';
 export { CollaboratorCursors } from './CollaboratorCursors';
 export { CollaboratorAvatars } from './CollaboratorAvatars';
+export { default as ERDiagramDesigner } from './ERDiagramDesigner';

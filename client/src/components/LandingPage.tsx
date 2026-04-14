@@ -76,7 +76,7 @@ const LandingPage: React.FC = () => {
           
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com"
+              href="https://github.com/Chinmay1635/sketchdb"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm transition-colors"
@@ -89,6 +89,28 @@ const LandingPage: React.FC = () => {
               </svg>
               GitHub
             </a>
+            <button
+              onClick={() => navigate('/er-diagram')}
+              className="hidden sm:inline-flex relative px-5 py-2.5 text-sm font-semibold rounded-lg overflow-hidden transition-all"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                background: 'linear-gradient(135deg, rgba(126, 59, 191, 0.18), rgba(36, 99, 235, 0.18))',
+                color: '#e9d5ff',
+                border: '1px solid rgba(167, 139, 250, 0.35)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(126, 59, 191, 0.32), rgba(36, 99, 235, 0.28))';
+                e.currentTarget.style.borderColor = 'rgba(196, 181, 253, 0.55)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(126, 59, 191, 0.18), rgba(36, 99, 235, 0.18))';
+                e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.35)';
+              }}
+            >
+              <span className="relative uppercase tracking-widest text-[11px] font-bold">
+                ER Diagram
+              </span>
+            </button>
             <button
               onClick={() => navigate('/playground')}
               className="relative px-6 py-2.5 text-sm font-semibold rounded-lg overflow-hidden transition-all"
@@ -174,6 +196,35 @@ const LandingPage: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     Start Building
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => navigate('/er-diagram')}
+                  className="group relative px-8 py-4 font-bold uppercase tracking-widest overflow-hidden transition-all duration-200 rounded-lg"
+                  style={{
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    background: 'linear-gradient(135deg, rgba(126, 59, 191, 0.14), rgba(20, 184, 166, 0.12))',
+                    color: '#f5e9ff',
+                    fontSize: '0.875rem',
+                    border: '1px solid rgba(167, 139, 250, 0.35)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(126, 59, 191, 0.24), rgba(20, 184, 166, 0.18))';
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.borderColor = 'rgba(196, 181, 253, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(126, 59, 191, 0.14), rgba(20, 184, 166, 0.12))';
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.35)';
+                  }}
+                >
+                  <span className="relative flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l7 7-7 11-7-11 7-7z" />
+                    </svg>
+                    ER Diagram
                   </span>
                 </button>
                 

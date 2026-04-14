@@ -40,6 +40,7 @@ import {
   CollaboratorAvatars,
   MyDiagramsDialog,
   AIChatSidebar,
+  ERDiagramDesigner,
 } from "./components";
 import AuthDialog from "./components/AuthDialog";
 import SavedDiagramsDialog from "./components/SavedDiagramsDialog";
@@ -2057,6 +2058,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/er-diagram" element={<ERDiagramDesigner />} />
       <Route path="/playground" element={<CanvasPlayground />} />
       <Route path="/playground/:username/:slug" element={<CanvasPlayground />} />
       <Route path="*" element={<NotFound />} />
