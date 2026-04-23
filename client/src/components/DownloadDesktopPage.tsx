@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const DOWNLOAD_FILE_NAME = 'SketchDB 1.0.0.exe';
-const DOWNLOAD_URL = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL || '/downloads/SketchDB%201.0.0.exe';
+const DOWNLOAD_FILE_NAME = 'SketchDB 1.0.1.exe';
+const DOWNLOAD_URL = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL || '/downloads/SketchDB%201.0.1.exe';
 
 const requirementItems = [
   { label: 'Operating System', value: 'Windows 10 or Windows 11 (64-bit)' },
@@ -67,7 +67,7 @@ const DownloadDesktopPage: React.FC = () => {
           <div className="grid gap-3 mb-8">
             <div className="flex items-center justify-between rounded-lg px-4 py-3" style={{ backgroundColor: '#0c0c0f', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
               <span className="text-sm" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#a1a1aa' }}>Version</span>
-              <span className="text-sm font-semibold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#fafafa' }}>1.0.0</span>
+              <span className="text-sm font-semibold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#fafafa' }}>1.0.1</span>
             </div>
 
             <div className="flex items-center justify-between rounded-lg px-4 py-3" style={{ backgroundColor: '#0c0c0f', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
