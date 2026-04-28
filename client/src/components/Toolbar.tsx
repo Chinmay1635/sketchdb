@@ -183,7 +183,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             {/* Logo */}
             <a href="/" className="flex items-center gap-2 mr-3 hover:opacity-90 transition-opacity">
               <div className="w-7 h-7 rounded flex items-center justify-center overflow-hidden">
-                <img className='w-full h-full' src="/logo.png" alt="SketchDB" />
+                <img className='w-full h-full' src={`${import.meta.env.BASE_URL}logo.png`} alt="SketchDB" />
               </div>
               <span className="text-sm font-bold text-white hidden sm:inline">
                 Sketch<span style={{ color: '#14b8a6' }}>DB</span>

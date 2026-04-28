@@ -1,14 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const DOWNLOAD_FILE_NAME = 'SketchDB 1.0.1.exe';
-const DOWNLOAD_URL = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL || '/downloads/SketchDB%201.0.1.exe';
+const DOWNLOAD_FILE_NAME = 'SketchDB 1.0.2.exe';
+const DOWNLOAD_URL = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL || 'https://github.com/Chinmay1635/sketchdb/releases/download/v1.0.2/SketchDB.Setup.1.0.2.exe';
 
 const requirementItems = [
   { label: 'Operating System', value: 'Windows 10 or Windows 11 (64-bit)' },
   { label: 'RAM', value: '4 GB minimum (8 GB recommended)' },
   { label: 'Storage', value: 'At least 500 MB free space' },
-  { label: 'Internet', value: 'Required for login, collaboration, and cloud sync' },
+  { label: 'Internet', value: 'Not required for core usage (optional for updates/download only)' },
 ];
 
 const DownloadDesktopPage: React.FC = () => {
@@ -61,13 +61,13 @@ const DownloadDesktopPage: React.FC = () => {
           </h1>
 
           <p className="text-sm sm:text-base mb-8" style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#a1a1aa' }}>
-            Install the desktop app for the same SketchDB interface you use on web, optimized for Windows 10/11.
+            Install the desktop app for the same SketchDB interface you use on web, optimized for Windows 10/11 with bundled runtime and local-first storage.
           </p>
 
           <div className="grid gap-3 mb-8">
             <div className="flex items-center justify-between rounded-lg px-4 py-3" style={{ backgroundColor: '#0c0c0f', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
               <span className="text-sm" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#a1a1aa' }}>Version</span>
-              <span className="text-sm font-semibold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#fafafa' }}>1.0.1</span>
+              <span className="text-sm font-semibold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#fafafa' }}>1.0.2</span>
             </div>
 
             <div className="flex items-center justify-between rounded-lg px-4 py-3" style={{ backgroundColor: '#0c0c0f', border: '1px solid rgba(255, 255, 255, 0.06)' }}>

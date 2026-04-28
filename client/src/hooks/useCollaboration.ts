@@ -168,6 +168,11 @@ export function useCollaboration(options: UseCollaborationOptions = {}): UseColl
 
   // Connect to socket server
   const connect = useCallback(() => {
+    if (!SOCKET_URL) {
+      setState(prev => ({ ...prev, error: 'Collaboration is unavailable in offline desktop mode' }));
+      return;
+    }
+
     const token = getToken();
     
     if (!token) {

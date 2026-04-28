@@ -11,11 +11,15 @@ const withApiSuffix = (url: string): string => {
 
 const envApiUrl = import.meta.env.VITE_API_URL?.trim();
 const envSocketUrl = import.meta.env.VITE_SOCKET_URL?.trim();
+const appTarget = import.meta.env.VITE_APP_TARGET?.trim() || 'web';
+const isDesktopTarget = appTarget === 'desktop';
 
-const baseApiUrl = envApiUrl ? withApiSuffix(envApiUrl) : `${DEFAULT_RENDER_ORIGIN}/api`;
+const baseApiUrl = envApiUrl
+  ? withApiSuffix(envApiUrl)
+  : (isDesktopTarget ? '' : `${DEFAULT_RENDER_ORIGIN}/api`);
 
-export const APP_TARGET = import.meta.env.VITE_APP_TARGET?.trim() || 'web';
+export const APP_TARGET = appTarget;
 export const API_BASE_URL = baseApiUrl;
 export const SOCKET_BASE_URL = envSocketUrl
   ? normalizeBaseUrl(envSocketUrl)
-  : normalizeBaseUrl(API_BASE_URL.replace(/\/api$/, ''));
+  : (isDesktopTarget ? '' : normalizeBaseUrl(API_BASE_URL.replace(/\/api$/, '')));
